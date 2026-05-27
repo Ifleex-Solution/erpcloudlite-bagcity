@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"c:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root betalite -e \"DESCRIBE stockbatch;\")",
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root betalite -e \"DESCRIBE stockbatch;\")"
+    ]
+  }
+}
