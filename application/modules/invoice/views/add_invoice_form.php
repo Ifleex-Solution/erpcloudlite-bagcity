@@ -264,6 +264,7 @@
                             <tr>
                                 <th class="text-center col-big">Product<i
                                         class="text-danger">*</i></th>
+                                <th class="text-center col-big">Print Name</th>
 
                                 <th class="text-center col-medium">Store<i class="text-danger">*</i>
                                 </th>
@@ -275,8 +276,8 @@
                                         class="text-danger col-medium">*</i></th>
                                 <th class="text-center col-medium">Price val <i
                                         class="text-danger"> *</i></th>
-                                <th class="text-center col-medium">Discount</th>
-                                <th class="text-center col-medium">Dis.val</th>
+                                <th class="text-center col-medium" style="display:none;">Discount</th>
+                                <th class="text-center col-medium" style="display:none;">Dis.val</th>
 
                                 <th class="text-center vathidden" id="vathidden">VAT.val</th>
 
@@ -317,6 +318,10 @@
 
                                 </td>
 
+                                <td class="product_field">
+                                    <input type="text" class="form-control" id="printname1" name="printname[]" placeholder="Print Name" autocomplete="off" />
+                                </td>
+
                                 <td class="rate">
                                     <select class="form-control" id="store1" name="store[]" tabindex="3" onchange="product_search(1,'store')">
                                         <option value=""></option>
@@ -352,13 +357,13 @@
                                     <input type="text" name="product_rate[]" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" id="product_rate1" class="form-control product_rate_1 text-right" placeholder="0.00" value="" min="0" tabindex="7" />
                                 </td>
 
-                                <td class="qty">
-                                    <input type="text" name="discount_per[]" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" id="discount1" class="form-control discount_1 text-right" min="0" tabindex="11" placeholder="0.00" />
+                                <td class="qty" style="display:none;">
+                                    <input type="text" name="discount_per[]" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" id="discount1" class="form-control discount_1 text-right" min="0" tabindex="11" placeholder="0.00" value="0" />
                                     <input type="hidden" value="<?php echo $discount_type ?>" name="discount_type" id="discount_type">
 
                                 </td>
-                                <td class="rate">
-                                    <input type="text" name="discountvalue[]" id="discount_value1" class="form-control text-right discount_value_1 total_discount_val" min="0" tabindex="12" placeholder="0.00" readonly />
+                                <td class="rate" style="display:none;">
+                                    <input type="text" name="discountvalue[]" id="discount_value1" class="form-control text-right discount_value_1 total_discount_val" min="0" tabindex="12" placeholder="0.00" value="0" readonly />
                                 </td>
 
                                 <!-- VAT  start-->
@@ -414,7 +419,9 @@
 
                                     </td>
 
-
+                                    <td class="product_field">
+                                        <input type="text" class="form-control" id="printname<?php echo $i; ?>" name="printname[]" placeholder="Print Name" autocomplete="off" />
+                                    </td>
 
                                     <td class="rate">
                                         <select class="form-control" id="store<?php echo $i; ?>" name="store[]" tabindex="3" onchange="product_search(<?php echo $i; ?>, 'store')">
@@ -453,13 +460,13 @@
                                         <input type="text" name="product_rate[]" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" id="product_rate<?php echo $i; ?>" class="form-control product_rate_1 text-right" placeholder="0.00" value="" min="0" tabindex="7" />
                                     </td>
 
-                                    <td class="qty">
-                                        <input type="text" name="discount_per[]" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" id="discount<?php echo $i; ?>" class="form-control discount_1 text-right" min="0" tabindex="11" placeholder="0.00" />
+                                    <td class="qty" style="display:none;">
+                                        <input type="text" name="discount_per[]" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" id="discount<?php echo $i; ?>" class="form-control discount_1 text-right" min="0" tabindex="11" placeholder="0.00" value="0" />
                                         <input type="hidden" value="<?php echo $discount_type ?>" name="discount_type" id="discount_type">
                                     </td>
 
-                                    <td class="rate">
-                                        <input type="text" name="discountvalue[]" id="discount_value<?php echo $i; ?>" class="form-control text-right discount_value_1 total_discount_val" min="0" tabindex="12" placeholder="0.00" readonly />
+                                    <td class="rate" style="display:none;">
+                                        <input type="text" name="discountvalue[]" id="discount_value<?php echo $i; ?>" class="form-control text-right discount_value_1 total_discount_val" min="0" tabindex="12" placeholder="0.00" value="0" readonly />
                                     </td>
 
                                     <!-- VAT start -->
@@ -497,68 +504,52 @@
                         </tbody>
                         <tfoot>
                             <tr>
-
-                                <td colspan="10" class="text-right vathidden"><b><?php echo display('total') ?>:</b></td>
-                                <td colspan="9" class="text-right vatshow"><b><?php echo display('total') ?>:</b></td>
-
+                                <td colspan="8" class="text-right"><b><?php echo display('total') ?>:</b></td>
                                 <td class="text-right">
                                     <input type="text" id="Total" class="text-right form-control" name="total" value="0.00" readonly="readonly" />
                                 </td>
-                                <td> <button type="button" id="add_invoice_item" class="btn btn-info" name="add-invoice-item"
+                                <td>
+                                    <button type="button" id="add_invoice_item" class="btn btn-info" name="add-invoice-item"
                                         onClick="addInputField('addinvoiceItem');" tabindex="9"><i class="fa fa-plus"></i></button>
-
                                     <input type="hidden" name="baseUrl" class="baseUrl" value="<?php echo base_url(); ?>" />
                                 </td>
                             </tr>
                             <tr>
-
-                                <td colspan="10" class="text-right vathidden"><b>Sale Discount:</b></td>
-                                <td colspan="9" class="text-right vatshow"><b>Sale Discount:</b></td>
-
+                                <td colspan="8" class="text-right"><b>Sale Discount:</b></td>
                                 <td class="text-right">
                                     <input type="text" id="discount" class="text-right form-control discount total_discount_val" onkeyup="calculate_store(1)" name="discount" placeholder="0.00" value="" />
                                 </td>
-
-                                <td>
-
+                                <td></td>
+                            </tr>
+                             <tr>
+                                <td colspan="8" class="text-right"><b>Guide Commission:</b></td>
+                                <td class="text-right">
+                                    <input type="text" id="guidecommission" class="form-control text-right" name="guidecommission" value="0.00"  />
                                 </td>
+                                <td></td>
                             </tr>
                             <tr>
-                                <td colspan="10" class="text-right vathidden"><b><?php echo display('total_discount') ?>:</b></td>
-                                <td colspan="9" class="text-right vatshow"><b><?php echo display('total_discount') ?>:</b></td>
-
-
+                                <td colspan="8" class="text-right"><b><?php echo display('total_discount') ?>:</b></td>
                                 <td class="text-right">
                                     <input type="text" id="total_discount_ammount" class="form-control text-right" name="total_discount" value="0.00" readonly="readonly" />
                                 </td>
-                                <td>
-
-                                </td>
+                                <td></td>
                             </tr>
+                             
                             <tr>
-
-                                <td class="text-right vathidden" colspan="10"><b><?php echo display('ttl_val') ?>:</b></td>
-
+                                <td class="text-right vathidden" colspan="8"><b><?php echo display('ttl_val') ?>:</b></td>
                                 <td class="text-right vathidden">
                                     <input type="text" id="total_vat_amnt" class="form-control text-right" name="total_vat_amnt" value="0.00" readonly="readonly" />
                                 </td>
-                                <td class="text-right vathidden">
-
-                                </td>
+                                <td class="vathidden"></td>
                             </tr>
-
-
                             <tr>
-                                <td colspan="10" class="text-right vathidden"><b><?php echo display('grand_total') ?>:</b></td>
-                                <td colspan="9" class="text-right vatshow"><b><?php echo display('grand_total') ?>:</b></td>
-
-
+                                <td colspan="8" class="text-right"><b><?php echo display('grand_total') ?>:</b></td>
                                 <td class="text-right">
                                     <input type="text" id="grandTotal" class="text-right form-control grandTotalamnt" name="grand_total_price" placeholder="0.00" value="00" readonly />
                                 </td>
-                                <td> </td>
+                                <td></td>
                             </tr>
-
                         </tfoot>
                     </table>
                     <input type="hidden" name="finyear" value="<?php echo financial_year(); ?>">
@@ -825,6 +816,7 @@ echo "</script>";
                         $invoiceTypeDropdown.prop('disabled', true);
                         document.getElementById('total_discount_ammount').value = sales[0].total_discount_ammount;
                         document.getElementById('total_vat_amnt').value = sales[0].total_vat_amnt;
+                        document.getElementById('guidecommission').value = sales[0].guidecommission;
                         document.getElementById('grandTotal').value = sales[0].grandTotal;
                         document.getElementById('Total').value = sales[0].total;
                         document.getElementById('discount').value = sales[0].discount;
@@ -860,6 +852,7 @@ echo "</script>";
 
                             document.getElementById('product' + a).value = sales[i].product;
                             document.getElementById('productInput' + a).value = sales[i].product_name;
+                            document.getElementById('printname' + a).value = sales[i].printname || '';
                             document.getElementById('groupId' + a).value = sales[i].group_id;
                             document.getElementById('parent' + a).value = sales[i].parent;
                             document.getElementById('invoicegroup' + a).value = sales[i].invoicegroup;
@@ -1024,6 +1017,7 @@ echo "</script>";
 
         } else if (event.key === "Backspace") {
             document.getElementById('product' + count).value = "";
+            document.getElementById('printname' + count).value = "";
             var $batchDropdown = $('#batch' + count);
             $batchDropdown.empty();
 
@@ -1356,6 +1350,8 @@ echo "</script>";
                     document.getElementById('groupId' + count).value = group.pid
                     document.getElementById('parent' + count).value = group.parent
                     document.getElementById('invoicegroup' + count).value = group.invoice_group;
+                     document.getElementById('printname' + count).value = group.printname;
+
 
 
 
@@ -1482,6 +1478,7 @@ echo "</script>";
 
                 document.getElementById('total_discount_ammount').value = sales[0].total_discount_ammount;
                 document.getElementById('total_vat_amnt').value = sales[0].total_vat_amnt;
+                document.getElementById('guidecommission').value = sales[0].guidecommission;
                 document.getElementById('grandTotal').value = sales[0].grandTotal;
                 document.getElementById('Total').value = sales[0].total;
                 document.getElementById('discount').value = sales[0].discount;
@@ -1728,6 +1725,7 @@ echo "</script>";
                         document.getElementById('vat_percent' + item).value = 0;
 
                     }
+                    document.getElementById('printname' + item).value = product[0].printname || '';
                     //document.getElementById('vat_value' + item).value = 0;
 
 
@@ -2416,6 +2414,7 @@ echo "</script>";
 
             document.getElementById('product' + i).value = "";
             document.getElementById('productInput' + i).value = "";
+            document.getElementById('printname' + i).value = "";
             var $storeDropdown = $('#store' + i);
             $storeDropdown.empty();
             $storeDropdown.append('<option value="" disabled selected>Select store</option>'); // Add default option
@@ -2451,6 +2450,9 @@ echo "</script>";
         document.getElementById('discount').value = ""
         document.getElementById('total_discount_ammount').value = ""
         document.getElementById('total_vat_amnt').value = ""
+        document.getElementById('guidecommission').value = ""
+
+        
         document.getElementById('grandTotal').value = ""
         document.getElementById('Total').value = ""
 
@@ -2529,6 +2531,7 @@ echo "</script>";
                     arrItem.push({
                         product: document.getElementById('product' + i).value,
                         product_name: document.getElementById('productInput' + i).value,
+                        printname: document.getElementById('printname' + i).value,
                         store: document.getElementById('store' + i).value,
                         quantity: qty,
                         product_rate: document.getElementById('product_rate' + i).value,
@@ -2601,6 +2604,7 @@ echo "</script>";
                     type2: type2,
                     total_discount_ammount: document.getElementById('total_discount_ammount').value,
                     total_vat_amnt: document.getElementById('total_vat_amnt').value,
+                    guidecommission:  document.getElementById('guidecommission').value,
                     grandTotal: document.getElementById('grandTotal').value,
                     date: document.getElementById('date').value,
                     details: document.getElementById('details').value,
@@ -2646,6 +2650,7 @@ echo "</script>";
                     discount: document.getElementById('discount').value,
                     total_discount_ammount: document.getElementById('total_discount_ammount').value,
                     total_vat_amnt: document.getElementById('total_vat_amnt').value,
+                    guidecommission:  document.getElementById('guidecommission').value,
                     grandTotal: document.getElementById('grandTotal').value,
                     date: document.getElementById('date').value,
                     details: document.getElementById('details').value,
@@ -2694,7 +2699,7 @@ echo "</script>";
             });
             document.getElementById('productInput' + i).value = '';
             document.getElementById('product' + i).value = '';
-
+            document.getElementById('printname' + i).value = '';
 
             document.getElementById('myRow' + i).style.display = 'none';
             document.getElementById('qty' + i).value = "";
@@ -2716,6 +2721,7 @@ echo "</script>";
         document.getElementById('discount').value = ""
         document.getElementById('total_discount_ammount').value = ""
         document.getElementById('total_vat_amnt').value = ""
+        document.getElementById('guidecommission').value = ""
         document.getElementById('grandTotal').value = ""
         document.getElementById('date').value = ""
         document.getElementById('details').value = ""

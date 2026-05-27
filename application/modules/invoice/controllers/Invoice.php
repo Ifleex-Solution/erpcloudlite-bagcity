@@ -2231,18 +2231,18 @@ class Invoice extends MX_Controller
 
 
         $query = "
-    INSERT INTO sale 
+    INSERT INTO sale
     (id,sale_id, date, details, type2, discount, total_discount_ammount, total_vat_amnt, grandTotal, total,customer_id,employee_id,payment_type,lastupdateddate,createddate,userid,
-    incidenttype,already,branch,invoicetype,sales_order_no) 
-    VALUES 
-    (0,AES_ENCRYPT('{$num}', '{$encryption_key}') , 
+    incidenttype,already,branch,invoicetype,sales_order_no,guidecommission)
+    VALUES
+    (0,AES_ENCRYPT('{$num}', '{$encryption_key}') ,
      '{$this->input->post('date', TRUE)}',
-     '{$this->input->post('details', TRUE)}',  
-     AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('total_vat_amnt', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'), 
+     '{$this->input->post('details', TRUE)}',
+     AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('total_vat_amnt', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'),
      AES_ENCRYPT('{$this->input->post('total', TRUE)}', '{$encryption_key}'),
      '{$this->input->post('customer_id', TRUE)}',
      '{$this->input->post('employee_id', TRUE)}',
@@ -2252,7 +2252,8 @@ class Invoice extends MX_Controller
        '{$this->input->post('incidenttype', TRUE)}',
         0,
         '{$this->input->post('branch', TRUE)}',
-        '{$this->input->post('invoicetype', TRUE)}',$sales_order_no
+        '{$this->input->post('invoicetype', TRUE)}',$sales_order_no,
+     AES_ENCRYPT('{$this->input->post('guidecommission', TRUE)}', '{$encryption_key}')
     );";
 
 
@@ -2359,29 +2360,30 @@ class Invoice extends MX_Controller
             }
 
             $query = "
-            INSERT INTO sale_details 
-            (id, pid, product,batch, store, quantity, 
-            product_rate,discount,discount_value,vat_percent,vat_value,total_price,total_discount,all_discount,type2,conversion_id,unit,group_id,parent,invoicegroup) 
-            VALUES 
-            (0, 
-             '{$inserted_id}', 
-             '{$item['product']}', 
+            INSERT INTO sale_details
+            (id, pid, product,batch, store, quantity,
+            product_rate,discount,discount_value,vat_percent,vat_value,total_price,total_discount,all_discount,type2,conversion_id,unit,group_id,parent,invoicegroup,printname)
+            VALUES
+            (0,
+             '{$inserted_id}',
+             '{$item['product']}',
               '{$item['batch']}',
-              '{$item['store']}', 
-             AES_ENCRYPT('{$item['quantity']}', '{$encryption_key}'), 
+              '{$item['store']}',
+             AES_ENCRYPT('{$item['quantity']}', '{$encryption_key}'),
              AES_ENCRYPT('{$item['product_rate']}', '{$encryption_key}'),
-             AES_ENCRYPT('{$item['discount']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['discount_value']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['vat_percent']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['vat_value']}', '{$encryption_key}'), 
-              AES_ENCRYPT('{$item['total_price']}', '{$encryption_key}'), 
-              AES_ENCRYPT('{$item['total_discount']}', '{$encryption_key}'), 
+             AES_ENCRYPT('{$item['discount']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['discount_value']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['vat_percent']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['vat_value']}', '{$encryption_key}'),
+              AES_ENCRYPT('{$item['total_price']}', '{$encryption_key}'),
+              AES_ENCRYPT('{$item['total_discount']}', '{$encryption_key}'),
               AES_ENCRYPT('{$item['all_discount']}', '{$encryption_key}'),
                AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
-               '{$item['conversionid']}', 
+               '{$item['conversionid']}',
                  '{$item['unit']}',
                '{$item['group']}',
-              '{$item['parent']}', '{$item['invoicegroup']}'
+              '{$item['parent']}', '{$item['invoicegroup']}',
+              '{$item['printname']}'
             );";
 
             $this->db->query($query);
@@ -2691,18 +2693,18 @@ class Invoice extends MX_Controller
         $lastupdate = date('Y-m-d H:i:s');
 
         $query = "
-    INSERT INTO sales_order 
+    INSERT INTO sales_order
     (id,sale_id, date, details, type2, discount, total_discount_ammount, total_vat_amnt, grandTotal, total,customer_id,employee_id,lastupdateddate,createddate,userid,
-    incidenttype,already,branch,invoicetype,status) 
-    VALUES 
-    (0,AES_ENCRYPT('{$num}', '{$encryption_key}') , 
+    incidenttype,already,branch,invoicetype,status,guidecommission)
+    VALUES
+    (0,AES_ENCRYPT('{$num}', '{$encryption_key}') ,
      '{$this->input->post('date', TRUE)}',
-     '{$this->input->post('details', TRUE)}',  
-     AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('total_vat_amnt', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'), 
+     '{$this->input->post('details', TRUE)}',
+     AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('total_vat_amnt', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'),
      AES_ENCRYPT('{$this->input->post('total', TRUE)}', '{$encryption_key}'),
      '{$this->input->post('customer_id', TRUE)}',
      '{$this->input->post('employee_id', TRUE)}',
@@ -2712,7 +2714,8 @@ class Invoice extends MX_Controller
         0,
         '{$this->input->post('branch', TRUE)}',
         '{$this->input->post('invoicetype', TRUE)}',
-        0
+        0,
+        AES_ENCRYPT('{$this->input->post('guidecommission', TRUE)}', '{$encryption_key}')
     );";
 
 
@@ -2725,29 +2728,29 @@ class Invoice extends MX_Controller
         $inserted_id = $this->db->insert_id();
         foreach ($items as $item) {
             $query = "
-            INSERT INTO sales_order_details 
-            (id, pid, product,batch, store, quantity, 
-            product_rate,discount,discount_value,vat_percent,vat_value,total_price,total_discount,all_discount,type2,conversion_id,unit,group_id,parent,invoicegroup) 
-            VALUES 
-            (0, 
-             '{$inserted_id}', 
-             '{$item['product']}', 
+            INSERT INTO sales_order_details
+            (id, pid, product,batch, store, quantity,
+            product_rate,discount,discount_value,vat_percent,vat_value,total_price,total_discount,all_discount,type2,conversion_id,unit,group_id,parent,invoicegroup,printname)
+            VALUES
+            (0,
+             '{$inserted_id}',
+             '{$item['product']}',
               '{$item['batch']}',
-              '{$item['store']}', 
-             AES_ENCRYPT('{$item['quantity']}', '{$encryption_key}'), 
+              '{$item['store']}',
+             AES_ENCRYPT('{$item['quantity']}', '{$encryption_key}'),
              AES_ENCRYPT('{$item['product_rate']}', '{$encryption_key}'),
-             AES_ENCRYPT('{$item['discount']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['discount_value']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['vat_percent']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['vat_value']}', '{$encryption_key}'), 
-              AES_ENCRYPT('{$item['total_price']}', '{$encryption_key}'), 
-              AES_ENCRYPT('{$item['total_discount']}', '{$encryption_key}'), 
+             AES_ENCRYPT('{$item['discount']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['discount_value']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['vat_percent']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['vat_value']}', '{$encryption_key}'),
+              AES_ENCRYPT('{$item['total_price']}', '{$encryption_key}'),
+              AES_ENCRYPT('{$item['total_discount']}', '{$encryption_key}'),
               AES_ENCRYPT('{$item['all_discount']}', '{$encryption_key}'),
                AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
-               '{$item['conversionid']}', 
+               '{$item['conversionid']}',
                  '{$item['unit']}',
                   '{$item['group']}',
-              '{$item['parent']}', '{$item['invoicegroup']}'
+              '{$item['parent']}', '{$item['invoicegroup']}', '{$item['printname']}'
             );";
 
             $this->db->query($query);
@@ -2991,7 +2994,9 @@ class Invoice extends MX_Controller
         WHERE pod.product = c.product
           AND pod.store = c.store 
           AND pod.batch = c.batch 
-    ) AS avstock,pi.batchtype,po.invoicetype,AES_DECRYPT(sod.sale_id, '{$encryption_key}') as sales_order_no,pod.group_id,pod.parent,pod.invoicegroup 
+    ) AS avstock,pi.batchtype,po.invoicetype,AES_DECRYPT(sod.sale_id, '{$encryption_key}') as sales_order_no,pod.group_id,pod.parent,pod.invoicegroup,
+         AES_DECRYPT(po.guidecommission, '{$encryption_key}') AS guidecommission,
+         pod.printname
      ");
         $this->db->from('sale po');
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', 'inner');
@@ -3186,7 +3191,9 @@ CAST( ROUND(    CASE
         WHERE pod.product = c.product
           AND pod.store = c.store 
           AND pod.batch = c.batch 
-    ) AS avstock,pi.batchtype,po.invoicetype,pod.group_id,pod.parent,pod.invoicegroup
+    ) AS avstock,pi.batchtype,po.invoicetype,pod.group_id,pod.parent,pod.invoicegroup,
+         AES_DECRYPT(po.guidecommission, '{$encryption_key}') AS guidecommission,
+         pod.printname
      ");
         $this->db->from('sales_order po');
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', 'inner');
@@ -3257,7 +3264,7 @@ CAST( ROUND(    CASE
 
         $query = "
     UPDATE sale
-    SET 
+    SET
         date = '{$this->input->post('date', TRUE)}',
         type2 = AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
         payment_type = '{$this->input->post('payment_type', TRUE)}',
@@ -3269,12 +3276,13 @@ CAST( ROUND(    CASE
         grandTotal = AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'),
         total = AES_ENCRYPT('{$this->input->post('total', TRUE)}', '{$encryption_key}'),
         customer_id = '{$this->input->post('customer_id', TRUE)}',
-         lastupdateddate='{$lastupdate}',
-         userid='{$this->session->userdata('id')}',
-          incidenttype= '{$this->input->post('incidenttype', TRUE)}',
-          branch='{$this->input->post('branch', TRUE)}',
-        invoicetype='{$this->input->post('invoicetype', TRUE)}',
-         already=0
+        lastupdateddate = '{$lastupdate}',
+        userid = '{$this->session->userdata('id')}',
+        incidenttype = '{$this->input->post('incidenttype', TRUE)}',
+        branch = '{$this->input->post('branch', TRUE)}',
+        invoicetype = '{$this->input->post('invoicetype', TRUE)}',
+        guidecommission = AES_ENCRYPT('{$this->input->post('guidecommission', TRUE)}', '{$encryption_key}'),
+        already = 0
     WHERE id = '{$this->input->post('id', TRUE)}';
 ";
 
@@ -3405,29 +3413,29 @@ CAST( ROUND(    CASE
 
             if ($item['invoicedetail'] == 0) {
                 $query = "
-            INSERT INTO sale_details 
-            (id, pid, product, store,batch, quantity, 
-            product_rate,discount,discount_value,vat_percent,vat_value,total_price,total_discount,all_discount,type2,conversion_id,unit,group_id,parent,invoicegroup) 
-            VALUES 
-            (0, 
-             '{$this->input->post('id', TRUE)}', 
-             '{$item['product']}', 
-              '{$item['store']}', 
-               '{$item['batch']}', 
-             AES_ENCRYPT('{$item['quantity']}', '{$encryption_key}'), 
+            INSERT INTO sale_details
+            (id, pid, product, store,batch, quantity,
+            product_rate,discount,discount_value,vat_percent,vat_value,total_price,total_discount,all_discount,type2,conversion_id,unit,group_id,parent,invoicegroup,printname)
+            VALUES
+            (0,
+             '{$this->input->post('id', TRUE)}',
+             '{$item['product']}',
+              '{$item['store']}',
+               '{$item['batch']}',
+             AES_ENCRYPT('{$item['quantity']}', '{$encryption_key}'),
              AES_ENCRYPT('{$item['product_rate']}', '{$encryption_key}'),
-             AES_ENCRYPT('{$item['discount']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['discount_value']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['vat_percent']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['vat_value']}', '{$encryption_key}'), 
-              AES_ENCRYPT('{$item['total_price']}', '{$encryption_key}'), 
-              AES_ENCRYPT('{$item['total_discount']}', '{$encryption_key}'), 
+             AES_ENCRYPT('{$item['discount']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['discount_value']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['vat_percent']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['vat_value']}', '{$encryption_key}'),
+              AES_ENCRYPT('{$item['total_price']}', '{$encryption_key}'),
+              AES_ENCRYPT('{$item['total_discount']}', '{$encryption_key}'),
               AES_ENCRYPT('{$item['all_discount']}', '{$encryption_key}'),
                AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
-                '{$item['conversionid']}', 
+                '{$item['conversionid']}',
                  '{$item['unit']}','{$item['group']}',
-              '{$item['parent']}', '{$item['invoicegroup']}'
-                 
+              '{$item['parent']}', '{$item['invoicegroup']}',
+              '{$item['printname']}'
             );";
 
 
@@ -3454,7 +3462,8 @@ UPDATE sale_details SET
     unit = '{$item['unit']}',
     group_id = '{$item['group']}',
     parent = '{$item['parent']}',
-    invoicegroup = '{$item['invoicegroup']}'
+    invoicegroup = '{$item['invoicegroup']}',
+    printname = '{$item['printname']}'
 WHERE id = '{$item['invoicedetail']}'
 ";
                 $this->db->query($query);
@@ -3793,7 +3802,7 @@ WHERE id = '{$item['invoicedetail']}'
 
         $query = "
     UPDATE sales_order
-    SET 
+    SET
         date = '{$this->input->post('date', TRUE)}',
         type2 = AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
         employee_id = '{$this->input->post('employee_id', TRUE)}',
@@ -3804,6 +3813,7 @@ WHERE id = '{$item['invoicedetail']}'
         grandTotal = AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'),
         total = AES_ENCRYPT('{$this->input->post('total', TRUE)}', '{$encryption_key}'),
         customer_id = '{$this->input->post('customer_id', TRUE)}',
+        guidecommission = AES_ENCRYPT('{$this->input->post('guidecommission', TRUE)}', '{$encryption_key}'),
          lastupdateddate='{$lastupdate}',
          userid='{$this->session->userdata('id')}',
           incidenttype= '{$this->input->post('incidenttype', TRUE)}',
@@ -3829,28 +3839,28 @@ WHERE id = '{$item['invoicedetail']}'
         foreach ($items as $item) {
 
             $query = "
-            INSERT INTO sales_order_details 
-            (id, pid, product, store,batch, quantity, 
-            product_rate,discount,discount_value,vat_percent,vat_value,total_price,total_discount,all_discount,type2,conversion_id,unit,group_id,parent,invoicegroup) 
-            VALUES 
-            (0, 
-             '{$this->input->post('id', TRUE)}', 
-             '{$item['product']}', 
-              '{$item['store']}', 
-               '{$item['batch']}', 
-             AES_ENCRYPT('{$item['quantity']}', '{$encryption_key}'), 
+            INSERT INTO sales_order_details
+            (id, pid, product, store,batch, quantity,
+            product_rate,discount,discount_value,vat_percent,vat_value,total_price,total_discount,all_discount,type2,conversion_id,unit,group_id,parent,invoicegroup,printname)
+            VALUES
+            (0,
+             '{$this->input->post('id', TRUE)}',
+             '{$item['product']}',
+              '{$item['store']}',
+               '{$item['batch']}',
+             AES_ENCRYPT('{$item['quantity']}', '{$encryption_key}'),
              AES_ENCRYPT('{$item['product_rate']}', '{$encryption_key}'),
-             AES_ENCRYPT('{$item['discount']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['discount_value']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['vat_percent']}', '{$encryption_key}'), 
-             AES_ENCRYPT('{$item['vat_value']}', '{$encryption_key}'), 
-              AES_ENCRYPT('{$item['total_price']}', '{$encryption_key}'), 
-              AES_ENCRYPT('{$item['total_discount']}', '{$encryption_key}'), 
+             AES_ENCRYPT('{$item['discount']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['discount_value']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['vat_percent']}', '{$encryption_key}'),
+             AES_ENCRYPT('{$item['vat_value']}', '{$encryption_key}'),
+              AES_ENCRYPT('{$item['total_price']}', '{$encryption_key}'),
+              AES_ENCRYPT('{$item['total_discount']}', '{$encryption_key}'),
               AES_ENCRYPT('{$item['all_discount']}', '{$encryption_key}'),
                AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
-                '{$item['conversionid']}', 
+                '{$item['conversionid']}',
                  '{$item['unit']}','{$item['group']}',
-              '{$item['parent']}', '{$item['invoicegroup']}'
+              '{$item['parent']}', '{$item['invoicegroup']}', '{$item['printname']}'
             );";
 
 
@@ -4317,18 +4327,18 @@ WHERE id = '{$item['invoicedetail']}'
     {
         $encryption_key = Config::$encryption_key;
 
-         $result1 = $this->db->select("pi.product_name,
+         $result1 = $this->db->select("IFNULL(NULLIF(sd.printname, ''), pi.product_name) AS product_name,
 CAST( ROUND(  CASE
-        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '+' 
+        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '+'
             THEN AES_DECRYPT(sd.quantity, '{$encryption_key}') + cr2.conversion_ratio
 
-        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '-' 
+        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '-'
             THEN AES_DECRYPT(sd.quantity, '{$encryption_key}') - cr2.conversion_ratio
 
-        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '*' 
+        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '*'
             THEN AES_DECRYPT(sd.quantity, '{$encryption_key}') * cr2.conversion_ratio
 
-        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '/' 
+        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '/'
             THEN AES_DECRYPT(sd.quantity, '{$encryption_key}') / cr2.conversion_ratio
 
         ELSE AES_DECRYPT(sd.quantity, '{$encryption_key}')
@@ -4353,18 +4363,18 @@ CAST( ROUND(  CASE
             ->get()
             ->result_array();
 
-             $result2 = $this->db->select("pi.product_name,
+             $result2 = $this->db->select("IFNULL(NULLIF(sd.printname, ''), pi.product_name) AS product_name,
 CAST( ROUND(  CASE
-        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '+' 
+        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '+'
             THEN AES_DECRYPT(sd.quantity, '{$encryption_key}') + cr2.conversion_ratio
 
-        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '-' 
+        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '-'
             THEN AES_DECRYPT(sd.quantity, '{$encryption_key}') - cr2.conversion_ratio
 
-        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '*' 
+        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '*'
             THEN AES_DECRYPT(sd.quantity, '{$encryption_key}') * cr2.conversion_ratio
 
-        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '/' 
+        WHEN sd.conversion_id IS NOT NULL AND cr2.convertiontype = '/'
             THEN AES_DECRYPT(sd.quantity, '{$encryption_key}') / cr2.conversion_ratio
 
         ELSE AES_DECRYPT(sd.quantity, '{$encryption_key}')
@@ -5439,7 +5449,7 @@ AES_DECRYPT(sd.quantity, '{$encryption_key}') AS quantity
         $encryption_key = Config::$encryption_key;
 
         $this->db->select("pod.pid, pod.product,pi.product_name,pod.unit,AES_DECRYPT(pod.qty, '" . $encryption_key . "') AS qty,pod.id,
-        ui.unit_name,pod.parent,pg.invoice_group");
+        ui.unit_name,pod.parent,pg.invoice_group,pi.printname");
         $this->db->from('product_group_details pod');
         $this->db ->join('product_group pg', 'pg.id = pod.pid', "left");
         $this->db ->join('product_information pi', 'pi.id = pod.product', "left");

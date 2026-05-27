@@ -729,7 +729,7 @@ WHERE id = '{$id}';
     AES_DECRYPT(pi.price, '{$encryption_key}') AS price,
     pi.product_model,
     AES_DECRYPT(pi.cost_price, '{$encryption_key}') AS cost_price,
-    pi.product_details,pi.ad,pi.bd,pi.addigit,pi.batchtype,
+    pi.product_details,pi.ad,pi.bd,pi.addigit,pi.batchtype,pi.printname,
     pi.store,u.unit_id,u.unit_name,s.dstock,pi.stock");
         $this->db->from('product_information pi');
         $this->db->join('units u', 'u.unit_id = pi.unit', 'inner');
