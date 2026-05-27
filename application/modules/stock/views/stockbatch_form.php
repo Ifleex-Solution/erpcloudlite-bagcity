@@ -169,7 +169,7 @@ input.datepicker[readonly] {
                 <div class="row" id="edate_row" style="display:<?php echo (isset($stockbatch->edate_enabled) && $stockbatch->edate_enabled == 1) ? 'flex' : 'none'; ?>;">
                     <div class="col-sm-6">
                         <div class="form-group row">
-                            <label for="edate" class="col-sm-4 col-form-label">Select Expire Date</label>
+                            <label for="edate" class="col-sm-4 col-form-label">Select Expiry Date</label>
                             <div class="col-sm-8">
                                 <input class="datepicker form-control" type="text" id="edate" name="edate"
                                     value="<?php echo !empty($stockbatch->edate) ? $stockbatch->edate : ''; ?>"

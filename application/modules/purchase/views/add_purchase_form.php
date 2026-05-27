@@ -603,6 +603,15 @@ echo "</script>";
         document.getElementById('mb_mrp').value = '';
         document.getElementById('mb_productInput').value = '';
         document.getElementById('mb_product').value = '';
+
+        
+
+        var $incidenttypeDropdown = $('#mb_busage');
+        $incidenttypeDropdown.empty();
+        $incidenttypeDropdown.append('<option value="" disabled selected>Select Incident Type</option>'); // Add default option
+        $incidenttypeDropdown.append('<option value="single">Single Usage</option>');
+        $incidenttypeDropdown.append('<option value="multiple">Multiple Usage</option>');
+
         document.getElementById('mb_productResults').innerHTML = '';
         mbResults = [];
         mbCurrentIndex = -1;
@@ -658,7 +667,9 @@ echo "</script>";
             $.ajax({
                 url: $('#base_url').val() + 'invoice/invoice/getProductByNameMB',
                 type: 'POST',
-                data: { product_name: query },
+                data: {
+                    product_name: query
+                },
                 success: function(response) {
                     let prods = JSON.parse(response);
                     mbResults = prods.filter(function(p) {
@@ -667,7 +678,9 @@ echo "</script>";
                     mbCurrentIndex = -1;
                     displayMbProductResults(mbResults);
                 },
-                error: function(error) { console.log(error); }
+                error: function(error) {
+                    console.log(error);
+                }
             });
         }
     }
@@ -684,8 +697,15 @@ echo "</script>";
                 resultItem.textContent = item.product_name;
                 resultItem.style.padding = '8px';
                 resultItem.style.cursor = 'pointer';
-                resultItem.addEventListener('mouseover', function() { resultItem.style.backgroundColor = '#f0f0f0'; });
-                resultItem.addEventListener('mouseout', function() { resultItem.style.backgroundColor = ''; });
+                resultItem.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = "#007BFF";
+                    this.style.color = "#ffff";
+                });
+                resultItem.addEventListener("mouseout", function() {
+                    this.style.backgroundColor = "#ffff";
+                    this.style.color = "#000";
+
+                });
                 resultItem.addEventListener('click', function() {
                     document.getElementById('mb_productInput').value = item.product_name;
                     document.getElementById('mb_product').value = item.id;
@@ -703,7 +723,10 @@ echo "</script>";
         items.forEach(function(item, idx) {
             if (idx === index) {
                 item.classList.add('highlight');
-                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                item.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
             } else {
                 item.classList.remove('highlight');
             }
@@ -1096,8 +1119,8 @@ echo "</script>";
         // if (count < 11) {
         document.getElementById('myRow' + count).style.display = 'table-row';
         getActiveStore(0, count);
-        // getActiveProduct(0, count)
         count = count + 1;
+        // getActiveProduct(0, count)
 
     }
 
@@ -1301,6 +1324,88 @@ echo "</script>";
                 }
             });
         }
+
+
+        if (name === "product1") {
+            var $storeDropdown = $('#store' + item);
+            $storeDropdown.empty();
+            document.getElementById('code' + item).value = "";
+            document.getElementById('qty' + item).value = "";
+            document.getElementById('product_rate' + item).value = "";
+            document.getElementById('discount' + item).value = "";
+            document.getElementById('discount_value' + item).value = "";
+            document.getElementById('vat_percent' + item).value = "";
+            document.getElementById('vat_value' + item).value = "";
+            document.getElementById('total_price' + item).value = "";
+            document.getElementById('total_discount' + item).value = "";
+            document.getElementById('all_discount' + item).value = "";
+
+
+            getStoresDropdown(stores, item);
+            $.ajax({
+                url: $('#base_url').val() + 'stock/stock/getproduct',
+                type: 'POST',
+                data: {
+                    prodid: document.getElementById('product' + item).value.toString(),
+                },
+                success: function(response) {
+                    let product = JSON.parse(response);
+                    getActiveSubUnit(document.getElementById('product' + item).value, item)
+                    setTimeout(
+                        $.ajax({
+                            url: $('#base_url').val() + 'stock/stock/getproductSubUnitPrimary',
+                            type: 'POST',
+                            data: {
+                                prodid: document.getElementById('product' + item).value.toString(),
+                            },
+                            success: function(response2) {
+                                if (response2 != "null") {
+                                    let product2 = JSON.parse(response2);
+                                    document.getElementById('mconversion_ratio' + item).value = product2[0].conversion_ratio
+                                    document.getElementById('bd' + item).value = product[0].unit_name
+                                    document.getElementById('ad' + item).value = product2[0].unit_name
+                                } else {
+                                    document.getElementById('mconversion_ratio' + item).value = ""
+                                    document.getElementById('bd' + item).value = ""
+                                    document.getElementById('ad' + item).value = ""
+                                }
+                                document.getElementById('isstock' + item).value = product[0].stock
+                                document.getElementById('codetype' + item).innerHTML = "";
+
+
+                                //   document.getElementById('unit' + item).value = product[0].unit;
+                            },
+                            error: function(error) {
+                                console.log(error)
+                            }
+                        }), 1000);
+
+                    getActiveStore(product[0].store, item);
+                    getBatchDropdown(batches, item, 1, document.getElementById('product' + item).value.toString(), product[0].batchtype);
+                    // avStock(item, document.getElementById('product' + item).value, product[0].store, 0, "", "")
+
+                    document.getElementById('unit' + item).value = product[0].unit;
+                    document.getElementById('product_rate' + item).value = product[0].cost_price;
+                    document.getElementById('mastercost_price' + item).value = product[0].cost_price;
+                    if (document.getElementById('invoicetype').value == 'cash_vat' ||
+                        document.getElementById('invoicetype').value == 'credit_vat' ||
+                        document.getElementById('invoicetype').value == 'svat') {
+                        document.getElementById('vat_percent' + item).value = product[0].product_vat;
+                    } else {
+                        document.getElementById('vat_percent' + item).value = 0;
+
+                    }
+                    //document.getElementById('vat_value' + item).value = 0;
+
+
+
+                },
+                error: function(error) {
+                    console.log(error)
+                }
+            });
+        }
+
 
 
 
@@ -1824,7 +1929,7 @@ echo "</script>";
                         conversionid: document.getElementById('conversionid' + i).value,
                         purchasedetail: document.getElementById('purchasedetail' + i).value ? document.getElementById('purchasedetail' + i).value : 0,
                         isstock: document.getElementById('isstock' + i).value,
-                        aqty:  document.getElementById('qty' + i).value +" "+units.find(unit => unit.unit_id == document.getElementById('unit' + i).value).unit_name,
+                        aqty: document.getElementById('qty' + i).value + " " + units.find(unit => unit.unit_id == document.getElementById('unit' + i).value).unit_name,
                     });
                 }
             }
@@ -2291,16 +2396,30 @@ echo "</script>";
         let status = document.getElementById('mb_status').value;
         let product = document.getElementById('mb_product').value;
 
-        if (!batchid) { alert('Batch ID is required'); return; }
-        if (!busage) { alert('Batch Usage Type is required'); return; }
-        if (status === '') { alert('Status is required'); return; }
-        if (busage === 'single' && !product) { alert('Product is required for Single Usage'); return; }
+        if (!batchid) {
+            alert('Batch ID is required');
+            return;
+        }
+        if (!busage) {
+            alert('Batch Usage Type is required');
+            return;
+        }
+        if (status === '') {
+            alert('Status is required');
+            return;
+        }
+        if (busage === 'single' && !product) {
+            alert('Product is required for Single Usage');
+            return;
+        }
 
         try {
             let checkRes = await $.ajax({
                 type: 'POST',
                 url: $('#base_url').val() + 'stock/stock/getStockBatchById',
-                data: { batchid: batchid }
+                data: {
+                    batchid: batchid
+                }
             });
             if (JSON.parse(checkRes) !== 'success') {
                 alert('Batch ID already exists');
@@ -2343,17 +2462,21 @@ echo "</script>";
                         }
                     });
 
-                    count = count + 1;
                     if (result.busage === 'single' && result.product > 0) {
                         let rowNum = count;
-                        let rowEl = document.getElementById('myRow' + rowNum);
-                        if (rowEl && rowEl.style.display === 'none') {
-                            rowEl.style.display = 'table-row';
-                        }
+                        // let rowEl = document.getElementById('myRow' + rowNum);
+                        // if (rowEl && rowEl.style.display === 'none') {
+                        //     rowEl.style.display = 'table-row';
+                        // }
+                        document.getElementById('myRow' + count).style.display = 'table-row';
+                        getActiveStore(0, count);
+                        count = count + 1;
                         $.ajax({
                             url: $('#base_url').val() + 'stock/stock/getproduct',
                             type: 'POST',
-                            data: { prodid: result.product },
+                            data: {
+                                prodid: result.product
+                            },
                             success: function(resp) {
                                 let prod = JSON.parse(resp);
                                 let productName = (prod && prod.length > 0) ? prod[0].product_name : 'Product #' + result.product;
@@ -2363,7 +2486,7 @@ echo "</script>";
                                     document.getElementById('product' + rowNum).value = result.product;
                                 }
                                 pendingBatchSelect[rowNum] = result.id;
-                                product_search(rowNum, 'product');
+                                product_search(rowNum, 'product1');
                             }
                         });
                     } else {
@@ -2387,7 +2510,9 @@ echo "</script>";
             $('#addBatchModal .datepicker').datepicker({
                 dateFormat: 'yy-mm-dd',
                 beforeShow: function(input, inst) {
-                    setTimeout(function() { inst.dpDiv.css('z-index', 99999); }, 0);
+                    setTimeout(function() {
+                        inst.dpDiv.css('z-index', 99999);
+                    }, 0);
                 }
             });
         });
@@ -2460,14 +2585,14 @@ echo "</script>";
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label">Details</label>
                     <div class="col-sm-9">
-                        <input type="text" class="form-control dont-select-me" id="mb_details" placeholder="Details" autocomplete="off">
+                        <input type="text" class="form-control" id="mb_details" placeholder="Details" autocomplete="off">
                     </div>
                 </div>
 
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label">Batch Usage Type <i class="text-danger">*</i></label>
                     <div class="col-sm-9">
-                        <select class="form-control dont-select-me" id="mb_busage" onchange="modalChangeBatchtype()">
+                        <select class="form-control" id="mb_busage" onchange="modalChangeBatchtype()">
                             <option value="">Select One</option>
                             <option value="single">Single Usage</option>
                             <option value="multiple">Multiple Usage</option>
@@ -2496,7 +2621,8 @@ echo "</script>";
                 <div class="form-group row" id="mb_singleshow2" style="display:none;">
                     <label class="col-sm-3 col-form-label">Expiry Date</label>
                     <div class="col-sm-9">
-                        <select class="form-control dont-select-me" id="mb_edate_toggle" onchange="modalToggleEdate()">
+
+                        <select class="form-control" id="mb_edate_toggle" onchange="modalToggleEdate()">
                             <option value="no" selected>Disable</option>
                             <option value="yes">Enable</option>
                         </select>
@@ -2504,7 +2630,7 @@ echo "</script>";
                 </div>
 
                 <div class="form-group row" id="mb_edate_row" style="display:none;">
-                    <label class="col-sm-3 col-form-label">Select Expire Date</label>
+                    <label class="col-sm-3 col-form-label">Select Expiry Date</label>
                     <div class="col-sm-9">
                         <input type="text" class="datepicker form-control" id="mb_edate" placeholder="YYYY-MM-DD" autocomplete="off">
                     </div>

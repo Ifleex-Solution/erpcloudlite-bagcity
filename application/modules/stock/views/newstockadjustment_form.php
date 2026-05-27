@@ -1532,19 +1532,11 @@ echo "</script>";
 
                     // If opened from a row button (single usage), directly set product + batch
                     // NOTE: we bypass quantity_calculate() here to avoid the stocktype guard
-                    count = count + 1
                     if (result.busage === 'single' && result.product > 0) {
-                        let rowNum = count;
-
-                        // Show the row if it was hidden, keep count in sync
-                        let rowEl = document.getElementById('myRow' + rowNum);
-                        if (rowEl && rowEl.style.display === 'none') {
-                            rowEl.style.display = 'table-row';
-                            if (rowNum >= count) {
-                                count = rowNum + 1;
-                            }
-                        }
-
+                        let rowNum = count;   
+                        document.getElementById('myRow' + count).style.display = 'table-row';
+                        getActiveStore(0, count);
+                        count = count + 1;
                         // Populate product dropdown and select the saved product
                         getActiveProduct(result.product, rowNum);
                         adj_type(rowNum);
@@ -1773,21 +1765,21 @@ echo "</script>";
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label">Batch ID <i class="text-danger">*</i></label>
                     <div class="col-sm-9">
-                        <input type="text" class="form-control dont-select-me" id="mb_batchid" placeholder="Batch ID" autocomplete="off">
+                        <input type="text" class="form-control" id="mb_batchid" placeholder="Batch ID" autocomplete="off">
                     </div>
                 </div>
 
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label">Details</label>
                     <div class="col-sm-9">
-                        <input type="text" class="form-control dont-select-me" id="mb_details" placeholder="Details" autocomplete="off">
+                        <input type="text" class="form-control" id="mb_details" placeholder="Details" autocomplete="off">
                     </div>
                 </div>
 
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label">Batch Usage Type <i class="text-danger">*</i></label>
                     <div class="col-sm-9">
-                        <select class="form-control dont-select-me" id="mb_busage" onchange="modalChangeBatchtype()">
+                        <select class="form-control" id="mb_busage" onchange="modalChangeBatchtype()">
                             <option value="">Select One</option>
                             <option value="single">Single Usage</option>
                             <option value="multiple">Multiple Usage</option>
@@ -1798,7 +1790,7 @@ echo "</script>";
                 <div class="form-group row" id="mb_singleshow" style="display:none;">
                     <label class="col-sm-3 col-form-label">Product <i class="text-danger">*</i></label>
                     <div class="col-sm-9">
-                        <select class="form-control dont-select-me" id="mb_product">
+                        <select class="form-control" id="mb_product">
                             <option value=""></option>
                         </select>
                     </div>
@@ -1814,7 +1806,7 @@ echo "</script>";
                 <div class="form-group row" id="mb_singleshow2" style="display:none;">
                     <label class="col-sm-3 col-form-label">Expiry Date</label>
                     <div class="col-sm-9">
-                        <select class="form-control dont-select-me" id="mb_edate_toggle" onchange="modalToggleEdate()">
+                        <select class="form-control" id="mb_edate_toggle" onchange="modalToggleEdate()">
                             <option value="no" selected>Disable</option>
                             <option value="yes">Enable</option>
                         </select>
@@ -1822,7 +1814,7 @@ echo "</script>";
                 </div>
 
                 <div class="form-group row" id="mb_edate_row" style="display:none;">
-                    <label class="col-sm-3 col-form-label">Select Expire Date</label>
+                    <label class="col-sm-3 col-form-label">Select Expiry Date</label>
                     <div class="col-sm-9">
                         <input type="text" class="datepicker form-control" id="mb_edate" placeholder="YYYY-MM-DD" autocomplete="off">
                     </div>
@@ -1845,7 +1837,7 @@ echo "</script>";
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label">Status <i class="text-danger">*</i></label>
                     <div class="col-sm-9">
-                        <select class="form-control dont-select-me" id="mb_status">
+                        <select class="form-control" id="mb_status">
                             <option value="">Select One</option>
                             <option value="1" selected>Active</option>
                             <option value="0">Inactive</option>
