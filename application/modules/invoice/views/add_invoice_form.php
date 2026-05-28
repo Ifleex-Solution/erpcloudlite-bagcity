@@ -1511,6 +1511,8 @@ echo "</script>";
                     document.getElementById('groupId' + a).value = sales[i].group_id;
                     document.getElementById('parent' + a).value = sales[i].parent;
                     document.getElementById('invoicegroup' + a).value = sales[i].invoicegroup;
+                    document.getElementById('printname' + a).value = sales[i].printname;
+
 
                     if (sales[i].group_id > 0) {
 
