@@ -29,6 +29,7 @@
 							<tr>
 								<th><?php echo display('sl') ?></th>
 								<th>Invoice No</th>
+								<th>Job Order Id</th>
 								<th>Customer</th>
 								<th>Date</th>
 								<th>Payment Type</th>
@@ -39,7 +40,7 @@
 						</thead>
 						<tbody></tbody>
 						<tfoot>
-							<th colspan="6" class="text-right"><?php echo display('total') ?>:</th>
+							<th colspan="7" class="text-right"><?php echo display('total') ?>:</th>
 							<th></th>
 							<th></th>
 						</tfoot>
@@ -223,6 +224,7 @@ echo "</script>";
 			columns: [
 				{ data: 'sl' },
 				{ data: 'id' },
+				{ data: 'service_order' },
 				{ data: 'customer_name' },
 				{ data: 'date' },
 				{ data: 'paymenttype' },

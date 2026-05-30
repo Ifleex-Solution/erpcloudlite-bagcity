@@ -42,7 +42,7 @@
                         </div>
 
                         <div class="col-xs-4 text-left ">
-                            <h2 class="m-t-0">Service Order</h2>
+                            <h2 class="m-t-0">Job Order</h2>
                             <div>
                                 <abbr class="font-bold">
                                     Order No: <span dir="ltr"></span>

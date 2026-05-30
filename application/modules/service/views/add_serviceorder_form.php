@@ -919,7 +919,7 @@ echo "</script>";
                     clearDetails()
                     $("#save_add").show();
 
-                    alert("Service order Details Updated Successfully")
+                    alert("Job order Details Updated Successfully")
                     printRawHtml(datas.details);
 
 
@@ -960,7 +960,7 @@ echo "</script>";
                     clearDetails()
                     $("#save_add").show();
 
-                    alert("Service order Details saved Successfully")
+                    alert("Job order Details saved Successfully")
                     printRawHtml(datas.details);
                 },
                 error: function(error) {

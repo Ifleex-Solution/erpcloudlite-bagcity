@@ -989,12 +989,14 @@ class Service_model extends CI_Model {
         $searchQuery = "";
         if ($searchValue != '') {
             $searchQuery = " (po.id like '%" . $searchValue . "%' or po.date like '%" . $searchValue . "%'
+            or AES_DECRYPT(so.service_order_id,'" . $encryption_key . "') like '%" . $searchValue . "%'
             or AES_DECRYPT(si.customer_name,'" . $encryption_key . "') like '%" . $searchValue . "%' or po.details like '%" . $searchValue . "%') ";
         }
 
         ## Total number of records without filtering
         $this->db->select('count(*) as allcount');
         $this->db->from('service po');
+        $this->db->join('service_order so', 'so.id = po.service_order_id', "left");
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
         $this->db->join('payment_type pt', 'pt.id = po.payment_type', "left");
         $this->db->where("AES_DECRYPT(po.type2,'" . $encryption_key . "')", $type2);
@@ -1016,6 +1018,7 @@ class Service_model extends CI_Model {
         ## Total number of records with filtering
         $this->db->select('count(*) as allcount');
         $this->db->from('service po');
+        $this->db->join('service_order so', 'so.id = po.service_order_id', "left");
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
         $this->db->join('payment_type pt', 'pt.id = po.payment_type', "left");
         $this->db->where("AES_DECRYPT(po.type2,'" . $encryption_key . "')", $type2);
@@ -1046,8 +1049,9 @@ class Service_model extends CI_Model {
          AES_DECRYPT(po.total_vat_amnt, "' . $encryption_key . '") AS total_vat_amnt,
          AES_DECRYPT(po.grandTotal, "' . $encryption_key . '") AS grandTotal,
          AES_DECRYPT(po.total,"' . $encryption_key . '") AS total,pt.name AS paymenttype,
-        po.details');
+        po.details,so.id as service_order_id,AES_DECRYPT(so.service_order_id,"' . $encryption_key . '") AS service_order,so.status AS service_status');
         $this->db->from('service po');
+        $this->db->join('service_order so', 'so.id = po.service_order_id', "left");
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
         $this->db->join('payment_type pt', 'pt.id = po.payment_type', 'left');
         $this->db->where("AES_DECRYPT(po.type2,'" . $encryption_key . "')", $type2);
@@ -1078,7 +1082,8 @@ class Service_model extends CI_Model {
             $button = '';
             $base_url = base_url();
             $jsaction = "return confirm('Are You Sure ?')";
-            if ($record->status == 0) {
+            
+             if ($record->status == 0) {
                 if ($this->permission1->method('manage_service_invoice', 'update')->access()) {
                     $button .= ' <a  style="margin-left:7px;" href="' . $base_url . 'edit_service_invoice/' . $record->id . '" class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="left" title="' . display('update') . '"><i class="fa fa-pencil" aria-hidden="true"></i></a>';
                 }
@@ -1102,7 +1107,9 @@ class Service_model extends CI_Model {
 
             $link = '  <a style="margin-left:7px;" href="' . $base_url . 'service_details/' . $record->id . '"   >' . $record->service_id . '</a>';
 
-
+            if ($record->service_order_id > 0&&  $record->service_status==1) {
+                $button .= '  <a  style="margin-left:5px;" href="' . $base_url . 'service/service/update_serviceorderdone/' . $record->service_order_id . '" class="btn btn-xs btn-success "  onclick="' . $jsaction . '"><i class="fa fa-check"></i></a>';
+            }
 
             $data[] = array(
                 'sl'       => $sl,
@@ -1112,6 +1119,7 @@ class Service_model extends CI_Model {
                 'grandTotal' =>   $record->grandTotal,
                 'paymenttype'         => $record->paymenttype,
                 'details'    => $record->details,
+                'service_order'=> $record->service_order,
                 'button'   => '<div >' . $button . '</div>',
             );
 
@@ -1224,7 +1232,8 @@ class Service_model extends CI_Model {
         po.details,
           CASE 
         WHEN po.status = 0 THEN \'Ordered\'
-        WHEN po.status = 1 THEN \'Sold\'
+        WHEN po.status = 1 THEN \'Invoiced\'
+        WHEN po.status = 3 THEN \'Job Done\'
         ELSE \'Canceled\'
     END AS status_label');
         $this->db->from('service_order po');
@@ -1258,7 +1267,7 @@ class Service_model extends CI_Model {
             $button = '';
             $base_url = base_url();
             $jsaction = "return confirm('Are You Sure ?')";
-            if ($record->status != 1) {
+            if ($record->status != 1&&$record->status != 3) {
 
                 if ($record->status == 2) {
                     $button .= '  <a  style="margin-left:5px;" href="' . $base_url . 'service/service/update_serviceorderstatusredo/' . $record->id . '" class="btn btn-xs btn-warning "  onclick="' . $jsaction . '"><i class="fa fa-repeat"></i></a>';
@@ -1293,11 +1302,15 @@ class Service_model extends CI_Model {
 
             $link = $record->service_order_id;
 
+             if($record->status==1){
+                $status='<span class="label label-primary"  >'.$record->status_label.'</a>';
+            }
+
             if($record->status==2){
                 $status='<span class="label label-danger"  >'.$record->status_label.'</a>';
             }
 
-            if($record->status==1){
+            if($record->status==3){
                 $status='<span class="label label-success"  >'.$record->status_label.'</a>';
             }
 

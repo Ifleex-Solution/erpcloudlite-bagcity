@@ -3876,7 +3876,7 @@ ORDER BY createddate DESC
         $pdf = new SalesReportInvoicewise('P', 'mm', 'A4', true, 'UTF-8', false);
         $pdf->SetCreator(PDF_CREATOR);
         $pdf->SetAuthor('Your Name');
-        $pdf->SetTitle('Service Order Report');
+        $pdf->SetTitle('Job Order Report');
         $pdf->SetSubject('TCPDF Tutorial');
         $pdf->SetKeywords('TCPDF, PDF, columns, example');
         $top_margin = 5;
@@ -3885,7 +3885,7 @@ ORDER BY createddate DESC
         $pdf->AddPage();
         $pdf->SetFont('helvetica', '', 10);
 
-        $this->header($pdf, $page, "Service Order Report", $_SESSION['ssori_istype'], $_SESSION['ssorifrom_date'], $_SESSION['ssorito_date']);
+        $this->header($pdf, $page, "Job Order Report", $_SESSION['ssori_istype'], $_SESSION['ssorifrom_date'], $_SESSION['ssorito_date']);
 
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(30, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
@@ -3907,7 +3907,7 @@ ORDER BY createddate DESC
                 $patotal = 0;
                 $pdf->AddPage();
                 $page = $page + 1;
-                $this->header($pdf, $page, "Service Order Report", $_SESSION['ssori_istype'], $_SESSION['ssorifrom_date'], $_SESSION['ssorito_date']);
+                $this->header($pdf, $page, "Job Order Report", $_SESSION['ssori_istype'], $_SESSION['ssorifrom_date'], $_SESSION['ssorito_date']);
                 $pdf->SetFont('helvetica', 'B', 12);
                 $pdf->Cell(30, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
                  $pdf->Cell(30, 10, 'EOD Date',    'TB', 0, 'L', 0, '', 1);
@@ -3936,7 +3936,7 @@ ORDER BY createddate DESC
         $pdf->updatePageTotal($patotal);
 
         $date = date('Y-m-d');
-        $filename = "Service Order Report_$date.pdf";
+        $filename = "Job Order Report_$date.pdf";
         $pdf->Output($filename, 'I');
     }
 

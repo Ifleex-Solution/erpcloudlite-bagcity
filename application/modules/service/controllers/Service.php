@@ -1520,7 +1520,7 @@ class Service extends MX_Controller
          if ($this->permission1->method('manage_serviceorder_invoice', 'create')->access()) {
             if ($id != null) {
 
-                $data['title'] = "Edit Service Order";
+                $data['title'] = "Edit Job Order";
             }
             // echo modules::run('template/layout', $data);
             echo modules::run('template/layout', $data);
@@ -1787,6 +1787,44 @@ class Service extends MX_Controller
         echo '<script type="text/javascript">
         alert("Status Updated successfully");
         window.location.href = "' . $base_url . 'manage_serviceorder_invoice";
+       </script>';  
+     }
+
+      public function update_serviceorderdone($id = null)
+    {
+
+        $base_url = base_url();
+
+        date_default_timezone_set('Asia/Colombo');
+
+
+        $lastupdate = date('Y-m-d H:i:s');
+        $query = "
+    UPDATE service_order
+    SET 
+        status = 3,
+        lastupdateddate='{$lastupdate}'
+    WHERE id = '{$id}';
+";
+
+        $this->db->query($query);
+
+        $query = "
+        INSERT INTO logs (id, screen, operation, pid, userid,lastupdatedate) 
+        VALUES (
+            0, 
+            'service_order', 
+            'update', 
+            '{$id}', 
+            '{$this->session->userdata('id')}',  '{$lastupdate}'
+        );
+    ";
+
+        $this->db->query($query);
+
+        echo '<script type="text/javascript">
+        alert("Status Updated successfully");
+        window.location.href = "' . $base_url . 'manage_service_invoice";
        </script>';  
      }
 
