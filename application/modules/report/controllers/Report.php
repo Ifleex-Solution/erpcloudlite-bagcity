@@ -3521,9 +3521,10 @@ ORDER BY createddate DESC
 
 
         $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(45, 10, 'Service Date', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(30, 10, 'Service Date', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(30, 10, 'EOD Date',    'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(40, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(60, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(50, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(40, 10, 'Amount', 'TB', 0, 'R', 0, '', 1);
         $pdf->Ln(10);
 
@@ -3542,9 +3543,10 @@ ORDER BY createddate DESC
                 $page = $page + 1;
                 $this->header($pdf, $page, "Service Report", $_SESSION['sri_istype'], $_SESSION['srifrom_date'], $_SESSION['srito_date']);
                 $pdf->SetFont('helvetica', 'B', 12);
-                $pdf->Cell(45, 10, 'Sale Date', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(30, 10, 'Service Date', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(30, 10, 'EOD Date',    'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(40, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(60, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(50, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(40, 10, 'Amount', 'TB', 0, 'R', 0, '', 1);
                 $pdf->Ln(10);
             }
@@ -3552,15 +3554,16 @@ ORDER BY createddate DESC
             $patotal = $patotal + $row['total'];
 
             $pdf->SetFont('', '', 10);
-            $pdf->Cell(45, 8, $row['date'], 0, 0, 'L');
+            $pdf->Cell(30, 8, $row['date'], 0, 0, 'L');
+             $pdf->Cell(30, 8, $row['eod_date'], 0, 0, 'L');
             $pdf->Cell(40, 8,  $row['invoiceno'], 0, 0, 'L');
-            $pdf->Cell(60, 8,  $row['customer_name'], 0, 0, 'L');
+            $pdf->Cell(50, 8,  $row['customer_name'], 0, 0, 'L');
             $pdf->Cell(40, 8, number_format($row['total'], 2), 0, 1, 'R');
         }
         $pdf->SetFont('', 'B', 12);
-        $pdf->Cell(50, 10, "Total Amount:", 'TB', 0, 'L');
-        $pdf->Cell(100, 10, "", 'TB', 0, 'L');
-        $pdf->Cell(35, 10, number_format($total, 2), 'TB', 1, 'R');
+        $pdf->Cell(40, 10, "Total Amount:", 'TB', 0, 'L');
+        $pdf->Cell(110, 10, "", 'TB', 0, 'L');
+        $pdf->Cell(40, 10, number_format($total, 2), 'TB', 1, 'R');
         $pdf->updatePageTotal($patotal);
 
         $date = date('Y-m-d');
@@ -3885,9 +3888,10 @@ ORDER BY createddate DESC
         $this->header($pdf, $page, "Service Order Report", $_SESSION['ssori_istype'], $_SESSION['ssorifrom_date'], $_SESSION['ssorito_date']);
 
         $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(45, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(30, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(30, 10, 'EOD Date',    'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(40, 10, 'Order No',      'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(60, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(50, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(40, 10, 'Amount',        'TB', 0, 'R', 0, '', 1);
         $pdf->Ln(10);
 
@@ -3905,9 +3909,10 @@ ORDER BY createddate DESC
                 $page = $page + 1;
                 $this->header($pdf, $page, "Service Order Report", $_SESSION['ssori_istype'], $_SESSION['ssorifrom_date'], $_SESSION['ssorito_date']);
                 $pdf->SetFont('helvetica', 'B', 12);
-                $pdf->Cell(45, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(30, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
+                 $pdf->Cell(30, 10, 'EOD Date',    'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(40, 10, 'Order No',      'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(60, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(50, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(40, 10, 'Amount',        'TB', 0, 'R', 0, '', 1);
                 $pdf->Ln(10);
             }
@@ -3917,16 +3922,17 @@ ORDER BY createddate DESC
             $patotal += $amount;
 
             $pdf->SetFont('', '', 10);
-            $pdf->Cell(45, 8, $row['date'], 0, 0, 'L');
+            $pdf->Cell(30, 8, $row['date'], 0, 0, 'L');
+             $pdf->Cell(30, 8, $row['eod_date'], 0, 0, 'L');
             $pdf->Cell(40, 8, $row['invoiceno'], 0, 0, 'L');
-            $pdf->Cell(60, 8, $row['customer_name'], 0, 0, 'L');
+            $pdf->Cell(50, 8, $row['customer_name'], 0, 0, 'L');
             $pdf->Cell(40, 8, number_format($amount, 2), 0, 1, 'R');
         }
 
         $pdf->SetFont('', 'B', 12);
-        $pdf->Cell(50,  10, "Total Amount:", 'TB', 0, 'L');
-        $pdf->Cell(100, 10, "",              'TB', 0, 'L');
-        $pdf->Cell(35,  10, number_format($total, 2), 'TB', 1, 'R');
+        $pdf->Cell(40,  10, "Total Amount:", 'TB', 0, 'L');
+        $pdf->Cell(110, 10, "",              'TB', 0, 'L');
+        $pdf->Cell(40,  10, number_format($total, 2), 'TB', 1, 'R');
         $pdf->updatePageTotal($patotal);
 
         $date = date('Y-m-d');

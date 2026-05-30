@@ -955,7 +955,7 @@ class Service_model extends CI_Model {
 
     }
 
-       public function service($postData = null, $type2,$branchid)
+       public function service($postData = null, $type2, $branchid, $fdate = null, $tdate = null)
     {
 
         $response = array();
@@ -972,24 +972,24 @@ class Service_model extends CI_Model {
 
         $branchids = [];
 
-        if ( isset($branchResult)) {
+        if (isset($branchResult)) {
             $branchids = array_column($branchResult, 'id');
         }
 
         ## Read value
         $draw = $postData['draw'];
         $start = $postData['start'];
-        $rowperpage = $postData['length']; // Rows display per page
-        $columnIndex = $postData['order'][0]['column']; // Column index
-        $columnName = $postData['columns'][$columnIndex]['data']; // Column name
-        $columnSortOrder = $postData['order'][0]['dir']; // asc or desc
-        $searchValue = $postData['search']['value']; // Search value
+        $rowperpage = $postData['length'];
+        $columnIndex = $postData['order'][0]['column'];
+        $columnName = $postData['columns'][$columnIndex]['data'];
+        $columnSortOrder = $postData['order'][0]['dir'];
+        $searchValue = $postData['search']['value'];
 
-        ## Search 
+        ## Search
         $searchQuery = "";
         if ($searchValue != '') {
-            $searchQuery = " (po.id like '%" . $searchValue . "%' or po.date like '%" . $searchValue . "%'  
-            or   AES_DECRYPT( si.customer_name,'" . $encryption_key . "')  like '%" . $searchValue . "%' or po.details like '%" . $searchValue . "%' ) ";
+            $searchQuery = " (po.id like '%" . $searchValue . "%' or po.date like '%" . $searchValue . "%'
+            or AES_DECRYPT(si.customer_name,'" . $encryption_key . "') like '%" . $searchValue . "%' or po.details like '%" . $searchValue . "%') ";
         }
 
         ## Total number of records without filtering
@@ -997,78 +997,72 @@ class Service_model extends CI_Model {
         $this->db->from('service po');
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
         $this->db->join('payment_type pt', 'pt.id = po.payment_type', "left");
-
         $this->db->where("AES_DECRYPT(po.type2,'" . $encryption_key . "')", $type2);
-       
-        if($branchid>0){
+        if ($branchid > 0) {
             $this->db->where("po.branch", $branchid);
-
-        }else{
+        } else {
             if ($this->session->userdata('user_level2') != 1) {
                 $this->db->where_in('po.branch', $branchids);
             }
         }
-        if ($searchValue != '')
-            $this->db->where($searchQuery);
+        if ($fdate && $tdate) {
+            $this->db->where('po.date >=', $fdate);
+            $this->db->where('po.date <=', $tdate);
+        }
+        if ($searchValue != '') $this->db->where($searchQuery);
         $records = $this->db->get()->result();
         $totalRecords = $records[0]->allcount;
 
-        //     ## Total number of record with filtering
+        ## Total number of records with filtering
         $this->db->select('count(*) as allcount');
         $this->db->from('service po');
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
         $this->db->join('payment_type pt', 'pt.id = po.payment_type', "left");
-
         $this->db->where("AES_DECRYPT(po.type2,'" . $encryption_key . "')", $type2);
-
-        if($branchid>0){
+        if ($branchid > 0) {
             $this->db->where("po.branch", $branchid);
-
-        }else{
+        } else {
             if ($this->session->userdata('user_level2') != 1) {
                 $this->db->where_in('po.branch', $branchids);
             }
         }
-
-
-        if ($searchValue != '')
-            $this->db->where($searchQuery);
-
-
+        if ($fdate && $tdate) {
+            $this->db->where('po.date >=', $fdate);
+            $this->db->where('po.date <=', $tdate);
+        }
+        if ($searchValue != '') $this->db->where($searchQuery);
         $records = $this->db->get()->result();
         $totalRecordwithFilter = $records[0]->allcount;
 
-
-
         ## Fetch records
-        $this->db->select('po.id,AES_DECRYPT(po.service_id,"' . $encryption_key . '") AS service_id, 
-         si.customer_id, 
-           AES_DECRYPT(si.customer_name,"' . $encryption_key . '") AS customer_name ,
-         po.date, 
-         po.details, 
-          po.status, 
-         AES_DECRYPT(po.discount,"' . $encryption_key . '") AS discount, 
-         AES_DECRYPT(po.total_discount_ammount, "' . $encryption_key . '") AS total_discount_ammount, 
-         AES_DECRYPT(po.total_vat_amnt, "' . $encryption_key . '") AS total_vat_amnt, 
-         AES_DECRYPT(po.grandTotal, "' . $encryption_key . '") AS grandTotal, 
+        $this->db->select('po.id,AES_DECRYPT(po.service_id,"' . $encryption_key . '") AS service_id,
+         si.customer_id,
+           AES_DECRYPT(si.customer_name,"' . $encryption_key . '") AS customer_name,
+         po.date,
+         po.details,
+          po.status,
+         AES_DECRYPT(po.discount,"' . $encryption_key . '") AS discount,
+         AES_DECRYPT(po.total_discount_ammount, "' . $encryption_key . '") AS total_discount_ammount,
+         AES_DECRYPT(po.total_vat_amnt, "' . $encryption_key . '") AS total_vat_amnt,
+         AES_DECRYPT(po.grandTotal, "' . $encryption_key . '") AS grandTotal,
          AES_DECRYPT(po.total,"' . $encryption_key . '") AS total,pt.name AS paymenttype,
         po.details');
         $this->db->from('service po');
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
         $this->db->join('payment_type pt', 'pt.id = po.payment_type', 'left');
         $this->db->where("AES_DECRYPT(po.type2,'" . $encryption_key . "')", $type2);
-
-        if($branchid>0){
+        if ($branchid > 0) {
             $this->db->where("po.branch", $branchid);
-
-        }else{
+        } else {
             if ($this->session->userdata('user_level2') != 1) {
                 $this->db->where_in('po.branch', $branchids);
             }
         }
-
-        if ($searchValue != '')
-            $this->db->where($searchQuery);
+        if ($fdate && $tdate) {
+            $this->db->where('po.date >=', $fdate);
+            $this->db->where('po.date <=', $tdate);
+        }
+        if ($searchValue != '') $this->db->where($searchQuery);
         $this->db->order_by($columnName, $columnSortOrder);
         $this->db->limit($rowperpage, $start);
         $this->db->order_by("service_id", "desc");
@@ -1136,7 +1130,7 @@ class Service_model extends CI_Model {
     }
 
 
-    public function serviceorder($postData = null, $type2,$branchid)
+    public function serviceorder($postData = null, $type2, $branchid, $fdate = null, $tdate = null)
     {
 
         $response = array();
@@ -1153,71 +1147,63 @@ class Service_model extends CI_Model {
 
         $branchids = [];
 
-        if ( isset($branchResult)) {
+        if (isset($branchResult)) {
             $branchids = array_column($branchResult, 'id');
         }
 
         ## Read value
         $draw = $postData['draw'];
         $start = $postData['start'];
-        $rowperpage = $postData['length']; // Rows display per page
-        $columnIndex = $postData['order'][0]['column']; // Column index
-        $columnName = $postData['columns'][$columnIndex]['data']; // Column name
-        $columnSortOrder = $postData['order'][0]['dir']; // asc or desc
-        $searchValue = $postData['search']['value']; // Search value
+        $rowperpage = $postData['length'];
+        $columnIndex = $postData['order'][0]['column'];
+        $columnName = $postData['columns'][$columnIndex]['data'];
+        $columnSortOrder = $postData['order'][0]['dir'];
+        $searchValue = $postData['search']['value'];
 
-        ## Search 
+        ## Search
         $searchQuery = "";
         if ($searchValue != '') {
-            $searchQuery = " (po.id like '%" . $searchValue . "%' or po.date like '%" . $searchValue . "%'  
-            or   AES_DECRYPT( si.customer_name,'" . $encryption_key . "')  like '%" . $searchValue . "%' or po.details like '%" . $searchValue . "%' ) ";
+            $searchQuery = " (po.id like '%" . $searchValue . "%' or po.date like '%" . $searchValue . "%'
+            or AES_DECRYPT(si.customer_name,'" . $encryption_key . "') like '%" . $searchValue . "%' or po.details like '%" . $searchValue . "%') ";
         }
 
         ## Total number of records without filtering
         $this->db->select('count(*) as allcount');
         $this->db->from('service_order po');
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
-
-        $this->db->where("AES_DECRYPT(po.type2, '$encryption_key') IN ('C', '$type2')",
-        null,
-        false
-    );         
-        if($branchid>0){
+        $this->db->where("AES_DECRYPT(po.type2, '$encryption_key') IN ('C', '$type2')", null, false);
+        if ($branchid > 0) {
             $this->db->where("po.branch", $branchid);
-
-        }else{
+        } else {
             if ($this->session->userdata('user_level2') != 1) {
                 $this->db->where_in('po.branch', $branchids);
             }
         }
-        if ($searchValue != '')
-            $this->db->where($searchQuery);
+        if ($fdate && $tdate) {
+            $this->db->where('po.date >=', $fdate);
+            $this->db->where('po.date <=', $tdate);
+        }
+        if ($searchValue != '') $this->db->where($searchQuery);
         $records = $this->db->get()->result();
         $totalRecords = $records[0]->allcount;
 
-        //     ## Total number of record with filtering
+        ## Total number of records with filtering
         $this->db->select('count(*) as allcount');
         $this->db->from('service_order po');
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
-
-        $this->db->where("AES_DECRYPT(po.type2, '$encryption_key') IN ('C', '$type2')",
-        null,
-        false
-    );  
-        if($branchid>0){
+        $this->db->where("AES_DECRYPT(po.type2, '$encryption_key') IN ('C', '$type2')", null, false);
+        if ($branchid > 0) {
             $this->db->where("po.branch", $branchid);
-
-        }else{
+        } else {
             if ($this->session->userdata('user_level2') != 1) {
                 $this->db->where_in('po.branch', $branchids);
             }
         }
-
-
-        if ($searchValue != '')
-            $this->db->where($searchQuery);
-
-
+        if ($fdate && $tdate) {
+            $this->db->where('po.date >=', $fdate);
+            $this->db->where('po.date <=', $tdate);
+        }
+        if ($searchValue != '') $this->db->where($searchQuery);
         $records = $this->db->get()->result();
         $totalRecordwithFilter = $records[0]->allcount;
 
@@ -1244,23 +1230,19 @@ class Service_model extends CI_Model {
         $this->db->from('service_order po');
         $this->db->join('customer_information si', 'si.customer_id = po.customer_id', "left");
 
-        $this->db->where("AES_DECRYPT(po.type2, '$encryption_key') IN ('C', '$type2')",
-        null,
-        false
-    );  
-
-
-        if($branchid>0){
+        $this->db->where("AES_DECRYPT(po.type2, '$encryption_key') IN ('C', '$type2')", null, false);
+        if ($branchid > 0) {
             $this->db->where("po.branch", $branchid);
-
-        }else{
+        } else {
             if ($this->session->userdata('user_level2') != 1) {
                 $this->db->where_in('po.branch', $branchids);
             }
         }
-
-        if ($searchValue != '')
-            $this->db->where($searchQuery);
+        if ($fdate && $tdate) {
+            $this->db->where('po.date >=', $fdate);
+            $this->db->where('po.date <=', $tdate);
+        }
+        if ($searchValue != '') $this->db->where($searchQuery);
         $this->db->order_by($columnName, $columnSortOrder);
         $this->db->limit($rowperpage, $start);
         $this->db->order_by("service_order_id", "desc");

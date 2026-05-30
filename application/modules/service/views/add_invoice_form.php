@@ -19,7 +19,11 @@
     }
 
     .vathidden {
-        width: 8% !important;
+        width: 11% !important;
+    }
+
+    .vatshow {
+        width: 15% !important;
     }
 
     .col-small {
@@ -31,8 +35,23 @@
         <div class="panel panel-bd lobidrag">
             <div class="panel-heading" id="style12">
                 <div class="panel-title">
-                    <h4 id="title"><?php echo $title; ?></h4>
+                    <span id="title"><?php echo $title; ?></span>
+                    <span class="padding-lefttitle">
+                        <table>
+                            <tr>
+                                <td style="padding-left: 20px;">
+                                    <button class="btn btn-success m-b-5 m-r-2" data-toggle="modal" data-target="#customerModel">
+                                        <i class="fa fa-user-plus"></i> Add Customer
+                                    </button>
+                                </td>
+                            </tr>
+                        </table>
+
+
+
+                    </span>
                 </div>
+
             </div>
 
             <div class="panel-body">
@@ -53,6 +72,16 @@
 
                                 $date = date('Y-m-d'); ?>
                                 <input type="text" required tabindex="2" class="form-control datepicker" name="sale_date" value="<?php echo $date; ?>" id="date" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group row">
+                            <label for="eod_date" class="col-sm-4 col-form-label">EOD Date
+                            </label>
+                            <div class="col-sm-6">
+                                <input type="text" tabindex="2" class="form-control datepicker" name="eod_date" value="<?php echo $date; ?>" id="eod_date" />
                             </div>
                         </div>
                     </div>
@@ -102,6 +131,23 @@
 
                     </div>
 
+                    <div class="col-sm-6">
+                        <div class="form-group row">
+                            <label for="invoicetype" class="col-sm-4 col-form-label">Invoice Type
+                                <i class="text-danger">*</i>
+                            </label>
+                            <div class="col-sm-6">
+                                <select class="form-control" id="invoicetype" required name="invoicetype" tabindex="3" onchange="incidetTypechange()">
+                                    <option value=""></option>
+                                    <option value="cash">Cash</option>
+                                    <option value="credit">Credit</option>
+                                    <option value="cash_vat">Cash VAT</option>
+                                    <option value="credit_vat">Credit VAT</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
 
 
                     <div class="col-sm-6">
@@ -118,12 +164,7 @@
                                     <?php } ?>
                                 </select>
                             </div>
-                            <?php if ($this->permission1->method('add_customer', 'create')->access()) { ?>
-                                <div class=" col-sm-1">
-                                    <a href="<?php echo base_url('add_customer'); ?>" class="client-add-btn btn btn-success" aria-hidden="true">
-                                        <i class="fa fa-user"></i></a>
-                                </div>
-                            <?php } ?>
+
                         </div>
                     </div>
 
@@ -144,15 +185,6 @@
                         </div>
                     </div>
 
-                    <div class="col-sm-6">
-                        <div class="form-group row">
-                            <label for="adress" class="col-sm-4 col-form-label"><?php echo display('details') ?>
-                            </label>
-                            <div class="col-sm-6">
-                                <textarea class="form-control" tabindex="4" id="details" name="sale_details" placeholder=" <?php echo display('details') ?>" rows="1"></textarea>
-                            </div>
-                        </div>
-                    </div>
 
 
 
@@ -173,50 +205,25 @@
                                 <th class="text-center  col-big">Service<i
                                         class="text-danger">*</i></th>
 
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <th class="text-center col-medium">Qty<i
-                                            class="text-danger">*</i></th>
-                                <?php } else { ?>
-                                    <th class="text-center col-medium2">Qty<i
-                                            class="text-danger">*</i></th>
-                                <?php } ?>
+                                <th class="text-center col-medium vathidden">Qty</th>
+                                <th class="text-center col-medium2 vatshow">Qty</th>
 
-
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <th class="text-center col-medium">Price val <i
-                                            class="text-danger"> *</i></th>
-                                <?php } else { ?>
-                                    <th class="text-center col-medium2">Price val <i
-                                            class="text-danger"> *</i></th>
-                                <?php } ?>
+                                <th class="text-center col-medium vathidden">Price val</th>
+                                <th class="text-center col-medium2 vatshow">Price val</th>
 
 
 
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <th class="text-center col-medium">Discount</th>
-                                    <th class="text-center col-medium">Dis.val</th>
-                                <?php } else { ?>
-                                    <th class="text-center col-medium2">Discount</th>
-                                    <th class="text-center col-medium2">Dis.val</th>
-                                <?php } ?>
+                                <th class="text-center col-medium vathidden">Discount</th>
+                                <th class="text-center col-medium vathidden">Dis.val</th>
 
+                                <th class="text-center col-medium2 vatshow">Discount</th>
+                                <th class="text-center col-medium2 vatshow">Dis.val</th>
 
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <th class="text-center col-medium">VAT </th>
-                                    <th class="text-center col-medium">VAT.val</th>
-                                <?php } else { ?>
+                                <th class="text-center col-medium vathidden">VAT </th>
+                                <th class="text-center col-medium vathidden">VAT.val</th>
 
-                                <?php } ?>
-
-
-
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <th class="text-center col-medium">Total</th>
-
-                                <?php } else { ?>
-                                    <th class="text-center col-medium2">Total</th>
-
-                                <?php } ?>
+                                <th class="text-center col-medium vathidden">Total</th>
+                                <th class="text-center col-medium2 vatshow">Total</th>
 
                                 <th class="text-center col-medium"><?php echo display('action') ?></th>
                                 <th></th>
@@ -256,21 +263,12 @@
                                 </td>
 
                                 <!-- VAT  start-->
-
-
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <td class="qty">
-                                        <input type="text" name="vatpercent[]" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" id="vat_percent1" class="form-control vat_percent_1 text-right" min="0" tabindex="13" placeholder="0.00" />
-                                    </td>
-                                    <td class="rate">
-                                        <input type="text" name="vatvalue[]" id="vat_value1" class="form-control vat_value1 text-right total_vatamnt" min="0" tabindex="14" placeholder="0.00" readonly />
-                                    </td>
-                                <?php } else { ?>
-                                    <input type="hidden" class="form-control" name="vat" id="vat_percent1" value="0.0">
-                                    <input type="hidden" class="form-control" name="vat" id="vat_value1" value="0.0">
-
-                                <?php } ?>
-
+                                <td class="qty vathidden">
+                                    <input type="text" name="vatpercent[]" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" id="vat_percent1" class="form-control vat_percent_1 text-right" min="0" tabindex="13" placeholder="0.00" />
+                                </td>
+                                <td class="rate vathidden">
+                                    <input type="text" name="vatvalue[]" id="vat_value1" class="form-control vat_value1 text-right total_vatamnt" min="0" tabindex="14" placeholder="0.00" readonly />
+                                </td>
                                 <!-- VAT  end-->
                                 <td class="product_field">
                                     <input class="form-control total_price text-right total_price_1" type="text" name="total_price[]" id="total_price1" value="0.00" readonly="readonly" />
@@ -319,18 +317,12 @@
                                     </td>
 
                                     <!-- VAT start -->
-                                    <?php if ($vtinfo->ischecked == 1) { ?>
-                                        <td class="qty">
-                                            <input type="text" name="vatpercent[]" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" id="vat_percent<?php echo $i; ?>" class="form-control vat_percent_1 text-right" min="0" tabindex="13" placeholder="0.00" />
-                                        </td>
-                                        <td class="rate">
-                                            <input type="text" name="vatvalue[]" id="vat_value<?php echo $i; ?>" class="form-control vat_value1 text-right total_vatamnt" min="0" tabindex="14" placeholder="0.00" readonly />
-                                        </td>
-                                    <?php } else { ?>
-                                        <input type="hidden" class="form-control" name="vat" id="vat_percent<?php echo $i; ?>" value="0.0">
-                                        <input type="hidden" class="form-control" name="vat" id="vat_value<?php echo $i; ?>" value="0.0">
-
-                                    <?php } ?>
+                                    <td class="qty vathidden">
+                                        <input type="text" name="vatpercent[]" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" id="vat_percent<?php echo $i; ?>" class="form-control vat_percent_1 text-right" min="0" tabindex="13" placeholder="0.00" />
+                                    </td>
+                                    <td class="rate vathidden">
+                                        <input type="text" name="vatvalue[]" id="vat_value<?php echo $i; ?>" class="form-control vat_value1 text-right total_vatamnt" min="0" tabindex="14" placeholder="0.00" readonly />
+                                    </td>
                                     <!-- VAT end -->
 
                                     <td class="product_field">
@@ -352,103 +344,72 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <td class="text-right" colspan="7"><b><?php echo display('total') ?>:</b></td>
-
-                                <?php } else { ?>
-                                    <td class="text-right" colspan="5"><b><?php echo display('total') ?>:</b></td>
-
-                                <?php } ?>
+                                <td class="text-right vathidden" colspan="7"><b><?php echo display('total') ?>:</b></td>
+                                <td class="text-right vatshow" colspan="5"><b><?php echo display('total') ?>:</b></td>
                                 <td class="text-right">
                                     <input type="text" id="Total" class="text-right form-control" name="total" value="0.00" readonly="readonly" />
                                 </td>
-                                <td> <button type="button" id="add_invoice_item" class="btn btn-info" name="add-invoice-item"
+                                <td>
+                                    <button type="button" id="add_invoice_item" class="btn btn-info" name="add-invoice-item"
                                         onClick="addInputField('addinvoiceItem');" tabindex="9"><i class="fa fa-plus"></i></button>
-
                                     <input type="hidden" name="baseUrl" class="baseUrl" value="<?php echo base_url(); ?>" />
                                 </td>
                             </tr>
                             <tr>
-
-
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <td class="text-right" colspan="7"><b>Service Discount:</b>
-                                    </td>
-                                <?php } else { ?>
-                                    <td class="text-right" colspan="5"><b>Service Discount:</b>
-                                    </td>
-                                <?php } ?>
+                                <td class="text-right vathidden" colspan="7"><b>Service Discount:</b></td>
+                                <td class="text-right vatshow" colspan="5"><b>Service Discount:</b></td>
                                 <td class="text-right">
                                     <input type="text" id="discount" class="text-right form-control discount total_discount_val" onkeyup="calculate_sum(1)" name="discount" placeholder="0.00" value="" />
                                 </td>
-
-                                <td>
-
-                                </td>
+                                <td></td>
                             </tr>
                             <tr>
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <td class="text-right" colspan="7"><b><?php echo display('total_discount') ?>:</b></td>
-
-                                <?php } else { ?>
-                                    <td class="text-right" colspan="5"><b><?php echo display('total_discount') ?>:</b></td>
-
-                                <?php } ?>
+                                <td class="text-right vathidden" colspan="7"><b><?php echo display('total_discount') ?>:</b></td>
+                                <td class="text-right vatshow" colspan="5"><b><?php echo display('total_discount') ?>:</b></td>
                                 <td class="text-right">
                                     <input type="text" id="total_discount_ammount" class="form-control text-right" name="total_discount" value="0.00" readonly="readonly" />
                                 </td>
                                 <td> </td>
-
                             </tr>
-                            <?php if ($vtinfo->ischecked == 1) { ?>
-                                <tr>
-
-                                    <td class="text-right" colspan="7"><b><?php echo display('ttl_val') ?>:</b></td>
-
-                                    <td class="text-right">
-                                        <input type="text" id="total_vat_amnt" class="form-control text-right" name="total_vat_amnt" value="0.00" readonly="readonly" />
-                                    </td>
-                                    <td> </td>
-
-                                </tr>
-                            <?php } else {  ?>
-                                <input type="hidden" class="form-control" name="vat" id="total_vat_amnt" value="0.0">
-                            <?php } ?>
-
-
                             <tr>
-
-                                <?php if ($vtinfo->ischecked == 1) { ?>
-                                    <td class="text-right" colspan="7"><b><?php echo display('grand_total') ?>:</b></td>
-
-                                <?php } else { ?>
-                                    <td class="text-right" colspan="5"><b><?php echo display('grand_total') ?>:</b></td>
-
-                                <?php } ?>
+                                <td class="text-right vathidden" colspan="7"><b><?php echo display('ttl_val') ?>:</b></td>
+                                <td class="text-right vathidden">
+                                    <input type="text" id="total_vat_amnt" class="form-control text-right" name="total_vat_amnt" value="0.00" readonly="readonly" />
+                                </td>
+                                <td class="vathidden"> </td>
+                            </tr>
+                            <tr>
+                                <td class="text-right vathidden" colspan="7"><b><?php echo display('grand_total') ?>:</b></td>
+                                <td class="text-right vatshow" colspan="5"><b><?php echo display('grand_total') ?>:</b></td>
                                 <td class="text-right">
                                     <input type="text" id="grandTotal" class="text-right form-control grandTotalamnt" name="grand_total_price" placeholder="0.00" value="00" readonly />
                                 </td>
                                 <td> </td>
                             </tr>
-
                         </tfoot>
                     </table>
                     <input type="hidden" name="finyear" value="<?php echo financial_year(); ?>">
                     <p hidden id="pay-amount"></p>
                     <p hidden id="change-amount"></p>
-                    <div class="col-sm-3 table-bordered p-20">
+                    <div class="col-sm-6 table-bordered p-20">
                         <div id="adddiscount" class="display-none">
-                            <div class="row no-gutters">
-                                <div class="form-group ">
-                                    <label for="payments" class="col-form-label pb-2"><?php echo display('payment_type'); ?> <i class="text-danger">*</i>
-                                    </label>
-                                    <select name="multipaytype[]" class="form-control" id="your_dropdown_id" tabindex="1">
-                                        <option value="">Select an option</option>
-                                        <?php foreach ($all_pmethod as $services) { ?>
-                                            <option value="<?php echo $services['id']; ?>"><?php echo $services['name']; ?></option>
-                                        <?php } ?>
-                                    </select>
-
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="payments" class="col-form-label"><?php echo display('payment_type'); ?> <i class="text-danger">*</i></label>
+                                        <select name="multipaytype[]" class="form-control" id="your_dropdown_id" tabindex="1">
+                                            <option value="">Select an option</option>
+                                            <?php foreach ($all_pmethod as $services) { ?>
+                                                <option value="<?php echo $services['id']; ?>"><?php echo $services['name']; ?></option>
+                                            <?php } ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="details" class="col-form-label"><?php echo display('details'); ?></label>
+                                        <textarea class="form-control" tabindex="4" id="details" name="sale_details" placeholder="<?php echo display('details'); ?>" rows="3"></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -468,6 +429,31 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<div id="customerModel" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Add New Customer</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Customer Name</label>
+                    <input type="text" class="form-control" id="customer_name" name="customer_name" />
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" class="form-control" id="customer_phone" name="customer_phone" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="save_customer()">Save</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -520,7 +506,64 @@ echo "</script>";
     document.getElementById("showorderno2").style.display = "none";
 
 
+    function clearDetails2() {
+        for (let i = 1; i < 20; i++) {
+            var $productDropdown = $('#product' + i);
+            $productDropdown.empty();
+            $productDropdown.append('<option value="" disabled selected>Select Product</option>');
+            $.each(services, function(index, s) {
+                $productDropdown.append('<option value="' + s.service_id + '">' + s.service_name + '</option>');
+            });
+
+            document.getElementById('myRow' + i).style.display = 'none';
+            document.getElementById('qty' + i).value = "";
+            document.getElementById('product_rate' + i).value = "";
+            document.getElementById('discount' + i).value = "";
+            document.getElementById('discount_value' + i).value = "";
+            document.getElementById('vat_percent' + i).value = "";
+            document.getElementById('vat_value' + i).value = "";
+            document.getElementById('total_price' + i).value = "";
+            document.getElementById('total_discount' + i).value = "";
+            document.getElementById('all_discount' + i).value = "";
+        }
+        document.getElementById('myRow1').style.display = 'table-row';
+        document.getElementById('discount').value = "";
+        document.getElementById('total_discount_ammount').value = "";
+        document.getElementById('total_vat_amnt').value = "";
+        document.getElementById('grandTotal').value = "";
+        document.getElementById('Total').value = "";
+    }
+
+    function incidetTypechange() {
+        clearDetails2();
+
+        if (document.getElementById('invoicetype').value === 'cash_vat' ||
+            document.getElementById('invoicetype').value === 'credit_vat') {
+            document.querySelectorAll('.vathidden').forEach(el => {
+                el.style.display = 'table-cell';
+            });
+            document.querySelectorAll('.vatshow').forEach(el => {
+                el.style.display = 'none';
+            });
+        } else {
+            document.querySelectorAll('.vathidden').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('.vatshow').forEach(el => {
+                el.style.display = 'table-cell';
+            });
+        }
+    }
+
     $(document).ready(function() {
+        document.querySelectorAll('.vathidden').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        if (id == null) {
+            document.getElementById('invoicetype').value = 'cash';
+        }
+
         for (let j = 2; j <= 20; j++) {
             document.getElementById('myRow' + j).style.display = 'none';
         }
@@ -542,6 +585,7 @@ echo "</script>";
 
                         var sales = JSON.parse(response);
                         document.getElementById('date').value = sales[0].date;
+                        document.getElementById('eod_date').value = sales[0].eod_date;
                         document.getElementById('details').value = sales[0].details;
 
                         getBranchDropdown(sales[0].branch);
@@ -571,12 +615,22 @@ echo "</script>";
 
                         var $paymentDropdown = $('#your_dropdown_id');
                         $paymentDropdown.empty();
-                        $paymentDropdown.append('<option value="" disabled selected>Select Supplier</option>'); // Add default option
+                        $paymentDropdown.append('<option value="" disabled selected>Select Supplier</option>');
                         $.each(pmethods, function(index, supplier) {
                             $paymentDropdown.append('<option value="' + supplier.id + '">' + supplier.name + '</option>');
                         });
-                        $paymentDropdown.val(sales[0].payment_type)
+                        $paymentDropdown.val(sales[0].payment_type);
 
+                        var $invoiceTypeDropdown = $('#invoicetype');
+                        $invoiceTypeDropdown.empty();
+                        $invoiceTypeDropdown.append('<option value="" disabled selected>Select Invoice Type</option>');
+                        $invoiceTypeDropdown.append('<option value="cash">Cash</option>');
+                        $invoiceTypeDropdown.append('<option value="credit">Credit</option>');
+                        $invoiceTypeDropdown.append('<option value="cash_vat">Cash VAT</option>');
+                        $invoiceTypeDropdown.append('<option value="credit_vat">Credit VAT</option>');
+                        $invoiceTypeDropdown.val(sales[0].invoicetype);
+                        $invoiceTypeDropdown.prop('disabled', true);
+                        incidetTypechange();
 
                         document.getElementById('total_discount_ammount').value = sales[0].total_discount_ammount;
                         document.getElementById('total_vat_amnt').value = sales[0].total_vat_amnt;
@@ -641,32 +695,51 @@ echo "</script>";
                 document.getElementById('sales_order_no_convert').value = id
                 document.getElementById('sales_order_no1').value = sales[0].service_order_id;
 
-                document.getElementById('date').value = sales[0].date;
+                document.getElementById('date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('eod_date').value = sales[0].eod_date;
                 document.getElementById('details').value = sales[0].details;
 
 
                 var $customerDropdown = $('#customer_id');
                 $customerDropdown.empty();
-                $customerDropdown.append('<option value="" disabled selected>Select Customer</option>'); // Add default option
+                $customerDropdown.append('<option value="" disabled selected>Select Customer</option>');
                 $.each(customers, function(index, customer) {
                     $customerDropdown.append('<option value="' + customer.customer_id + '">' + customer.customer_name + '</option>');
                 });
-                $customerDropdown.val(sales[0].customer_id)
+                $customerDropdown.val(sales[0].customer_id);
 
                 var $employeeDropdown = $('#employee_id');
                 $employeeDropdown.empty();
-                $employeeDropdown.append('<option value="" disabled selected>Select Employee</option>'); // Add default option
+                $employeeDropdown.append('<option value="" disabled selected>Select Employee</option>');
                 $.each(employees, function(index, employee) {
                     $employeeDropdown.append('<option value="' + employee.id + '">' + employee.first_name + " " + employee.last_name + '</option>');
                 });
-                $employeeDropdown.val(sales[0].employee_id)
+                $employeeDropdown.val(sales[0].employee_id);
 
+                var $invoiceTypeDropdown = $('#invoicetype');
+                $invoiceTypeDropdown.empty();
+                $invoiceTypeDropdown.append('<option value="" disabled selected>Select Invoice Type</option>');
+                $invoiceTypeDropdown.append('<option value="cash">Cash</option>');
+                $invoiceTypeDropdown.append('<option value="credit">Credit</option>');
+                $invoiceTypeDropdown.append('<option value="cash_vat">Cash VAT</option>');
+                $invoiceTypeDropdown.append('<option value="credit_vat">Credit VAT</option>');
+                $invoiceTypeDropdown.val(sales[0].invoicetype);
+                $invoiceTypeDropdown.prop('disabled', false);
+                incidetTypechange();
 
                 document.getElementById('total_discount_ammount').value = sales[0].total_discount_ammount;
                 document.getElementById('total_vat_amnt').value = sales[0].total_vat_amnt;
                 document.getElementById('grandTotal').value = sales[0].grandTotal;
                 document.getElementById('Total').value = sales[0].total;
                 document.getElementById('discount').value = sales[0].discount;
+
+                var $paymentDropdown = $('#your_dropdown_id');
+                $paymentDropdown.empty();
+                $paymentDropdown.append('<option value="" disabled selected>Select Supplier</option>'); // Add default option
+                $.each(pmethods, function(index, supplier) {
+                    $paymentDropdown.append('<option value="' + supplier.id + '">' + supplier.name + '</option>');
+                });
+                $paymentDropdown.val(1)
 
                 // count = 1;
                 for (let i = 0; i < sales.length; i++) {
@@ -679,8 +752,10 @@ echo "</script>";
                     document.getElementById('discount' + a).value = sales[i].discount2;
                     document.getElementById('discount_value' + a).value = sales[i].discount_value;
 
-                    if (vtinfo.ischecked == 1) {
+                    if (sales[0].invoicetype === 'cash_vat' || sales[0].invoicetype === 'credit_vat') {
                         document.getElementById('vat_percent' + a).value = sales[i].vat_percent;
+                    } else {
+                        document.getElementById('vat_percent' + a).value = 0;
                     }
                     document.getElementById('vat_value' + a).value = sales[i].vat_value;
                     document.getElementById('total_price' + a).value = sales[i].total_price;
@@ -862,7 +937,12 @@ echo "</script>";
         var discount = $("#discount" + sl).val();
         var dis_type = $("#discount_type").val();
         var price_item = $("#product_rate" + sl).val();
-        var vat_percent = $("#vat_percent" + sl).val();
+        var invoicetype = document.getElementById('invoicetype').value;
+        var isVatType = (invoicetype === 'cash_vat' || invoicetype === 'credit_vat');
+        var vat_percent = isVatType ? (parseFloat($("#vat_percent" + sl).val()) || 0) : 0;
+        if (!isVatType) {
+            $("#vat_value" + sl).val(0);
+        }
         var avqty = $("#avqty" + sl).val();
 
 
@@ -1067,6 +1147,9 @@ echo "</script>";
                 if (document.getElementById('customer_id').value == "" || document.getElementById('customer_id').value === " ") {
                     alert("Customer shouldn't be empty")
                     return
+                } else if (document.getElementById('invoicetype').value == "") {
+                    alert("Invoice Type shouldn't be empty")
+                    return
                 } else if (document.getElementById('your_dropdown_id').value == "") {
                     alert("Payment Type shouldn't be empty")
                     return
@@ -1118,10 +1201,12 @@ echo "</script>";
                     items: arrItem,
                     discount: document.getElementById('discount').value,
                     type2: type2,
+                    invoicetype: document.getElementById('invoicetype').value,
                     total_discount_ammount: document.getElementById('total_discount_ammount').value,
                     total_vat_amnt: document.getElementById('total_vat_amnt').value,
                     grandTotal: document.getElementById('grandTotal').value,
                     date: document.getElementById('date').value,
+                    eod_date: document.getElementById('eod_date').value,
                     details: document.getElementById('details').value,
                     total: document.getElementById('Total').value,
                     customer_id: document.getElementById('customer_id').value,
@@ -1129,7 +1214,6 @@ echo "</script>";
                     payment_type: document.getElementById('your_dropdown_id').value,
                     payment: paymentdropdown.options[paymentdropdown.selectedIndex].text,
                     branch: document.getElementById('branch').value
-
                 },
                 success: function(response) {
                     // alert("Invoice Details Updated Successfully")
@@ -1158,11 +1242,13 @@ echo "</script>";
                 data: {
                     items: arrItem,
                     type2: type2,
+                    invoicetype: document.getElementById('invoicetype').value,
                     discount: document.getElementById('discount').value,
                     total_discount_ammount: document.getElementById('total_discount_ammount').value,
                     total_vat_amnt: document.getElementById('total_vat_amnt').value,
                     grandTotal: document.getElementById('grandTotal').value,
                     date: document.getElementById('date').value,
+                    eod_date: document.getElementById('eod_date').value,
                     details: document.getElementById('details').value,
                     total: document.getElementById('Total').value,
                     customer_id: document.getElementById('customer_id').value,
@@ -1245,6 +1331,45 @@ echo "</script>";
         $paymentDropdown.append('<option value="" disabled selected>Select Supplier</option>'); // Add default option
         $.each(pmethods, function(index, supplier) {
             $paymentDropdown.append('<option value="' + supplier.id + '">' + supplier.name + '</option>');
+        });
+    }
+
+    function save_customer() {
+        var name = document.getElementById('customer_name').value.trim();
+        var phone = document.getElementById('customer_phone').value.trim();
+
+        if (!name) {
+            alert("Customer name shouldn't be empty");
+            return;
+        }
+
+        $.ajax({
+            url: $('#base_url').val() + 'invoice/invoice/save_customer',
+            type: 'POST',
+            data: {
+                customer_name: name,
+                customer_phone: phone
+            },
+            success: function(response) {
+                var result = JSON.parse(response);
+                customers = result.all_customer;
+
+                var $customerDropdown = $('#customer_id');
+                $customerDropdown.empty();
+                $customerDropdown.append('<option value="" disabled selected>Select Customer</option>');
+                $.each(customers, function(index, customer) {
+                    $customerDropdown.append('<option value="' + customer.customer_id + '">' + customer.customer_name + '</option>');
+                });
+                $customerDropdown.val(result.inserted_id);
+
+                alert("Customer saved successfully");
+                $('#customerModel').modal('hide');
+                document.getElementById('customer_name').value = '';
+                document.getElementById('customer_phone').value = '';
+            },
+            error: function(error) {
+                console.log(error);
+            }
         });
     }
 

@@ -1880,13 +1880,13 @@ ORDER BY quantity DESC
             $branchids = array_column($branchResult, 'id');
         }
 
-        $this->db->select("a.date,AES_DECRYPT(a.service_id,'" . $encryption_key . "') as invoiceno, AES_DECRYPT(b.customer_name, '{$encryption_key}') AS customer_name,AES_DECRYPT(a.grandTotal,'" . $encryption_key . "')  as total");
+        $this->db->select("a.date,a.eod_date,AES_DECRYPT(a.service_id,'" . $encryption_key . "') as invoiceno, AES_DECRYPT(b.customer_name, '{$encryption_key}') AS customer_name,AES_DECRYPT(a.grandTotal,'" . $encryption_key . "')  as total");
         $this->db->from('service a');
         $this->db->join('customer_information b', 'b.customer_id = a.customer_id');
         $this->db->where('a.date >=', $from_date);
         $this->db->where('a.date <=', $to_date);
         if ($empid != "All") {
-            $this->db->where("AES_DECRYPT(a.type2,'" . $encryption_key . "')", $empid);
+             $this->db->where("AES_DECRYPT(a.type2, '$encryption_key') IN ('C', '$empid')", null, false);
         }
         if (!empty($customer_id)) {
             $this->db->where('a.customer_id', $customer_id);
@@ -1924,7 +1924,7 @@ ORDER BY quantity DESC
             $branchids = array_column($branchResult, 'id');
         }
 
-        $this->db->select("a.date,
+        $this->db->select("a.date,a.eod_date,
             AES_DECRYPT(a.service_order_id,'" . $encryption_key . "') as invoiceno,
             AES_DECRYPT(b.customer_name, '" . $encryption_key . "') AS customer_name,
             AES_DECRYPT(a.grandTotal,'" . $encryption_key . "') as total,
@@ -1936,7 +1936,8 @@ ORDER BY quantity DESC
         $this->db->where('a.date <=', $to_date);
 
         if ($empid != "All") {
-            $this->db->where("AES_DECRYPT(a.type2,'" . $encryption_key . "')", $empid);
+          $this->db->where("AES_DECRYPT(a.type2, '$encryption_key') IN ('C', '$empid')", null, false);
+
         }
 
         if ($customer_id) {

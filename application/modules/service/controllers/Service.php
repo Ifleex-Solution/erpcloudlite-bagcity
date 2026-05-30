@@ -986,28 +986,28 @@ class Service extends MX_Controller
         }
 
         $query = "
-    INSERT INTO service 
-    (id,service_id, date, details, type2, discount, total_discount_ammount, total_vat_amnt, grandTotal, total,customer_id,employee_id,payment_type,lastupdateddate,createddate,userid,already,branch,service_order_id) 
-    VALUES 
-    (0,AES_ENCRYPT('{$num}', '{$encryption_key}') , 
+    INSERT INTO service
+    (id,service_id, date, eod_date, details, type2, discount, total_discount_ammount, total_vat_amnt, grandTotal, total,customer_id,employee_id,payment_type,invoicetype,lastupdateddate,createddate,userid,already,branch,service_order_id)
+    VALUES
+    (0,AES_ENCRYPT('{$num}', '{$encryption_key}') ,
      '{$this->input->post('date', TRUE)}',
-     '{$this->input->post('details', TRUE)}',  
-     AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('total_vat_amnt', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'), 
+     '{$this->input->post('eod_date', TRUE)}',
+     '{$this->input->post('details', TRUE)}',
+     AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('total_vat_amnt', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'),
      AES_ENCRYPT('{$this->input->post('total', TRUE)}', '{$encryption_key}'),
      '{$this->input->post('customer_id', TRUE)}',
      '{$this->input->post('employee_id', TRUE)}',
       '{$this->input->post('payment_type', TRUE)}',
+      '{$this->input->post('invoicetype', TRUE)}',
       '{$lastupdate}',
       '{$lastupdate}','{$this->session->userdata('id')}',
             0,
                    '{$this->input->post('branch', TRUE)}',
                    '{$service_order_no}'
-
-
     );";
 
 
@@ -1136,7 +1136,13 @@ class Service extends MX_Controller
        public function checkservice()
     {
         $postData = $this->input->post();
-        $data = $this->service_model->service($postData, $this->input->post('type2'),$this->input->post('branchid'));
+        $data = $this->service_model->service(
+            $postData,
+            $this->input->post('type2'),
+            $this->input->post('branchid'),
+            $this->input->post('fdate'),
+            $this->input->post('tdate')
+        );
         echo json_encode($data);
     }
 
@@ -1148,13 +1154,15 @@ class Service extends MX_Controller
         $encryption_key = Config::$encryption_key;
 
         $this->db->select("
-         po.id, 
+         po.id,
          si.customer_id,
-         po.date, 
-           po.branch, 
-         po.details, 
- po.payment_type, 
-           po.employee_id, 
+         po.date,
+         po.eod_date,
+         po.branch,
+         po.details,
+         po.payment_type,
+         po.invoicetype,
+         po.employee_id,
          AES_DECRYPT(po.discount, '" . $encryption_key . "') AS discount, 
          AES_DECRYPT(sod.service_order_id, '" . $encryption_key . "') AS service_order_id, 
          AES_DECRYPT(po.total_discount_ammount, '" . $encryption_key . "') AS total_discount_ammount, 
@@ -1204,10 +1212,12 @@ class Service extends MX_Controller
 
         $query = "
     UPDATE service
-    SET 
+    SET
         date = '{$this->input->post('date', TRUE)}',
+        eod_date = '{$this->input->post('eod_date', TRUE)}',
         type2 = AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
         payment_type = '{$this->input->post('payment_type', TRUE)}',
+        invoicetype = '{$this->input->post('invoicetype', TRUE)}',
         employee_id = '{$this->input->post('employee_id', TRUE)}',
         details = '{$this->input->post('details', TRUE)}',
         discount = AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'),
@@ -1535,19 +1545,21 @@ class Service extends MX_Controller
 
         $query = "
     INSERT INTO service_order
-    (id,service_order_id, date, details, type2, discount, total_discount_ammount, total_vat_amnt, grandTotal, total,customer_id,employee_id,lastupdateddate,createddate,userid,already,branch) 
-    VALUES 
-    (0,AES_ENCRYPT('{$num}', '{$encryption_key}') , 
+    (id,service_order_id, date, eod_date, details, type2, discount, total_discount_ammount, total_vat_amnt, grandTotal, total,customer_id,employee_id,invoicetype,lastupdateddate,createddate,userid,already,branch)
+    VALUES
+    (0,AES_ENCRYPT('{$num}', '{$encryption_key}') ,
      '{$this->input->post('date', TRUE)}',
-     '{$this->input->post('details', TRUE)}',  
-     AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('total_vat_amnt', TRUE)}', '{$encryption_key}'), 
-     AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'), 
+     '{$this->input->post('eod_date', TRUE)}',
+     '{$this->input->post('details', TRUE)}',
+     AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('total_vat_amnt', TRUE)}', '{$encryption_key}'),
+     AES_ENCRYPT('{$this->input->post('grandTotal', TRUE)}', '{$encryption_key}'),
      AES_ENCRYPT('{$this->input->post('total', TRUE)}', '{$encryption_key}'),
      '{$this->input->post('customer_id', TRUE)}',
      '{$this->input->post('employee_id', TRUE)}',
+     '{$this->input->post('invoicetype', TRUE)}',
       '{$lastupdate}',
       '{$lastupdate}','{$this->session->userdata('id')}',
             0,
@@ -1690,7 +1702,13 @@ class Service extends MX_Controller
     public function checkserviceorder()
     {
         $postData = $this->input->post();
-        $data = $this->service_model->serviceorder($postData, $this->input->post('type2'),$this->input->post('branchid'));
+        $data = $this->service_model->serviceorder(
+            $postData,
+            $this->input->post('type2'),
+            $this->input->post('branchid'),
+            $this->input->post('fdate'),
+            $this->input->post('tdate')
+        );
         echo json_encode($data);
     }
 
@@ -1778,13 +1796,15 @@ class Service extends MX_Controller
          $encryption_key = Config::$encryption_key;
  
          $this->db->select("
-          po.id, 
+          po.id,
           si.customer_id,
-          po.date, 
-            po.branch, 
-          po.details, 
-            po.employee_id, 
-          AES_DECRYPT(po.service_order_id, '" . $encryption_key . "') AS service_order_id, 
+          po.date,
+          po.eod_date,
+          po.branch,
+          po.details,
+          po.employee_id,
+          po.invoicetype,
+          AES_DECRYPT(po.service_order_id, '" . $encryption_key . "') AS service_order_id,
           AES_DECRYPT(po.discount, '" . $encryption_key . "') AS discount, 
           AES_DECRYPT(po.total_discount_ammount, '" . $encryption_key . "') AS total_discount_ammount, 
           AES_DECRYPT(po.total_vat_amnt, '" . $encryption_key . "') AS total_vat_amnt, 
@@ -1833,10 +1853,12 @@ class Service extends MX_Controller
 
         $query = "
     UPDATE service_order
-    SET 
+    SET
         date = '{$this->input->post('date', TRUE)}',
+        eod_date = '{$this->input->post('eod_date', TRUE)}',
         type2 = AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}'),
         employee_id = '{$this->input->post('employee_id', TRUE)}',
+        invoicetype = '{$this->input->post('invoicetype', TRUE)}',
         details = '{$this->input->post('details', TRUE)}',
         discount = AES_ENCRYPT('{$this->input->post('discount', TRUE)}', '{$encryption_key}'),
         total_discount_ammount = AES_ENCRYPT('{$this->input->post('total_discount_ammount', TRUE)}', '{$encryption_key}'),

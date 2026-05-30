@@ -22,7 +22,7 @@
                             <tr>
                                 <th class="text-left"><?php echo display('sl') ?></th>
                                 <th class="text-left"><?php echo display('service_name') ?></th>
-                                <th class="text-left"><?php echo 'Service Code' ?></th>
+                                <th class="text-left"><?php echo 'Service ID' ?></th>
                                 <th class="text-left"><?php echo display('charge') ?></th>
                                 <?php if ($vattaxinfo->fixed_tax == 1) { ?>
                                     <th class="text-left"><?php echo display('service_vat') ?></th>

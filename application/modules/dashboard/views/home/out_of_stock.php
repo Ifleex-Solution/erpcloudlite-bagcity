@@ -7,18 +7,23 @@
                     min-width: 115px;
                 }
 
-                .btn-low-stock, 
-                .btn-reorder {
-                    background-color: #f39c12;
-                    border-color: #e08e0b;
-                    color: #fff;
-                }
                 
+                .btn-low-stock,
+                .btn-reorder,
+                .btn-warning {
+                    background-color: #ec8303ca;
+                    border-color: #ec8303ca;
+                    color: #000;
+                }
 
                 .btn-near-order {
-                    background-color: #f1c40f;
-                    border-color: #d4ac0d;
-                    color: #2c3e50;
+                    background-color: #fff59d; 
+                    border-color: #f3ec8a;
+                    color: #000; 
+                }
+                
+                .btn-info {
+                    color: #000;
                 }
             </style>
             <div class="panel-heading">

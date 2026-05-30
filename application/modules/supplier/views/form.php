@@ -16,7 +16,7 @@
                     <div class="col-sm-6">
                         <div class="form-group row">
                             <label for="supplier_name" class="col-sm-4 col-form-label">
-                                <?php echo display('supplier_name') ?> <i class="text-danger">*</i>
+                                <?php echo display('supplier_name') ?>&nbsp;<i class="text-danger">*</i>
                             </label>
                             <div class="col-sm-8">
                                 <input type="text" name="supplier_name" class="form-control" id="supplier_name"
@@ -44,7 +44,7 @@
                     <div class="col-sm-6">
                         <div class="form-group row">
                             <label for="supplier_billing_name" class="col-sm-4 col-form-label">
-                                Supplier Printing Name <i class="text-danger">*</i>
+                                Supplier Printing Name&nbsp;<i class="text-danger">*</i>
                             </label>
                             <div class="col-sm-8">
                                 <input type="text" name="supplier_billing_name" id="supplier_billing_name"
@@ -56,7 +56,7 @@
                     <div class="col-sm-6">
                         <div class="form-group row">
                             <label for="status" class="col-sm-4 col-form-label">
-                                Status <i class="text-danger">*</i>
+                                Status&nbsp;<i class="text-danger">*</i>
                             </label>
                             <div class="col-sm-8">
                                 <select class="form-control" id="status" name="status" tabindex="-1" aria-hidden="true" required>
