@@ -1913,7 +1913,7 @@ FROM
     SELECT 
         V.date,
         'Payments' AS incidenttype,
-        V.from AS payment_type,
+        V.`from` AS payment_type,
         pt.name AS payment_method,
         AES_DECRYPT(V.voucher_id, '{$encryption_key}') AS invoice_no,
         -CAST(AES_DECRYPT(V.total, '{$encryption_key}') AS DECIMAL(18,2)) AS grandTotal,
@@ -1929,7 +1929,7 @@ FROM
     SELECT 
         V.date,
         'Receipts' AS incidenttype,
-        V.from AS payment_type,
+        V.`from` AS payment_type,
         pt.name AS payment_method,
         AES_DECRYPT(V.voucher_id, '{$encryption_key}') AS invoice_no,
         CAST(AES_DECRYPT(V.total, '{$encryption_key}') AS DECIMAL(18,2)) AS grandTotal,
@@ -1944,7 +1944,7 @@ FROM
       SELECT 
         V.date,
         'Transfer' AS incidenttype,
-        V.from AS payment_type,
+        V.`from` AS payment_type,
         pt.name AS payment_method,
         AES_DECRYPT(V.voucher_id, '{$encryption_key}') AS invoice_no,
         -CAST(AES_DECRYPT(V.total, '{$encryption_key}') AS DECIMAL(18,2)) AS grandTotal,
@@ -1968,7 +1968,7 @@ FROM
         V.date as createddate,
         V.branch
     FROM voucher_details Vd
-    INNER JOIN voucher V ON vd.pid = V.id
+    INNER JOIN voucher V ON Vd.pid = V.id
     INNER JOIN payment_type pt ON pt.id = Vd.to
     WHERE V.type = 3
 
@@ -2039,11 +2039,11 @@ WHERE date BETWEEN '$from_date' AND '$to_date'
 $sqljoin
 
 ORDER BY createddate DESC
-// ";
-//         $query = $this->db->query($sql);
-//         $data  = $query->result_array();
+";
+        $query = $this->db->query($sql);
+        $data  = $query->result_array();
 
-        $_SESSION['cashbook'] = null;
+        $_SESSION['cashbook'] =  $data;
         $_SESSION['cb_istype'] =   $this->input->post('istype');
         $_SESSION['cbfrom_date'] = $from_date;
         $_SESSION['cbto_date'] =  $to_date;
@@ -2052,7 +2052,7 @@ ORDER BY createddate DESC
 
 
 
-        echo json_encode($sql);
+        echo json_encode($data);
     }
 
     public function generate_stockreport()
