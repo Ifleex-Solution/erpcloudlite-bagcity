@@ -2039,11 +2039,11 @@ WHERE date BETWEEN '$from_date' AND '$to_date'
 $sqljoin
 
 ORDER BY createddate DESC
-";
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
+// ";
+//         $query = $this->db->query($sql);
+//         $data  = $query->result_array();
 
-        $_SESSION['cashbook'] =  $data;
+        $_SESSION['cashbook'] = null;
         $_SESSION['cb_istype'] =   $this->input->post('istype');
         $_SESSION['cbfrom_date'] = $from_date;
         $_SESSION['cbto_date'] =  $to_date;
