@@ -4430,6 +4430,130 @@ ORDER BY createddate DESC
     }
 
 
+    // ---------------------------------------------------------------
+    // Commission Wise Sales Report
+    // ---------------------------------------------------------------
 
+    public function bdtask_commission_wise_sales_report()
+    {
+        if (!$this->permission1->method('commission_wise_sales_report', 'read')->access()) {
+            $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
+            redirect($previous_url);
+        }
 
+        $user_list = $this->report_model->userList();
+        $data = [
+            'title'     => 'Sales Report (Commission Wise)',
+            'user_list' => $user_list,
+        ];
+        $data['module'] = 'report';
+        $data['page']   = 'commission_wise_sales_report';
+        echo modules::run('template/layout', $data);
+    }
+
+    public function sales_reportcommissionwise()
+    {
+        $from_date = $this->input->post('from_date');
+        $to_date   = $this->input->post('to_date');
+        $empid     = $this->input->post('empid');
+        $employee  = $this->input->post('employee');
+        $branch    = $this->input->post('branch');
+
+        $report_data = $this->report_model->commission_wise_sales_report($from_date, $to_date, $employee, $empid, $branch);
+
+        $_SESSION['sale_reportscw'] = $report_data;
+        $_SESSION['scw_istype']     = $this->input->post('istype');
+        $_SESSION['scwfrom_date']   = $from_date;
+        $_SESSION['scwto_date']     = $to_date;
+
+        echo json_encode($_SESSION['sale_reportscw']);
+    }
+
+    public function generate_salesreportcommissionwise()
+    {
+        $page = 1;
+        $pdf  = new SalesReportInvoicewise('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('System');
+        $pdf->SetTitle('Sales Report (Commission Wise)');
+        $pdf->SetSubject('Commission Wise Sales Report');
+        $pdf->SetKeywords('PDF, commission, sales');
+        $pdf->SetMargins(7, 5, 7);
+        $pdf->SetAutoPageBreak(TRUE, 20);
+        $pdf->AddPage();
+        $pdf->SetFont('helvetica', '', 9);
+
+        $this->header($pdf, $page, 'Sales Report (Commission Wise)', $_SESSION['scw_istype'], $_SESSION['scwfrom_date'], $_SESSION['scwto_date']);
+
+        // Column widths — total 196mm (A4 210mm - 7mm left - 7mm right)
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(22, 10, 'Date',            'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(20, 10, 'Invoice No',       'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(20, 10, 'Employee',         'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(26, 10, 'Grand Total',      'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(23, 10, 'Cost',             'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(23, 10, 'Profit',           'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(30, 10, 'Guide Commmi.',      'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(30, 10, 'Salesman Commi.',       'TB', 1, 'R', 0, '', 1);
+
+        $data       = isset($_SESSION['sale_reportscw']) ? $_SESSION['sale_reportscw'] : [];
+        $lineHeight = 8;
+        $maxY       = 270;
+
+        $total_grand      = 0;
+        $total_cost       = 0;
+        $total_profit     = 0;
+        $total_guide      = 0;
+        $total_commission = 0;
+        $patotal          = 0;
+
+        foreach ($data as $row) {
+            if ($pdf->GetY() + $lineHeight > $maxY) {
+                $pdf->updatePageTotal($patotal);
+                $patotal = 0;
+                $pdf->AddPage();
+                $page++;
+                $this->header($pdf, $page, 'Sales Report (Commission Wise)', $_SESSION['scw_istype'], $_SESSION['scwfrom_date'], $_SESSION['scwto_date']);
+                $pdf->SetFont('helvetica', 'B', 9);
+                $pdf->Cell(22, 10, 'Date',            'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(20, 10, 'Invoice No',       'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(20, 10, 'Employee',         'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(26, 10, 'Grand Total',      'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(23, 10, 'Cost',             'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(23, 10, 'Profit',           'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(24, 10, 'Guide Commmi.',      'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(23, 10, 'Salesman Commi.',       'TB', 1, 'R', 0, '', 1);
+            }
+
+            $total_grand      += $row['grand_total'];
+            $total_cost       += $row['cost'];
+            $total_profit     += $row['profit'];
+            $total_guide      += $row['guide_commission'];
+            $total_commission += $row['sale_commission'];
+            $patotal          += $row['sale_commission'];
+
+            $pdf->SetFont('', '', 8);
+            $pdf->Cell(22, $lineHeight, $row['sale_date'],                          0, 0, 'L');
+            $pdf->Cell(20, $lineHeight, $row['sale_id'],                            0, 0, 'L');
+            $pdf->Cell(20, $lineHeight, $row['employee_name'],                      0, 0, 'L');
+            $pdf->Cell(26, $lineHeight, number_format($row['grand_total'],    2),   0, 0, 'R');
+            $pdf->Cell(23, $lineHeight, number_format($row['cost'],           2),   0, 0, 'R');
+            $pdf->Cell(23, $lineHeight, number_format($row['profit'],         2),   0, 0, 'R');
+            $pdf->Cell(30, $lineHeight, number_format($row['guide_commission'], 2), 0, 0, 'R');
+            $pdf->Cell(30, $lineHeight, number_format($row['sale_commission'], 2),  0, 1, 'R');
+        }
+
+        $pdf->SetFont('', 'B', 9);
+        $pdf->Cell(62, 10, 'Total',                              'TB', 0, 'L');
+        $pdf->Cell(26, 10, number_format($total_grand,      2),  'TB', 0, 'R');
+        $pdf->Cell(23, 10, number_format($total_cost,       2),  'TB', 0, 'R');
+        $pdf->Cell(23, 10, number_format($total_profit,     2),  'TB', 0, 'R');
+        $pdf->Cell(30, 10, number_format($total_guide,      2),  'TB', 0, 'R');
+        $pdf->Cell(30, 10, number_format($total_commission, 2),  'TB', 1, 'R');
+
+        $pdf->updatePageTotal($patotal);
+
+        $filename = 'Sales_Report_Commission_Wise_' . date('Y-m-d') . '.pdf';
+        $pdf->Output($filename, 'I');
+    }
 }

@@ -2322,4 +2322,87 @@ ORDER BY quantity DESC
 
         return $result;
     }
+
+    public function commission_wise_sales_report($from_date, $to_date, $user_id, $emp_id, $branch)
+    {
+        $encryption_key = Config::$encryption_key;
+
+        $branchResult = $this->db->select("branch.id")
+            ->from('sec_branch')
+            ->join('branch', 'branch.id=sec_branch.branchid')
+            ->where('sec_branch.userid', $this->session->userdata('id'))
+            ->group_by('sec_branch.branchid')
+            ->get()
+            ->result();
+
+        $branchids = [];
+        if (isset($branchResult)) {
+            $branchids = array_column($branchResult, 'id');
+        }
+
+        $p_branch      = !empty($branch)   ? "'$branch'"   : 'NULL';
+        $p_from_date   = !empty($from_date) ? "'$from_date'" : 'NULL';
+        $p_to_date     = !empty($to_date)   ? "'$to_date'"   : 'NULL';
+        $p_type2       = ($emp_id != 'All') ? "'$emp_id'"   : 'NULL';
+        $p_employee_id = !empty($user_id)   ? "'$user_id'"  : 'NULL';
+
+        if (empty($branch) && $this->session->userdata('user_level2') != 1 && !empty($branchids)) {
+            $branchList  = implode(',', array_map(fn($b) => "'$b'", $branchids));
+            $p_branch    = 'NULL';
+            $extra_filter = " AND s.branch IN ($branchList)";
+        } else {
+            $extra_filter = '';
+        }
+
+        $sql = "
+            WITH sale_cost AS (
+                SELECT
+                    sd.pid,
+                    SUM(
+                        (
+                            SELECT SUM(AES_DECRYPT(pd.total_price, '$encryption_key'))
+                                 / SUM(AES_DECRYPT(pd.quantity,    '$encryption_key'))
+                            FROM purchase_details pd
+                            WHERE pd.product = sd.product
+                              AND pd.batch   = sd.batch
+                        ) * AES_DECRYPT(sd.quantity, '$encryption_key')
+                    ) AS cost
+                FROM sale_details sd
+                INNER JOIN sale s ON s.id = sd.pid
+                WHERE (s.date >= $p_from_date OR $p_from_date IS NULL)
+                  AND (s.date <= $p_to_date   OR $p_to_date   IS NULL)
+                  AND ($p_branch IS NULL OR s.branch = $p_branch)
+                  AND ($p_type2  IS NULL OR AES_DECRYPT(s.type2, '$encryption_key') = $p_type2)
+                  AND ($p_employee_id IS NULL OR s.employee_id = $p_employee_id)
+                  $extra_filter
+                GROUP BY sd.pid
+            )
+            SELECT
+                AES_DECRYPT(s.sale_id,        '$encryption_key')                              AS sale_id,
+                s.date                                                                         AS sale_date,
+                CONCAT(e.first_name, ' ', e.last_name)                                        AS employee_name,
+                ROUND(AES_DECRYPT(s.grandTotal, '$encryption_key'), 2)                        AS grand_total,
+                ROUND(sc.cost, 2)                                                              AS cost,
+                ROUND(AES_DECRYPT(s.grandTotal, '$encryption_key') - sc.cost, 2)              AS profit,
+                ROUND(AES_DECRYPT(s.guidecommission, '$encryption_key'), 2)                   AS guide_commission,
+                ROUND(
+                    (
+                        (AES_DECRYPT(s.grandTotal, '$encryption_key') - sc.cost)
+                        - AES_DECRYPT(s.guidecommission, '$encryption_key')
+                    ) * 0.10
+                , 2)                                                                           AS sale_commission
+            FROM sale s
+            LEFT JOIN sale_cost  sc ON sc.pid  = s.id
+            LEFT JOIN employee_history e ON e.id = s.employee_id
+            WHERE (s.date >= $p_from_date OR $p_from_date IS NULL)
+              AND (s.date <= $p_to_date   OR $p_to_date   IS NULL)
+              AND ($p_branch IS NULL OR s.branch = $p_branch)
+              AND ($p_type2  IS NULL OR AES_DECRYPT(s.type2, '$encryption_key') = $p_type2)
+              AND ($p_employee_id IS NULL OR s.employee_id = $p_employee_id)
+              $extra_filter
+            ORDER BY s.date DESC
+        ";
+
+        return $this->db->query($sql)->result_array();
+    }
 }
