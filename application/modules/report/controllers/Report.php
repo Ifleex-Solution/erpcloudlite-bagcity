@@ -4490,11 +4490,11 @@ ORDER BY createddate DESC
         $pdf->Cell(22, 10, 'Date',            'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(20, 10, 'Invoice No',       'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(20, 10, 'Employee',         'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(26, 10, 'Grand Total',      'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(26, 10, 'Invoice Total',      'TB', 0, 'R', 0, '', 1);
         $pdf->Cell(23, 10, 'Cost',             'TB', 0, 'R', 0, '', 1);
         $pdf->Cell(23, 10, 'Profit',           'TB', 0, 'R', 0, '', 1);
-        $pdf->Cell(30, 10, 'Guide Commmi.',      'TB', 0, 'R', 0, '', 1);
-        $pdf->Cell(30, 10, 'Salesman Commi.',       'TB', 1, 'R', 0, '', 1);
+        $pdf->Cell(30, 10, 'Guide Com.',      'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(30, 10, 'Salesman Com.',       'TB', 1, 'R', 0, '', 1);
 
         $data       = isset($_SESSION['sale_reportscw']) ? $_SESSION['sale_reportscw'] : [];
         $lineHeight = 8;
@@ -4518,11 +4518,11 @@ ORDER BY createddate DESC
                 $pdf->Cell(22, 10, 'Date',            'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(20, 10, 'Invoice No',       'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(20, 10, 'Employee',         'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(26, 10, 'Grand Total',      'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(26, 10, 'Invoice Total',      'TB', 0, 'R', 0, '', 1);
                 $pdf->Cell(23, 10, 'Cost',             'TB', 0, 'R', 0, '', 1);
                 $pdf->Cell(23, 10, 'Profit',           'TB', 0, 'R', 0, '', 1);
-                $pdf->Cell(24, 10, 'Guide Commmi.',      'TB', 0, 'R', 0, '', 1);
-                $pdf->Cell(23, 10, 'Salesman Commi.',       'TB', 1, 'R', 0, '', 1);
+                $pdf->Cell(24, 10, 'Guide Comm.',      'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(23, 10, 'Salesman Com.',       'TB', 1, 'R', 0, '', 1);
             }
 
             $total_grand      += $row['grand_total'];
