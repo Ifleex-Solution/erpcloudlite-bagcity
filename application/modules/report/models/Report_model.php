@@ -2405,4 +2405,52 @@ ORDER BY quantity DESC
 
         return $this->db->query($sql)->result_array();
     }
+
+     //Retrieve todays_purchase_report
+    public function bdtask_purchase_report($from_date, $to_date, $empid, $branch, $supplier_id)
+    {
+        $encryption_key = Config::$encryption_key;
+
+        $branchResult = $this->db->select("branch.id")
+            ->from('sec_branch')
+            ->join('branch', 'branch.id=sec_branch.branchid')
+            ->where('sec_branch.userid', $this->session->userdata('id'))
+            ->group_by('sec_branch.branchid')
+            ->get()
+            ->result();
+
+        $branchids = [];
+
+        if (isset($branchResult)) {
+            $branchids = array_column($branchResult, 'id');
+        }
+
+
+        date_default_timezone_set('Asia/Colombo');
+        $this->db->select("a.date,AES_DECRYPT(a.chalan_no,'" . $encryption_key . "') as invoiceno,AES_DECRYPT(b.supplier_name,'" . $encryption_key . "') as supplier_name,AES_DECRYPT(a.grandTotal,'" . $encryption_key . "')  as total");
+        $this->db->from('purchase a');
+        $this->db->join('supplier_information b', 'b.supplier_id = a.supplier_id');
+        $this->db->where('a.date >=', $from_date);
+        $this->db->where('a.date <=', $to_date);
+        if ($empid != "All") {
+            $this->db->where("AES_DECRYPT(a.type2,'" . $encryption_key . "')", $empid);
+        }
+        if ($empid != "All") {
+            $this->db->where("AES_DECRYPT(a.type2,'" . $encryption_key . "')", $empid);
+        }
+        if ($supplier_id) {
+            $this->db->where("a.supplier_id", $supplier_id);
+        } else {
+            if ($this->session->userdata('user_level2') != 1) {
+
+                $this->db->where_in('a.branch', $branchids);
+            }
+        }
+        $this->db->order_by('a.date', 'desc');
+        $query = $this->db->get();
+        if ($query->num_rows() > 0) {
+            return $query->result_array();
+        }
+        return false;
+    }
 }
