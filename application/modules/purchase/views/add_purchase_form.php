@@ -971,7 +971,7 @@ echo "</script>";
         $incidenttypeDropdown.append('<option value="" disabled selected>Select Incident Type</option>'); // Add default option
         $incidenttypeDropdown.append('<option value="2">Local Purchase</option>');
         $incidenttypeDropdown.append('<option value="1">International Purchase</option>');
-        $incidenttypeDropdown.val(1)
+        $incidenttypeDropdown.val(2)
 
 
         for (let j = 2; j <= 20; j++) {
@@ -2653,7 +2653,7 @@ echo "</script>";
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label">Status <i class="text-danger">*</i></label>
                     <div class="col-sm-9">
-                        <select class="form-control dont-select-me" id="mb_status">
+                        <select class="form-control" id="mb_status">
                             <option value="">Select One</option>
                             <option value="1" selected>Active</option>
                             <option value="0">Inactive</option>
