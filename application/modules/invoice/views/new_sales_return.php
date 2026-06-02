@@ -1715,7 +1715,8 @@ echo "</script>";
             type: 'POST',
             data: {
                 product: product,
-                batchtype: batchtype
+                batchtype: batchtype,
+                id:id
             },
             success: function(response2) {
                 var $batchDropdown = $('#batch' + item);

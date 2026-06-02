@@ -35,8 +35,12 @@ class Purchase extends MX_Controller
 
         // $data['products'] = $this->active_product();
         $data['vtinfo']   = $this->db->select('*')->from('vat_tax_setting')->get()->row();
-        $data['store_list'] = $this->product_model->active_store();
-        $data["batches"] = $this->active_batch();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
+        // $data["batches"] = $this->active_batch();
 
         $data['module']      = "purchase";
         $data['page']        = "add_purchase_form";
@@ -61,7 +65,11 @@ class Purchase extends MX_Controller
         $data['all_supplier'] = $this->purchase_model->supplier_list();
         $data['all_pmethod'] = $this->pmethod_dropdown();
         $data['products'] = $this->active_product();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data["batches"] = $this->active_batch();
         $data["units"] = $this->active_units();
 
@@ -89,7 +97,11 @@ class Purchase extends MX_Controller
         $data['all_pmethod'] = $this->pmethod_dropdown();
         $data['products'] = $this->active_product();
         $data['vtinfo']   = $this->db->select('*')->from('vat_tax_setting')->get()->row();
-        $data['store_list'] = $this->product_model->active_store();
+         if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data["batches"] = $this->active_batch();
         $data["units"] = $this->active_units();
 
@@ -758,7 +770,11 @@ class Purchase extends MX_Controller
         $data['all_pmethod'] = $this->pmethod_dropdown();
         $data['products'] = $this->active_product();
         $data['vtinfo']   = $this->db->select('*')->from('vat_tax_setting')->get()->row();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data["batches"] = $this->active_batch();
 
         $data['module']      = "purchase";

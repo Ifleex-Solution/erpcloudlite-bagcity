@@ -995,13 +995,15 @@ ORDER BY amount DESC
     {
         $this->db->select('*');
         $this->db->from('store');
-        $this->db->where('status', 1);
+        // $this->db->where('status', 1);
         $query = $this->db->get();
         if ($query->num_rows() > 0) {
             return $query->result_array();
         }
         return false;
     }
+
+    
 
     public function active_store_stock()
     {
@@ -2322,8 +2324,7 @@ ORDER BY quantity DESC
 
         return $result;
     }
-
-    public function commission_wise_sales_report($from_date, $to_date, $user_id, $emp_id, $branch)
+       public function commission_wise_sales_report($from_date, $to_date, $user_id, $emp_id, $branch)
     {
         $encryption_key = Config::$encryption_key;
 

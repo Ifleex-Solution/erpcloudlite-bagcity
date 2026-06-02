@@ -943,7 +943,7 @@ class Service extends MX_Controller
         // $maxid = $this->Accounts_model->getMaxFieldNumber('id', 'acc_vaucher', 'Vtype', 'DV', 'VNo');
         $query = $this->db->select('*')
             ->from('employee_history')
-            // ->where('status', '1')
+            ->where('status', '1')
             ->get();
         if ($query->num_rows() > 0) {
             return $query->result_array();
@@ -1790,7 +1790,7 @@ class Service extends MX_Controller
        </script>';  
      }
 
-      public function update_serviceorderdone($id = null)
+     public function update_serviceorderdone($id = null)
     {
 
         $base_url = base_url();
@@ -1813,6 +1813,44 @@ class Service extends MX_Controller
         INSERT INTO logs (id, screen, operation, pid, userid,lastupdatedate) 
         VALUES (
             0, 
+            'service_order', 
+            'update', 
+            '{$id}', 
+            '{$this->session->userdata('id')}',  '{$lastupdate}'
+        );
+    ";
+
+        $this->db->query($query);
+
+        echo '<script type="text/javascript">
+        alert("Status Updated successfully");
+        window.location.href = "' . $base_url . 'manage_service_invoice";
+       </script>';  
+     }
+
+        public function update_serviceorderdoneredo($id = null)
+    {
+
+        $base_url = base_url();
+
+        date_default_timezone_set('Asia/Colombo');
+
+
+        $lastupdate = date('Y-m-d H:i:s');
+        $query = "
+    UPDATE service_order
+    SET 
+        status = 3,
+        lastupdateddate='{$lastupdate}'
+    WHERE id = '{$id}';
+";
+
+        $this->db->query($query);
+
+        $query = "
+        INSERT INTO logs (id, screen, operation, pid, userid,lastupdatedate) 
+        VALUES (
+            1, 
             'service_order', 
             'update', 
             '{$id}', 

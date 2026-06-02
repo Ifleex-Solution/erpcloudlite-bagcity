@@ -275,6 +275,20 @@ class Product_model extends CI_Model
         return false;
     }
 
+     public function all_store()
+    {
+        $this->db->select('*');
+        $this->db->from('store');
+        // $this->db->where('status', 1);
+        $this->db->where_not_in('id', 1);
+
+        $query = $this->db->get();
+        if ($query->num_rows() > 0) {
+            return $query->result_array();
+        }
+        return false;
+    }
+
     public function active_unit()
     {
         $this->db->select('*');

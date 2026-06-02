@@ -38,7 +38,11 @@ class Invoice extends MX_Controller
         $data['vtinfo']   = $this->db->select('*')->from('vat_tax_setting')->get()->row();
         $data['all_pmethod'] = $this->pmethod_dropdown();
         $data['products'] = $this->active_product();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data["batches"] = $this->active_batch();
         $data['units'] = $this->active_units();
         $data['module']      = "invoice";
@@ -68,7 +72,11 @@ class Invoice extends MX_Controller
 
         $data['vtinfo']   = $this->db->select('*')->from('vat_tax_setting')->get()->row();
         $data['all_pmethod'] = $this->pmethod_dropdown();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data["batches"] = $this->active_batch();
         $data['module']      = "invoice";
         $data['page']        = "add_invoice_form";
@@ -87,7 +95,11 @@ class Invoice extends MX_Controller
         $data['vtinfo']   = $this->db->select('*')->from('vat_tax_setting')->get()->row();
         $data['all_pmethod'] = $this->pmethod_dropdown();
         $data['products'] = $this->active_product();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data["batches"] = $this->active_batch();
         $data["units"] = $this->active_units();
 
@@ -144,7 +156,11 @@ class Invoice extends MX_Controller
         $data['all_pmethod'] = $this->pmethod_dropdown();
         // $data['products'] = $this->active_product();
         $data['units'] = $this->active_units();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data['module']      = "invoice";
         $data['page']        = "new_pos";
         $data['id'] = $id;
@@ -4536,7 +4552,11 @@ AES_DECRYPT(sd.quantity, '{$encryption_key}') AS quantity
         $data['all_pmethod'] = $this->pmethod_dropdown();
         $data['products'] = $this->active_product();
         $data["batches"] = $this->active_batch();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data['module']      = "invoice";
         $data['page']        = "new_quotation";
         $data['id'] = $id;
@@ -5430,7 +5450,7 @@ AES_DECRYPT(sd.quantity, '{$encryption_key}') AS quantity
 
      public function getProductGroupByName()
      {
-        $this->db->select("po.id, CONCAT(po.groupcode, ' - ', po.name) AS group_name,po.invoice_group");
+        $this->db->select("po.id,  po.name AS group_name,po.invoice_group");
         $this->db->from('product_group po');
         $this->db->like("CONCAT(po.groupcode, ' - ', po.name)", $this->input->post('group_name'));
        $this->db->where("po.status", 1);

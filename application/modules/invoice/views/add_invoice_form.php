@@ -667,6 +667,7 @@ echo "</script>";
 ?>
 <script>
     $('body').addClass("sidebar-mini sidebar-collapse");
+    console.log(id)
 
     let type2 = ""
     if (usertype == 3) {
@@ -1238,12 +1239,12 @@ echo "</script>";
                 const resultItem = document.createElement('div');
 
                 resultItem.classList.add('resultItem');
-                if (item.invoice_group == 1) {
-                    resultItem.textContent = item.group_name + " - " + "ig";
+                // if (item.invoice_group == 1) {
 
-                } else {
-                    resultItem.textContent = item.group_name;
-                }
+                // } else {
+                //     resultItem.textContent = item.group_name;
+                // }
+                resultItem.textContent = item.group_name ;
 
                 // style (optional but recommended)
                 resultItem.style.padding = "8px";
@@ -2768,7 +2769,8 @@ echo "</script>";
             type: 'POST',
             data: {
                 product: product,
-                batchtype: batchtype
+                batchtype: batchtype,
+                id:id
             },
             success: function(response2) {
                 var $batchDropdown = $('#batch' + item);

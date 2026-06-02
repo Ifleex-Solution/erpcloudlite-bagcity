@@ -354,7 +354,11 @@ WHERE id = '{$id}';
         $data["batches"] = $this->active_batch();
         $data['products'] = $this->active_product();
         $data['floor_list'] = $this->active_floor();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
 
         $data['id'] = $id;
         $data['module']      = 'stock';
@@ -637,7 +641,11 @@ WHERE id = '{$id}';
         $data["batches"] = $this->active_batches();
         $data['products'] = $this->active_product();
         $data['floor_list'] = $this->active_floor();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
 
         $data['id'] = $id;
         $data['module']      = 'stock';
@@ -1066,7 +1074,11 @@ WHERE id = '{$id}';
         );
         $data['products'] = $this->active_product();
         $data["batches"] = $this->active_batch();
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data['stockbatchopening'] = $this->stockbatchopening();
         $data['units'] = $this->active_units();
         $data['modal_products'] = $this->singleusage_product();
@@ -1616,7 +1628,11 @@ WHERE id = '{$id}';
         $data['floor_list'] = $this->active_floor();
         $data["batches"] = $this->active_batches();
 
-        $data['store_list'] = $this->product_model->active_store();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
         $data['id'] = $id;
         $data['module']      = 'stock';
         $data['page']    = "new_store_transfer";
@@ -3836,16 +3852,25 @@ WHERE id = '{$id}';
                 ->where('status', 1)
                 ->get_compiled_select();
 
-            $query2 = $this->db
-                ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
-                ->from('stockbatch')
-                ->where('busage', 'multiple')
-                 ->where('status', 1)
-                ->get_compiled_select();
+            if (!$this->input->post('id', TRUE)) {
+                $query2 = $this->db
+                    ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
+                    ->from('stockbatch')
+                    ->where('busage', 'multiple')
+                    ->where('status', 1)
+                    ->get_compiled_select();
+            } else {
+                $query2 = $this->db
+                    ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
+                    ->from('stockbatch')
+                    ->where('busage', 'multiple')
+                    ->get_compiled_select();
+            }
+
             $finalQuery = $this->db->query("$query1 UNION $query2");
             if ($finalQuery->num_rows() > 0) {
                 echo json_encode($finalQuery->result_array());
-            }else{
+            } else {
                 echo "not";
             }
         }

@@ -1111,6 +1111,10 @@ class Service_model extends CI_Model {
                 $button .= '  <a  style="margin-left:5px;" href="' . $base_url . 'service/service/update_serviceorderdone/' . $record->service_order_id . '" class="btn btn-xs btn-success "  onclick="' . $jsaction . '"><i class="fa fa-check"></i></a>';
             }
 
+            if ($record->service_order_id > 0&&  $record->service_status==3) {
+                $button .= '  <a  style="margin-left:5px;" href="' . $base_url . 'service/service/update_serviceorderdoneredo/' . $record->service_order_id . '" class="btn btn-xs btn-success "  onclick="' . $jsaction . '"><i class="fa fa-repeat"></i></a>';
+            }
+
             $data[] = array(
                 'sl'       => $sl,
                 'id'       => $link,

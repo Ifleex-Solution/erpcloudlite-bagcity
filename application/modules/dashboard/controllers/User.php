@@ -149,6 +149,11 @@ class User extends MX_Controller {
 
     public function  save_user($id = null){
         $base_url = base_url();
+         $image = $this->fileupload->do_upload(
+            './assets/img/user/', 
+            'image'
+
+        );
 
         $data['user'] = (object)$userLevelData = array(
             'user_id'       => $id,

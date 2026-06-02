@@ -175,6 +175,7 @@
                             <div class="col-sm-6">
                                 <select name="employee_id" id="employee_id" class="form-control " tabindex="1">
                                     <option value="">Select an option</option>
+                                    <option value="1">N/A</option>
                                     <?php foreach ($all_employee as $employee) { ?>
                                         <option value="<?php echo $employee['id'] ?>">
                                             <?php echo $employee['first_name'] . " " . $employee['last_name'] ?></option>
@@ -608,6 +609,7 @@ echo "</script>";
                         var $employeeDropdown = $('#employee_id');
                         $employeeDropdown.empty();
                         $employeeDropdown.append('<option value="" disabled selected>Select Employee</option>'); // Add default option
+                        $employeeDropdown.append('<option value="1">N/A</option>');
                         $.each(employees, function(index, employee) {
                             $employeeDropdown.append('<option value="' + employee.id + '">' + employee.first_name + " " + employee.last_name + '</option>');
                         });
@@ -711,6 +713,7 @@ echo "</script>";
                 var $employeeDropdown = $('#employee_id');
                 $employeeDropdown.empty();
                 $employeeDropdown.append('<option value="" disabled selected>Select Employee</option>');
+                 $employeeDropdown.append('<option value="1">N/A</option>');
                 $.each(employees, function(index, employee) {
                     $employeeDropdown.append('<option value="' + employee.id + '">' + employee.first_name + " " + employee.last_name + '</option>');
                 });
@@ -830,10 +833,19 @@ echo "</script>";
                 var $employeeDropdown = $('#employee_id');
                 $employeeDropdown.empty();
                 $employeeDropdown.append('<option value="" disabled selected>Select Employee</option>'); // Add default option
+                $employeeDropdown.append('<option value="1">N/A</option>');
                 $.each(employees, function(index, employee) {
                     $employeeDropdown.append('<option value="' + employee.id + '">' + employee.first_name + " " + employee.last_name + '</option>');
                 });
                 $employeeDropdown.val(sales[0].employee_id)
+
+                var $paymentDropdown = $('#your_dropdown_id');
+                $paymentDropdown.empty();
+                $paymentDropdown.append('<option value="" disabled selected>Select Supplier</option>'); // Add default option
+                $.each(pmethods, function(index, supplier) {
+                    $paymentDropdown.append('<option value="' + supplier.id + '">' + supplier.name + '</option>');
+                });
+                $paymentDropdown.val(1)
 
 
                 document.getElementById('total_discount_ammount').value = sales[0].total_discount_ammount;

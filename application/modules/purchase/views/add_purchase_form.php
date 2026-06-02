@@ -612,6 +612,14 @@ echo "</script>";
         $incidenttypeDropdown.append('<option value="single">Single Usage</option>');
         $incidenttypeDropdown.append('<option value="multiple">Multiple Usage</option>');
 
+
+        var $incidenttypeDropdown = $('#mb_edate_toggle');
+        $incidenttypeDropdown.empty();
+        $incidenttypeDropdown.append('<option value="" disabled selected>Select Incident Type</option>'); // Add default option
+        $incidenttypeDropdown.append('<option value="no">Disable</option>');
+        $incidenttypeDropdown.append('<option value="yes">Enable</option>');
+        $incidenttypeDropdown.val("no")
+
         document.getElementById('mb_productResults').innerHTML = '';
         mbResults = [];
         mbCurrentIndex = -1;
@@ -2161,7 +2169,8 @@ echo "</script>";
             type: 'POST',
             data: {
                 product: product,
-                batchtype: batchtype
+                batchtype: batchtype,
+                id:id
             },
             success: function(response2) {
                 var $batchDropdown = $('#batch' + item);
@@ -2578,7 +2587,7 @@ echo "</script>";
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label">Batch ID <i class="text-danger">*</i></label>
                     <div class="col-sm-9">
-                        <input type="text" class="form-control dont-select-me" id="mb_batchid" placeholder="Batch ID" autocomplete="off">
+                        <input type="text" class="form-control" id="mb_batchid" placeholder="Batch ID" autocomplete="off">
                     </div>
                 </div>
 
