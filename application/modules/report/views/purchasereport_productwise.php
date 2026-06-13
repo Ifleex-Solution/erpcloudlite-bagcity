@@ -48,6 +48,18 @@
                     </div>
                 </div>
 
+                   <div class="form-group">
+                    <label for="incident_type">Incident Type</label>
+                    <div class="input-group mr-4" style="width: 250px;">
+                        <select class="form-control" id="incident_type" name="incident_type" style="width:250px;">
+                            <option value="">All Types</option>
+                            <option value="1">International Purchase</option>
+                            <option value="2">Local Purchase</option>
+                            <option value="3">Purchase Return</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-group" style="margin-bottom: 10px;">
                     <input type="checkbox" id="single_date_checkbox" name="single_date_checkbox">
                     <label for="single_date_checkbox">Single Date</label>
@@ -202,25 +214,18 @@ echo "</script>";
                 empid: type,
                 istype: document.getElementById('single_date_checkbox').checked,
                 productid: $('#productid').val(),
-                branch: $('#branch').val()
-
-
+                branch: $('#branch').val(),
+                incident_type: $('#incident_type').val(),
             },
             success: function(data1) {
                 datas = JSON.parse(data1);
                 if (datas.length > 0) {
                     window.open(`generate_purchasereportproduct`, '_blank');
-
                 } else {
                     alert("There is no data available for the selected parameters.")
                 }
-
-                // updateTable(datas)
-                // $("#exampleModal").modal('hide');
-
             }
         });
-
 
     }
 </script>

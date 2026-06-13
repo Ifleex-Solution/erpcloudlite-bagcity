@@ -65,6 +65,9 @@
             <?php $this->load->view('includes/sidebar') ?>
         </aside>
 
+        <!-- Mobile sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
             <!-- Content Header (Page header) -->

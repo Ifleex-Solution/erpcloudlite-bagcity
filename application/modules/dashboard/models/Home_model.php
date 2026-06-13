@@ -510,21 +510,19 @@ class Home_model extends CI_Model
                 CAST(pi.reorder_stock_level AS DECIMAL(18,4)) AS reorder_stock_level,
                 CAST(pi.reserve_stock_level AS DECIMAL(18,4)) AS reserve_stock_level,
                 pc.category_name,
-                IFNULL((
-                    SELECT SUM(AES_DECRYPT(sd.stock, '$encryption_key'))
-                    FROM stock_details sd
-                    WHERE sd.product = pi.product_id OR sd.product = CAST(pi.id AS CHAR)
-                ), 0) AS master_stock_qty,
+                IFNULL(SUM(AES_DECRYPT(sd.stock, '$encryption_key')), 0) AS master_stock_qty,
                 cr.conversion_ratio,
                 u1.unit_name AS sub,
                 u2.unit_name AS master
-            FROM product_information pi
-            LEFT  JOIN product_category pc  ON pc.category_id  = pi.category_id
-            LEFT  JOIN subunit_product  sp  ON sp.product_id   = pi.id AND sp.first = 1
-            LEFT  JOIN units            u1  ON u1.unit_id       = sp.unit_id
-            INNER JOIN units            u2  ON u2.unit_id       = pi.unit
-            LEFT  JOIN conversion_ratio cr  ON cr.product       = pi.id AND u1.unit_id = cr.subunit
+            FROM stock_details sd
+            INNER JOIN product_information pi  ON pi.id          = CAST(sd.product AS UNSIGNED)
+            LEFT  JOIN product_category    pc  ON pc.category_id = pi.category_id
+            LEFT  JOIN subunit_product     sp  ON sp.product_id  = pi.id AND sp.first = 1
+            LEFT  JOIN units               u1  ON u1.unit_id     = sp.unit_id
+            INNER JOIN units               u2  ON u2.unit_id     = pi.unit
+            LEFT  JOIN conversion_ratio    cr  ON cr.product     = pi.id AND u1.unit_id = cr.subunit
             WHERE pi.status = 1
+            GROUP BY pi.id
         ";
 
         $with_status_sql = "
@@ -683,27 +681,27 @@ class Home_model extends CI_Model
                 CAST(AES_DECRYPT(sb.batchid, '$encryption_key') AS CHAR) AS batch_id,
                 DATE_FORMAT(sb.edate, '%Y-%m-%d') AS expiry_date,
                 IFNULL(pi.product_name, '') AS product_name,
-                IFNULL((
-                    SELECT SUM(AES_DECRYPT(pd.stock, '$encryption_key'))
-                    FROM stock_details pd
-                    WHERE pd.product = sb.product AND pd.batch = sb.id
-                ), 0) AS master_stock_qty,
+                IFNULL(SUM(AES_DECRYPT(sd.stock, '$encryption_key')), 0) AS master_stock_qty,
                 cr.conversion_ratio,
                 u1.unit_name AS sub,
                 u2.unit_name AS master,
                 CASE WHEN DATE(sb.edate) <= CURDATE() THEN 'Expired' ELSE 'To be Expired' END AS status_text,
                 CASE WHEN DATE(sb.edate) <= CURDATE() THEN 'btn-danger' ELSE 'btn-warning'  END AS status_class
             FROM stockbatch sb
-            LEFT  JOIN product_information pi ON (pi.id = sb.product OR pi.product_id = sb.product)
-            LEFT  JOIN subunit_product sp ON sp.product_id = pi.id AND sp.first = 1
-            LEFT  JOIN units u1 ON u1.unit_id = sp.unit_id
-            INNER JOIN units u2 ON u2.unit_id = pi.unit
-            LEFT  JOIN conversion_ratio cr ON cr.product = pi.id AND u1.unit_id = cr.subunit
+            LEFT  JOIN stock_details       sd ON sd.batch      = sb.id AND sd.product = CAST(sb.product AS CHAR)
+            LEFT  JOIN product_information pi ON pi.id         = sb.product
+            LEFT  JOIN subunit_product     sp ON sp.product_id = pi.id AND sp.first = 1
+            LEFT  JOIN units               u1 ON u1.unit_id    = sp.unit_id
+            INNER JOIN units               u2 ON u2.unit_id    = pi.unit
+            LEFT  JOIN conversion_ratio    cr ON cr.product    = pi.id AND u1.unit_id = cr.subunit
             WHERE sb.busage = 'single'
               AND sb.status = 1
+              AND sb.edate_enabled = 1
               AND sb.edate IS NOT NULL
               AND sb.edate != '0000-00-00'
               AND DATE(sb.edate) <= DATE_ADD(CURDATE(), INTERVAL $expiry_alert_days DAY)
+            GROUP BY pi.id, sb.id
+            ORDER BY pi.id, sb.id DESC
         ";
 
         $search_sql = "";

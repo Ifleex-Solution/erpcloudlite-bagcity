@@ -859,12 +859,15 @@ INSERT INTO company_information (
 
 			if($data[0]['password']==$password){
 				echo json_encode("A");
+				$_SESSION['reporttype'] =   1;
 
 			}elseif($data[1]['password']==$password){
 				echo json_encode("B");
+				$_SESSION['reporttype'] =   3;
 
 			}elseif($data[0]['password'].$data[1]['password']==$password){
 				echo json_encode("All");
+				$_SESSION['reporttype'] =   $this->session->userdata('user_level2');
 
 			}else{
 				echo json_encode("wrong password");

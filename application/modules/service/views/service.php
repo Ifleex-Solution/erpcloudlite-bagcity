@@ -21,8 +21,8 @@
                         <thead>
                             <tr>
                                 <th class="text-left"><?php echo display('sl') ?></th>
-                                <th class="text-left"><?php echo display('service_name') ?></th>
                                 <th class="text-left"><?php echo 'Service ID' ?></th>
+                                <th class="text-left"><?php echo display('service_name') ?></th>
                                 <th class="text-left"><?php echo display('charge') ?></th>
                                 <?php if ($vattaxinfo->fixed_tax == 1) { ?>
                                     <th class="text-left"><?php echo display('service_vat') ?></th>
@@ -48,8 +48,8 @@
 
                                     <tr>
                                         <td class="text-left"><?php echo $sl; ?></td>
-                                        <td class="text-left"><?php echo html_escape($services['service_name']); ?></td>
                                         <td class="text-left"><?php echo !empty($services['service_code'])?html_escape($services['service_code']):''; ?></td>
+                                        <td class="text-left"><?php echo html_escape($services['service_name']); ?></td>
                                         <td class="text-left"><?php echo html_escape($services['charge']); ?></td>
                                         <?php if ($vattaxinfo->fixed_tax == 1) { ?>
                                             <td class="text-left"><?php echo html_escape($services['service_vat']); ?></td>

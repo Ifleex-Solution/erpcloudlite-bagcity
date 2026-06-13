@@ -16,14 +16,14 @@
                                 <span
                                     class="label label-success-outline m-r-15 p-10"><?php echo display('billing_from') ?></span>
                                 <address class="margin-top10">
-                                    <strong class=""><?php echo $company_info2[0]['company_name'] ?></strong><br>
-                                    <span class="comp-web"><?php echo $company_info2[0]['address'] ?></span><br>
+                                    <strong class=""><?php echo $company_info[0]['company_name'] ?></strong><br>
+                                    <span class="comp-web"><?php echo $company_info[0]['address'] ?></span><br>
                                     <abbr class="font-bold"><?php echo display('mobile') ?>: </abbr>
-                                    <?php echo $company_info2[0]['mobile'] ?><br>
+                                    <?php echo $company_info[0]['mobile'] ?><br>
                                     <abbr><b><?php echo display('email') ?>:</b></abbr>
-                                    <?php echo $company_info2[0]['email'] ?><br>
+                                    <?php echo $company_info[0]['email'] ?><br>
                                     <abbr><b><?php echo display('website') ?>:</b></abbr>
-                                    <span class="comp-web"><?php echo $company_info2[0]['website'] ?></span><br>
+                                    <span class="comp-web"><?php echo $company_info[0]['website'] ?></span><br>
                                    
                                 </address>
 

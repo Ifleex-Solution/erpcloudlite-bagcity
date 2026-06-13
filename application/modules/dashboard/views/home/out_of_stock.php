@@ -28,7 +28,7 @@
             </style>
             <div class="panel-heading">
                 <div class="panel-title">
-                    <h4>Stock Level Notification</h4>
+                    <h4>Stock Alert Notification</h4>
                 </div>
             </div>
             <div class="panel-body">
@@ -64,10 +64,10 @@
             dom: "<'col-sm-4'l><'col-sm-4 text-center'><'col-sm-4'>Bfrtip",
             buttons: [
                 { extend: 'copy',  className: 'btn-sm prints', exportOptions: { columns: [0,1,2,3,4,5] } },
-                { extend: 'csv',   className: 'btn-sm prints', title: 'Stock Level Notification', exportOptions: { columns: [0,1,2,3,4,5] } },
-                { extend: 'excel', className: 'btn-sm prints', title: 'Stock Level Notification', exportOptions: { columns: [0,1,2,3,4,5] } },
-                { extend: 'pdf',   className: 'btn-sm prints', title: 'Stock Level Notification', exportOptions: { columns: [0,1,2,3,4,5] } },
-                { extend: 'print', className: 'btn-sm prints', title: '<center>Stock Level Notification</center>', exportOptions: { columns: [0,1,2,3,4,5] } }
+                { extend: 'csv',   className: 'btn-sm prints', title: 'Stock Alert Notification', exportOptions: { columns: [0,1,2,3,4,5] } },
+                { extend: 'excel', className: 'btn-sm prints', title: 'Stock Alert Notification', exportOptions: { columns: [0,1,2,3,4,5] } },
+                { extend: 'pdf',   className: 'btn-sm prints', title: 'Stock Alert Notification', exportOptions: { columns: [0,1,2,3,4,5] } },
+                { extend: 'print', className: 'btn-sm prints', title: '<center>Stock Alert Notification</center>', exportOptions: { columns: [0,1,2,3,4,5] } }
             ],
             serverMethod: 'post',
             ajax: {
@@ -101,7 +101,8 @@
     });
 
     function convertmasterstock(avstock, conversion_ratio, mastername, subname) {
-        if (!subname && !conversion_ratio) {
+        console.log(avstock+" "+conversion_ratio)
+        if (!subname || !conversion_ratio) {
             return ((avstock ? avstock : 0) + mastername);
         }
         let mas  = conversion_ratio * avstock / conversion_ratio;

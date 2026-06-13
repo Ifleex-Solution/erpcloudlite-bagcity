@@ -3913,7 +3913,65 @@ WHERE id = '{$id}';
             }
         }
        
-       
+
+        return false;
+    }
+
+     public function getBatchbyProductAndBatchtype2()
+    {
+        $encryption_key = Config::$encryption_key;
+        if ($this->input->post('batchtype', TRUE) == 1) {
+            $this->db->select('id,AES_DECRYPT( batchid , "' . $encryption_key . '")  as batchid');
+            $this->db->from('stockbatch');
+            $this->db->where('busage', "single");
+            $this->db->where('product', $this->input->post('product', TRUE));
+                  // $this->db->where('edate >=', $currentDate);
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                echo json_encode($query->result_array());
+            }else{
+                echo "not";
+            }
+        } else if ($this->input->post('batchtype', TRUE) == 2) {
+
+            $this->db->select('id,AES_DECRYPT( batchid , "' . $encryption_key . '")  as batchid');
+            $this->db->from('stockbatch');
+            $this->db->where('busage', "multiple");
+
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                echo json_encode($query->result_array());
+            }else{
+                echo "not";
+            }
+        } else if ($this->input->post('batchtype', TRUE) == 3) {
+
+            $query1 = $this->db
+                ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
+                ->from('stockbatch')
+                ->where('busage', 'single')
+                ->where('product', $this->input->post('product', TRUE))
+                ->get_compiled_select();
+
+
+
+            $query2 = $this->db
+                ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
+                ->from('stockbatch')
+                ->where('busage', 'multiple')
+                ->get_compiled_select();
+
+
+            $finalQuery = $this->db->query("$query1 UNION $query2");
+            if ($finalQuery->num_rows() > 0) {
+                echo json_encode($finalQuery->result_array());
+            } else {
+                echo "not";
+            }
+        }
+
+
+
         return false;
     }
 

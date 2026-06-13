@@ -15,8 +15,110 @@
     .sidebar-menu li:hover i {
         color: #ffffff;
     }
+
+    /* ── Sidebar Scrollbar ── */
+    .main-sidebar {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        height: 100vh !important;
+    }
+
+    /* Disable slimscroll wrapper interference */
+    .main-sidebar .slimScrollDiv,
+    .main-sidebar .sidebar {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .main-sidebar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .main-sidebar::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .main-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 3px;
+    }
+
+    .main-sidebar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.45);
+    }
+
+    /* ── Mobile Sidebar ── */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1039;
+        cursor: pointer;
+    }
+
+    .sidebar-close-btn {
+        display: none;
+    }
+
+    @media (max-width: 767px) {
+        body.sidebar-open .sidebar-overlay {
+            display: block;
+        }
+
+        .sidebar-close-btn {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 10px 14px 4px;
+        }
+
+        .sidebar-close-btn button {
+            background: none;
+            border: none;
+            color: #cfd8dc;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .sidebar-close-btn button:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .main-sidebar {
+            -webkit-transition: -webkit-transform .3s ease-in-out;
+            transition: transform .3s ease-in-out;
+            z-index: 1040 !important;
+        }
+    }
 </style>
+
+<script>
+    $(document).ready(function () {
+        // Close sidebar when overlay is tapped
+        $(document).on('click', '#sidebarOverlay', function () {
+            $('body').removeClass('sidebar-open');
+        });
+
+        // Close sidebar when X button is tapped
+        $(document).on('click', '#sidebarCloseBtn', function () {
+            $('body').removeClass('sidebar-open');
+        });
+    });
+</script>
+
 <div class="sidebar">
+    <!-- Mobile close button -->
+    <div class="sidebar-close-btn">
+        <button id="sidebarCloseBtn" title="Close menu">&#10005;</button>
+    </div>
     <!-- Sidebar user panel -->
 
     <div class="user-panel text-center">

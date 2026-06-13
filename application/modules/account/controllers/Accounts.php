@@ -2919,6 +2919,7 @@ class Accounts extends MX_Controller
 
     $this->permission1->method('cash_book', 'read')->access();
     $data['title']   = display('cash_book');
+    $_SESSION['reporttype'] =   1;
     $data['all_pmethod'] = $this->pmethod_dropdown();
     $data['module']  = "account";
     $data['cashs']  = $this->accounts_model->get_all_cash();

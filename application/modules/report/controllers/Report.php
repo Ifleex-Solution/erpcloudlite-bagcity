@@ -89,6 +89,7 @@ class Report extends MX_Controller
         $data['product_list']  = $this->report_model->product_list_stock();
         $data['category_list'] = $this->report_model->category_list_product();
         $data['store_list']    = $this->report_model->active_store_stock();
+        $_SESSION['reporttype'] =   1;
         $data['product_group_list'] = $this->db
             ->select('id, name')
             ->from('product_group')
@@ -107,6 +108,7 @@ class Report extends MX_Controller
         $data['product_list']  = $this->report_model->product_list_stock();
         $data['category_list'] = $this->report_model->category_list_product();
         $data['store_list']    = $this->report_model->active_store_stock();
+        $_SESSION['reporttype'] =   1;
         $data['product_group_list'] = $this->db
             ->select('id, name')
             ->from('product_group')
@@ -322,6 +324,7 @@ class Report extends MX_Controller
             $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
             redirect($previous_url);
         }
+        $_SESSION['reporttype'] =   1;
         $data = array(
             'title'        => display('sales_report'),
             'sales_amount' => number_format($sales_amount, 2, '.', ','),
@@ -335,6 +338,7 @@ class Report extends MX_Controller
     {
         $from_date = $this->input->get('from_date');
         $to_date  = $this->input->get('to_date');
+        $_SESSION['reporttype'] =   1;
         $sales_report = $this->report_model->retrieve_dateWise_SalesReports($from_date, $to_date);
         $sales_amount = 0;
         if (!empty($sales_report)) {
@@ -367,6 +371,7 @@ class Report extends MX_Controller
             $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
             redirect($previous_url);
         }
+        $_SESSION['reporttype'] =   1;
 
         // $sales_report = $this->report_model->user_sales_report($star_date, $end_date, $user_id);
         // $sales_amount = 0;
@@ -406,6 +411,7 @@ class Report extends MX_Controller
             'to_date'      => $to_date,
 
         );
+        $_SESSION['reporttype'] =   1;
 
         $data['module']   = "report";
         $data['page']     = "due_report";
@@ -449,6 +455,7 @@ class Report extends MX_Controller
             $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
             redirect($previous_url);
         }
+        $_SESSION['reporttype'] =   1;
         $data['title']   = display('purchase_report');
         $data['from']   = $from_date;
         $data['to']   = $to_date;
@@ -464,6 +471,7 @@ class Report extends MX_Controller
         $category  = (!empty($this->input->get('category')) ? $this->input->get('category') : '');
         $category_list = $this->report_model->category_list_product();
         $product_list = $this->report_model->product_list();
+        $_SESSION['reporttype'] =   1;
 
         // $purchase_report_category_wise = $this->report_model->purchase_report_category_wise($from_date, $to_date, $category);
         $data = array(
@@ -497,6 +505,7 @@ class Report extends MX_Controller
             $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
             redirect($previous_url);
         }
+         $_SESSION['reporttype'] =   1;
         $product_list = $this->report_model->product_list();
         // if (!empty($product_report)) {
         //     $i = 0;
@@ -538,6 +547,7 @@ class Report extends MX_Controller
             $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
             redirect($previous_url);
         }
+        $_SESSION['reporttype'] =   1;
         // $sales_report_category_wise = $this->report_model->sales_report_category_wise($from_date, $to_date, $category);
         $data = array(
             'title'                      => display('sales_report_category_wise'),
@@ -561,6 +571,7 @@ class Report extends MX_Controller
         $to_date   = $this->input->post('to_date', TRUE);
         $start     = (!empty($from_date) ? $from_date : date('Y-m-d'));
         $end       = (!empty($to_date) ? $to_date : date('Y-m-d'));
+        $_SESSION['reporttype'] =   1;
         $return_list = $this->report_model->sales_return_list($start, $end);
         if (!empty($return_list)) {
             foreach ($return_list as $k => $v) {
@@ -746,8 +757,9 @@ class Report extends MX_Controller
         $empid = $this->input->post('empid');
         $branch = $this->input->post('branch');
         $customer_id = $this->input->post('customer_id');
+        $incident_type = $this->input->post('incident_type');
 
-        $report_data = $this->report_model->sales_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id);
+        $report_data = $this->report_model->sales_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id,$incident_type);
         $_SESSION['sale_reportsri'] =  $report_data;
         $_SESSION['sri_istype'] =   $this->input->post('istype');
         $_SESSION['srifrom_date'] = $from_date;
@@ -764,12 +776,14 @@ class Report extends MX_Controller
         $empid = $this->input->post('empid');
         $branch = $this->input->post('branch');
         $supplier_id = $this->input->post('supplier_id');
+        $incident_type = $this->input->post('incident_type');
 
-        $report_data = $this->report_model->bdtask_purchase_report($from_date, $to_date, $empid, $branch, $supplier_id);
+        $report_data = $this->report_model->bdtask_purchase_report($from_date, $to_date, $empid, $branch, $supplier_id, $incident_type);
         $_SESSION['purchase_reportpri'] =  $report_data;
         $_SESSION['pri_istype'] =   $this->input->post('istype');
         $_SESSION['prifrom_date'] = $from_date;
         $_SESSION['prito_date'] =  $to_date;
+        $_SESSION['pri_incident_type'] =  $incident_type;
 
 
         echo json_encode($_SESSION['purchase_reportpri']);
@@ -782,8 +796,9 @@ class Report extends MX_Controller
         $empid = $this->input->post('empid');
         $productid = $this->input->post('productid');
         $branch = $this->input->post('branch');
+        $incident_type = $this->input->post('incident_type');
 
-        $report_data = $this->report_model->retrieve_product_sales_report($from_date, $to_date, $productid, $empid, $branch);
+        $report_data = $this->report_model->retrieve_product_sales_report($from_date, $to_date, $productid, $empid, $branch,$incident_type);
         $_SESSION['sale_reportsrp'] =  $report_data;
         $_SESSION['srp_istype'] =   $this->input->post('istype');
         $_SESSION['srpfrom_date'] = $from_date;
@@ -887,10 +902,9 @@ class Report extends MX_Controller
             if ($pdf->GetY() + $lineHeight > $maxY) {
                 $pdf->updatePageTotal($patotal);
                 $patotal = 0;
-                $pdf->AddPage();
                 $page = $page + 1;
-                $this->header($pdf, $page, "Sales Report (Invoice Wise)", $_SESSION['sri_istype'], $_SESSION['srifrom_date'], $_SESSION['srito_date']);
-                $pdf->SetFont('helvetica', 'B', 12);
+            $pdf->AddPage();
+            $pdf->SetFont('helvetica', '', 9);
                 $pdf->Cell(45, 10, 'Sale Date', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(33, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(40, 10, 'Incident Type', 'TB', 0, 'L', 0, '', 1);
@@ -919,7 +933,7 @@ class Report extends MX_Controller
         $pdf->Output($filename, 'I');
     }
 
-    public function generate_purchasereportinvoice()
+     public function generate_purchasereportinvoice()
     {
         $page = 1;
         $pdf = new SalesReportInvoicewise('P', 'mm', 'A4', true, 'UTF-8', false);
@@ -971,12 +985,13 @@ class Report extends MX_Controller
             $patotal = $patotal + $row['total'];
             $total = $total + $row['total'];
 
-            $pdf->SetFont('', '', 10);
-            $pdf->Cell(45, 8, $row['date'], 0, 0, 'L');
-            $pdf->Cell(33, 8,  $row['invoiceno'], 0, 0, 'L');
-            $pdf->Cell(40, 8,  $row['incidenttype'], 0, 0, 'L');
-            $pdf->Cell(35, 8,  $row['supplier_name'], 0, 0, 'L');
-            $pdf->Cell(40, 8, number_format($row['total'], 2), 0, 1, 'R');
+            $pdf->SetFont('', '', 9);
+            $pdf->MultiCell(45, 8, $row['date'],'', 'L', 0, 0);
+            $pdf->MultiCell(33, 8,  $row['invoiceno'],'', 'L', 0, 0);
+            $pdf->MultiCell(40, 8,  $row['incidenttype'],'', 'L', 0, 0);
+            $pdf->MultiCell(35, 8,  $row['supplier_name'],'', 'L', 0, 0);
+            $pdf->MultiCell(40, 8, number_format($row['total'], 2),'', 'R', 0, 0);
+            $pdf->Ln(8);
         }
         $pdf->SetFont('', 'B', 12);
         $pdf->Cell(50, 10, "Total Amount:", 'TB', 0, 'L');
@@ -1009,71 +1024,148 @@ class Report extends MX_Controller
 
         $this->header($pdf, $page, "Sales Report (Product Wise)", $_SESSION['srp_istype'], $_SESSION['srpfrom_date'], $_SESSION['srpto_date']);
 
-
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(24, 10, 'Sale Date', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(36, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(23, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(22, 10, 'Invoice Type', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(15, 10, 'Customer', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(27, 10, 'Rate', 'TB', 0, 'R', 0, '', 1);
-        $pdf->Cell(15, 10, 'Qty', 'TB', 0, 'R', 0, '', 1);
-        $pdf->Cell(27, 10, 'Total', 'TB', 0, 'R', 0, '', 1);
-
-
-        $pdf->Ln(10);
-
         $data = isset($_SESSION['sale_reportsrp']) ? $_SESSION['sale_reportsrp'] : [];
-        $lineHeight = 10;
-        $maxY = 270;
+        $headers = [
+            'Sale Date',
+            'Product Name',
+            'Invoice No',
+            'Invoice Type',
+            'Customer',
+            'Rate',
+            'Qty',
+            'Total',
+        ];
 
+        $rows = [];
+        $amounts = [];
+        foreach ($data as $row) {
+            $rawTotal = (float) $row['total'];
+            $rows[] = [
+                (string) $row['date'],
+                (string) $row['product_name'],
+                (string) $row['sale_id'],
+                (string) $row['incidenttype'],
+                (string) $row['customer_name'],
+                number_format((float) $row['product_rate'], 2),
+                (string) $row['quantity'],
+                number_format($rawTotal, 2),
+            ];
+            $amounts[] = $rawTotal;
+        }
 
+        $leftMargin = 15;
+        $rightMargin = 10;
+        $usableWidth = $pdf->getPageWidth() - $leftMargin - $rightMargin;
+        $minimumWidths = [18, 28, 18, 20, 24, 14, 10, 12];
+        $alignments = ['C', 'L', 'C', 'C', 'L', 'R', 'R', 'R'];
+        $widths = [];
+
+        $pdf->SetFont('helvetica', 'B', 8);
+        foreach ($headers as $index => $label) {
+            $widths[$index] = max($minimumWidths[$index], $pdf->GetStringWidth($label) + 4);
+        }
+
+        $pdf->SetFont('helvetica', '', 7.5);
+        foreach ($rows as $row) {
+            foreach ($row as $index => $value) {
+                $widths[$index] = max($widths[$index], $pdf->GetStringWidth($value) + 4);
+            }
+        }
+
+        $totalWidth = array_sum($widths);
+        if ($totalWidth > $usableWidth) {
+            $scale = $usableWidth / $totalWidth;
+            foreach ($widths as $index => $width) {
+                $widths[$index] = max($minimumWidths[$index], round($width * $scale, 2));
+            }
+            $adjustedWidth = array_sum($widths);
+            if ($adjustedWidth > $usableWidth) {
+                $overflow = $adjustedWidth - $usableWidth;
+                $flexIndexes = [1, 4, 7, 2, 0, 3, 5, 6];
+                foreach ($flexIndexes as $index) {
+                    if ($overflow <= 0) {
+                        break;
+                    }
+                    $room = $widths[$index] - $minimumWidths[$index];
+                    if ($room <= 0) {
+                        continue;
+                    }
+                    $shrink = min($room, $overflow);
+                    $widths[$index] -= $shrink;
+                    $overflow -= $shrink;
+                }
+            }
+        } elseif ($totalWidth < $usableWidth) {
+            $extraWidth = $usableWidth - $totalWidth;
+            $widths[1] += $extraWidth * 0.45;
+            $widths[4] += $extraWidth * 0.20;
+            $widths[2] += $extraWidth * 0.10;
+            $widths[0] += $extraWidth * 0.10;
+            $widths[7] += $extraWidth * 0.15;
+        }
+
+        $finalWidth = array_sum($widths);
+        if (abs($finalWidth - $usableWidth) > 0.01) {
+            $widths[7] += $usableWidth - $finalWidth;
+        }
+
+        $renderHeaderRow = function () use ($pdf, $headers, $widths) {
+            $pdf->SetFont('helvetica', 'B', 8);
+            foreach ($headers as $index => $label) {
+                $align = ($index === 1 || $index === 4) ? 'L' : (($index >= 5) ? 'R' : 'C');
+                $pdf->Cell($widths[$index], 9, $label, 'TB', 0, $align, 0, '', 1);
+            }
+            $pdf->Ln(9);
+        };
+
+        $renderHeaderRow();
+
+        $lineHeight = 8;
+        $maxY = $pdf->getPageHeight() - $pdf->getBreakMargin() - 8;
 
         $patotal = 0;
         $total = 0;
 
-        foreach ($data as $row) {
+        foreach ($rows as $rowIndex => $row) {
+            $amount = $amounts[$rowIndex] ?? 0;
+            $patotal += $amount;
+            $total += $amount;
 
-            if ($pdf->GetY() + $lineHeight > $maxY) {
-                $pdf->updatePageTotal($patotal);
-                $patotal = 0;
-                $pdf->AddPage();
-                $page = $page + 1;
-                $this->header($pdf, $page, "Sales Report (Product Wise)", $_SESSION['srp_istype'], $_SESSION['srpfrom_date'], $_SESSION['srpto_date']);
-                $pdf->SetFont('helvetica', 'B', 12);
-                $pdf->Cell(24, 10, 'Sale Date', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(36, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(23, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(22, 10, 'Invoice Type', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(15, 10, 'Customer', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(27, 10, 'Rate', 'TB', 0, 'R', 0, '', 1);
-                $pdf->Cell(15, 10, 'Qty', 'TB', 0, 'R', 0, '', 1);
-                $pdf->Cell(27, 10, 'Total', 'TB', 0, 'R', 0, '', 1);
-
-                $pdf->Ln(10);
+            $rowHeight = $lineHeight;
+            foreach ($row as $index => $value) {
+                $rowHeight = max($rowHeight, $pdf->getStringHeight($widths[$index], $value));
             }
-            $patotal = $patotal + $row['total'];
-            $total = $total + $row['total'];
 
-            $pdf->SetFont('', '', 10);
-            $pdf->MultiCell(24, 8, $row['date'],'', 'L', 0, 0);
-            $pdf->MultiCell(36, 8,  $row['product_name'], '', 'L', 0, 0);
-            $pdf->MultiCell(23, 8,  $row['sale_id'], '', 'L', 0, 0);
-            $pdf->MultiCell(22, 8,  $row['incidenttype'], '', 'L', 0, 0);
-            $pdf->MultiCell(15, 8,  $row['customer_name'], '', 'L', 0, 0);
-            $pdf->MultiCell(27, 8, number_format($row['product_rate'], 2), '', 'R', 0, 0);
-            $pdf->MultiCell(15, 8,  $row['quantity']." ". $row['unit_name'], '', 'R', 0, 0);
-            $pdf->MultiCell(27, 8, number_format($row['total'], 2), '', 'R', 0, 0);
-            $pdf->Ln(10);
+            if ($pdf->GetY() + $rowHeight > $maxY) {
+                $pdf->updatePageTotal($patotal - $amount);
+                $patotal = $amount;
+                $pdf->AddPage();
+                $page++;
+                $this->header($pdf, $page, "Sales Report (Product Wise)", $_SESSION['srp_istype'], $_SESSION['srpfrom_date'], $_SESSION['srpto_date']);
+                $renderHeaderRow();
+            }
+
+            $rowY = $pdf->GetY();
+            $x = $pdf->GetX();
+            $pdf->SetFont('helvetica', '', 7.5);
+
+            foreach ($row as $index => $value) {
+                $cellX = $x;
+                for ($i = 0; $i < $index; $i++) {
+                    $cellX += $widths[$i];
+                }
+                $pdf->MultiCell($widths[$index], $rowHeight, $value, '0', $alignments[$index], false, 0, $cellX, $rowY, true, 0, false, true, $rowHeight, 'M', false);
+            }
+
+            $pdf->SetXY($x, $rowY + $rowHeight);
 
 
 
             // $pdf->Cell(40, 8, number_format($row['total'], 2), 0, 1, 'R');
         }
-        $pdf->SetFont('', 'B', 12);
-        $pdf->Cell(50, 10, "Total Amount:", 'TB', 0, 'L');
-        $pdf->Cell(108, 10, "", 'TB', 0, 'L');
-        $pdf->Cell(35, 10, number_format($total, 2), 'TB', 1, 'R');
+        $pdf->SetFont('helvetica', 'B', 8.5);
+        $pdf->Cell(array_sum(array_slice($widths, 0, 7)), 10, "Total Amount:", 'TB', 0, 'L');
+        $pdf->Cell($widths[7], 10, number_format($total, 2), 'TB', 1, 'R');
 
         $pdf->updatePageTotal($patotal);
 
@@ -1101,9 +1193,9 @@ class Report extends MX_Controller
 
 
         $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(75, 10, 'Category Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(50, 10, 'Category Name', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(60, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(20, 10, 'Qty', 'TB', 0, 'C', 0, '', 1);
+        $pdf->Cell(45, 10, 'Qty', 'TB', 0, 'C', 0, '', 1);
         $pdf->Cell(30, 10, 'Amount', 'TB', 0, 'R', 0, '', 1);
 
 
@@ -1131,26 +1223,19 @@ class Report extends MX_Controller
                 $page = $page + 1;
                 $this->header($pdf, $page, "Sales Report (Category Wise)", $_SESSION['src_istype'], $_SESSION['srcfrom_date'], $_SESSION['srcto_date']);
                 $pdf->SetFont('helvetica', 'B', 12);
-                $pdf->Cell(75, 10, 'Category Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(50, 10, 'Category Name', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(60, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(20, 10, 'Qty', 'TB', 0, 'C', 0, '', 1);
+                $pdf->Cell(45, 10, 'Qty', 'TB', 0, 'C', 0, '', 1);
                 $pdf->Cell(30, 10, 'Amount', 'TB', 0, 'R', 0, '', 1);
                 $pdf->Ln(10);
             }
             $patotal = $patotal + $row['total_price'];
             $total = $total + $row['total_price'];
 
-            // $pdf->SetFont('', '', 10);
-            // $pdf->Cell(45, 8, $row['category_name'], 0, 0, 'L');
-            // $pdf->Cell(50, 8,  $row['product_name'], 0, 0, 'L');
-            // $pdf->Cell(30, 8,  $row['date'], 0, 0, 'L');
-            // $pdf->Cell(20, 8,  $row['quantity'], 0, 0, 'R');
-            // $pdf->Cell(40, 8, number_format($row['total_price'], 2), 0, 0, 'R');
-
             $pdf->SetFont('', '', 10);
-            $pdf->MultiCell(75, 8, $row['category_name'], '', 'L', 0, 0);
+            $pdf->MultiCell(50, 8, $row['category_name'], '', 'L', 0, 0);
             $pdf->MultiCell(60, 8, $row['product_name'], '', 'L', 0, 0);
-            $pdf->MultiCell(20, 8, $row['quantity'], '', 'C', 0, 0);
+            $pdf->MultiCell(45, 8, $row['quantity'], '', 'C', 0, 0);
             $pdf->MultiCell(30, 8,  number_format($row['total_price'], 2), '', 'R', 0, 0);
             $pdf->Ln(10);
 
@@ -1236,7 +1321,7 @@ class Report extends MX_Controller
             $pdf->SetFont('', '', 10);
             $pdf->Cell(50, 8, $row['first_name'], 0, 0, 'L');
             $pdf->Cell(50, 8,  $row['last_name'], 0, 0, 'L');
-            $pdf->Cell(40, 8,  $row['toal_invoice'], 0, 0, 'C');
+            $pdf->Cell(40, 8,  $row['total_invoice'], 0, 0, 'C');
             $pdf->Cell(45, 8, number_format($row['amount'], 2), 0, 0, 'R');
             $pdf->Ln(8);
 
@@ -1278,9 +1363,9 @@ class Report extends MX_Controller
 
 
         $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(75, 10, 'Category Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(50, 10, 'Category Name', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(60, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(20, 10, 'Qty', 'TB', 0, 'C', 0, '', 1);
+        $pdf->Cell(45, 10, 'Qty', 'TB', 0, 'C', 0, '', 1);
         $pdf->Cell(30, 10, 'Amount', 'TB', 0, 'R', 0, '', 1);
 
 
@@ -1308,9 +1393,9 @@ class Report extends MX_Controller
                 $page = $page + 1;
                 $this->header($pdf, $page, "Purchase Report (Category Wise)", $_SESSION['src_istype'], $_SESSION['srcfrom_date'], $_SESSION['srcto_date']);
                 $pdf->SetFont('helvetica', 'B', 12);
-                $pdf->Cell(75, 10, 'Category Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(50, 10, 'Category Name', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(60, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(20, 10, 'Qty', 'TB', 0, 'C', 0, '', 1);
+                $pdf->Cell(45, 10, 'Qty', 'TB', 0, 'C', 0, '', 1);
                 $pdf->Cell(30, 10, 'Amount', 'TB', 0, 'R', 0, '', 1);
                 $pdf->Ln(10);
             }
@@ -1320,9 +1405,9 @@ class Report extends MX_Controller
 
 
             $pdf->SetFont('', '', 10);
-            $pdf->MultiCell(75, 8, $row['category_name'], '', 'L', 0, 0);
+            $pdf->MultiCell(50, 8, $row['category_name'], '', 'L', 0, 0);
             $pdf->MultiCell(60, 8, $row['product_name'], '', 'L', 0, 0);
-            $pdf->MultiCell(20, 8, $row['quantity'], '', 'C', 0, 0);
+            $pdf->MultiCell(45, 8, $row['quantity'], '', 'C', 0, 0);
             $pdf->MultiCell(30, 8,  number_format($row['total_price'], 2), '', 'R', 0, 0);
 
             // $pdf->Cell(40, 8, number_format($row['total_price'], 2), 0, 0, 'R');
@@ -1363,7 +1448,7 @@ class Report extends MX_Controller
     public function header($pdf, $page, $head, $type, $from, $to)
     {
         $pdf->Ln(5);
-        $company_info     = $this->service_model->company_info();
+        $company_info     = $this->company_info();
         $currency_details = $this->service_model->web_setting();
         $pdf->SetFont('helvetica', 'B', 100);
         $x = $pdf->GetX();
@@ -1413,6 +1498,28 @@ class Report extends MX_Controller
         $pdf->SetXY($pageWidth - $rightMargin - 60, 13);
         $pdf->Cell(50, 10, "", 0, 0, 'R');
         $pdf->Ln(40);
+    }
+
+    public function company_info()
+    {
+        $encryption_key = Config::$encryption_key;
+
+
+        return  $data = $this->db->select("
+     company_id,
+     AES_DECRYPT(company_name, '{$encryption_key}') AS company_name,
+     AES_DECRYPT(email, '{$encryption_key}') AS email,
+     AES_DECRYPT(address, '{$encryption_key}') AS address,
+     AES_DECRYPT(mobile, '{$encryption_key}') AS mobile,
+	AES_DECRYPT(website, '{$encryption_key}') AS website,
+    		AES_DECRYPT(vat_no, '{$encryption_key}') AS vat_no,
+		 AES_DECRYPT(cr_no, '{$encryption_key}') AS cr_no,
+     status
+ ")
+            ->from('company_information')
+            ->where('company_id', $_SESSION['reporttype'])
+            ->get()
+            ->result_array();
     }
 
 
@@ -1628,6 +1735,23 @@ GROUP By pi.id";
         echo json_encode("");
     }
 
+    public function set_purchase_product_session()
+    {
+        $_SESSION['purchase_reportsrp'] = $this->input->post('datas');
+        echo json_encode("");
+    }
+
+    public function set_purchase_category_session()
+    {
+        $_SESSION['purchase_reportprc'] = $this->input->post('datas');
+        echo json_encode("");
+    }
+
+    public function set_sales_category_session()
+    {
+        $_SESSION['sale_reportsrc'] = $this->input->post('datas');
+        echo json_encode("");
+    }
 
     public function livestock_reportdata()
     {
@@ -2466,6 +2590,7 @@ ORDER BY createddate DESC
     public function bdtask_stock_audit_report()
     {
         $encryption_key = Config::$encryption_key;
+        $_SESSION['reporttype'] =   1;
 
         if (!$this->permission1->method('stock_audit_report', 'read')->access()) {
             $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
@@ -2843,68 +2968,76 @@ ORDER BY createddate DESC
 
 
     public function bdtask_sales_order_report()
-    { 
+    {
         $data['title']      = display('sales_order_report');
         $data['module']     = "report";
         $data['page']       = "sales_order_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
     public function bdtask_sales_return_report()
-    { 
+    {
         $data['title']      = display('sales_return_report');
         $data['module']     = "report";
         $data['page']       = "sales_return_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
     public function bdtask_purchase_order_report()
-    { 
+    {
         $data['title']      = display('purchase_order_report');
         $data['module']     = "report";
         $data['page']       = "purchase_order_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
     public function bdtask_purchase_return_report()
-    { 
+    {
         $data['title']      = display('purchase_return_report');
         $data['module']     = "report";
         $data['page']       = "purchase_return_report";
+         $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
     public function bdtask_grn_report()
-    { 
+    {
         $data['title']      = display('grn_report');
         $data['module']     = "report";
         $data['page']       = "grn_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
     public function bdtask_gdn_report()
-    { 
+    {
         $data['title']      = display('gdn_report');
         $data['module']     = "report";
         $data['page']       = "gdn_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
     public function bdtask_gross_profit_report()
-    { 
+    {
         $data['title']      = display('gross_profit_report');
         $data['module']     = "report";
         $data['page']       = "gross_profit_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
     public function bdtask_gross_profit_category_report()
-    { 
+    {
         $data['title']      = display('gross_profit_category_report');
         $data['product_list']  = $this->report_model->product_list();
         $data['category_list']  = $this->report_model->category_list_product();
         $data['module']     = "report";
         $data['page']       = "gross_profit_category_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
@@ -2975,12 +3108,16 @@ ORDER BY createddate DESC
         $empid       = $this->input->post('empid');
         $branch      = $this->input->post('branch');
         $customer_id = $this->input->post('customer_id');
+        $status      = $this->input->post('status');
+        $incident_type = $this->input->post('incident_type');
 
-        $report_data = $this->report_model->sales_order_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id);
+        $report_data = $this->report_model->sales_order_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id, $status, $incident_type);
         $_SESSION['sale_order_reportsori'] = $report_data;
         $_SESSION['sori_istype']           = $this->input->post('istype');
         $_SESSION['sorifrom_date']         = $from_date;
         $_SESSION['sorito_date']           = $to_date;
+        $_SESSION['sori_status']           = $status;
+        $_SESSION['sori_incident_type']    = $incident_type;
 
         echo json_encode($_SESSION['sale_order_reportsori']);
     }
@@ -3095,8 +3232,9 @@ ORDER BY createddate DESC
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(45, 10, 'Order Date',     'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(40, 10, 'Order No',       'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(60, 10, 'Customer Name',  'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(40, 10, 'Amount',         'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(45, 10, 'Customer Name',  'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(25, 10, 'Status',         'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(25, 10, 'Amount',         'TB', 0, 'R', 0, '', 1);
         $pdf->Ln(10);
 
         $data       = isset($_SESSION['sale_order_reportsori']) ? $_SESSION['sale_order_reportsori'] : [];
@@ -3115,8 +3253,9 @@ ORDER BY createddate DESC
                 $pdf->SetFont('helvetica', 'B', 12);
                 $pdf->Cell(45, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(40, 10, 'Order No',      'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(60, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(40, 10, 'Amount',        'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(45, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(25, 10, 'Status',        'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(25, 10, 'Amount',        'TB', 0, 'R', 0, '', 1);
                 $pdf->Ln(10);
             }
             $total   += $row['total'];
@@ -3125,8 +3264,9 @@ ORDER BY createddate DESC
             $pdf->SetFont('', '', 10);
             $pdf->Cell(45, 8, $row['date'],          0, 0, 'L');
             $pdf->Cell(40, 8, $row['invoiceno'],     0, 0, 'L');
-            $pdf->Cell(60, 8, $row['customer_name'], 0, 0, 'L');
-            $pdf->Cell(40, 8, number_format($row['total'], 2), 0, 1, 'R');
+            $pdf->Cell(45, 8, $row['customer_name'], 0, 0, 'L');
+            $pdf->Cell(25, 8, $row['status_label'],   0, 0, 'L');
+            $pdf->Cell(25, 8, number_format($row['total'], 2), 0, 1, 'R');
         }
 
         $pdf->SetFont('', 'B', 12);
@@ -3247,7 +3387,7 @@ ORDER BY createddate DESC
             $pdf->Cell(25, 8, $row['grn_id'],        0, 0, 'L');
             $pdf->Cell(30, 8, $row['voucherno'],     0, 0, 'L');
             $pdf->Cell(35, 8, $row['store'],         0, 0, 'L');
-            $pdf->Cell(32, 8, $row['type'],          0, 0, 'L');
+            $pdf->Cell(32, 8, $row['incidenttype'],   0, 0, 'L');
             $pdf->Cell(35, 8, $row['supplier_name'], 0, 1, 'L');
         }
 
@@ -3307,7 +3447,7 @@ ORDER BY createddate DESC
             $pdf->Cell(25, 8, $row['gdn_id'],        0, 0, 'L');
             $pdf->Cell(30, 8, $row['voucherno'],     0, 0, 'L');
             $pdf->Cell(35, 8, $row['store'],         0, 0, 'L');
-            $pdf->Cell(32, 8, $row['type'],          0, 0, 'L');
+            $pdf->Cell(32, 8, $row['incidenttype'],  0, 0, 'L');
             $pdf->Cell(35, 8, $row['customer_name'], 0, 1, 'L');
         }
 
@@ -3334,7 +3474,7 @@ ORDER BY createddate DESC
         $this->header($pdf, $page, "Purchase Order Report", $_SESSION['pori_istype'], $_SESSION['porifrom_date'], $_SESSION['porito_date']);
 
         $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(35, 10, 'Purchase Date', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(35, 10, 'Order Date', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(35, 10, 'Order No', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(50, 10, 'Supplier Name', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(30, 10, 'Status', 'TB', 0, 'L', 0, '', 1);
@@ -3357,7 +3497,7 @@ ORDER BY createddate DESC
                 $page = $page + 1;
                 $this->header($pdf, $page, "Purchase Order Report", $_SESSION['pori_istype'], $_SESSION['porifrom_date'], $_SESSION['porito_date']);
                 $pdf->SetFont('helvetica', 'B', 12);
-                $pdf->Cell(35, 10, 'Purchase Date', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(35, 10, 'Order Date', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(35, 10, 'Order No', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(50, 10, 'Supplier Name', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(30, 10, 'Status', 'TB', 0, 'L', 0, '', 1);
@@ -3482,6 +3622,7 @@ ORDER BY createddate DESC
         );
         $data['module']   = "report";
         $data['page']     = "servicereport_invoicewise";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
@@ -3847,6 +3988,7 @@ ORDER BY createddate DESC
         );
         $data['module']   = "report";
         $data['page']     = "service_order_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
@@ -3953,6 +4095,7 @@ ORDER BY createddate DESC
         );
         $data['module']   = "report";
         $data['page']     = "product_batch_summary_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
@@ -4006,7 +4149,12 @@ ORDER BY createddate DESC
         $pdf->SetFont('helvetica', '', 8.5);
 
         foreach ($data as $row) {
-            if ($pdf->GetY() + $lineHeight > $maxY) {
+            $supplier  = isset($row['supplier']) && trim((string)$row['supplier']) !== '' ? $row['supplier'] : 'n/a';
+            $batchText = (string) $row['batch_id'];
+            // getStringHeight gives the exact height MultiCell will render
+            $rowHeight = max($lineHeight, $pdf->getStringHeight(28, $batchText));
+
+            if ($pdf->GetY() + $rowHeight > $maxY) {
                 $pdf->AddPage('L', 'A4');
                 $page = $page + 1;
                 $pdf->SetY(5);
@@ -4015,19 +4163,24 @@ ORDER BY createddate DESC
                 $pdf->SetFont('helvetica', '', 8.5);
             }
 
-            $supplier = isset($row['supplier']) && trim((string)$row['supplier']) !== '' ? $row['supplier'] : 'n/a';
+            $rowY = $pdf->GetY();
 
-            $pdf->Cell(8, 8, $row['sl'], 'LRB', 0, 'C');
-            $pdf->Cell(28, 8, $this->fitPdfText($pdf, $row['category'], 28), 'LRB', 0, 'L');
-            $pdf->Cell(46, 8, $this->fitPdfText($pdf, $row['product_name'], 46), 'LRB', 0, 'L');
-            $pdf->Cell(34, 8, $this->fitPdfText($pdf, $supplier, 34), 'LRB', 0, 'L');
-            $pdf->Cell(28, 8, $this->fitPdfText($pdf, $row['batch_id'], 28), 'LRB', 0, 'L');
-            $pdf->Cell(22, 8, $row['manufacture_date'], 'LRB', 0, 'C');
-            $pdf->Cell(22, 8, $row['packing_date'], 'LRB', 0, 'C');
-            $pdf->Cell(22, 8, $row['expiry_date'], 'LRB', 0, 'C');
-            $pdf->Cell(18, 8, number_format((float)$row['mrp'], 2), 'LRB', 0, 'R');
-            $pdf->Cell(24, 8, $row['avqty'], 'LRB', 0, 'R');
-            $pdf->Cell(20, 8, $row['status'], 'LRB', 1, 'C');
+            $pdf->Cell(8,  $rowHeight, $row['sl'], 'LRB', 0, 'C');
+            $pdf->Cell(28, $rowHeight, $this->fitPdfText($pdf, $row['category'], 28), 'LRB', 0, 'L');
+            $pdf->Cell(46, $rowHeight, $this->fitPdfText($pdf, $row['product_name'], 46), 'LRB', 0, 'L');
+            $pdf->Cell(34, $rowHeight, $this->fitPdfText($pdf, $supplier, 34), 'LRB', 0, 'L');
+
+            $batchX = $pdf->GetX();
+            $pdf->MultiCell(28, $lineHeight, $batchText, 'LRB', 'L', false, 0, $batchX, $rowY, true, 0, false, true, $rowHeight, 'T', false);
+            // Explicitly reset cursor to right of batch cell so remaining cells align correctly
+            $pdf->SetXY($batchX + 28, $rowY);
+
+            $pdf->Cell(22, $rowHeight, $row['manufacture_date'], 'LRB', 0, 'C');
+            $pdf->Cell(22, $rowHeight, $row['packing_date'], 'LRB', 0, 'C');
+            $pdf->Cell(22, $rowHeight, $row['expiry_date'], 'LRB', 0, 'C');
+            $pdf->Cell(18, $rowHeight, number_format((float)$row['mrp'], 2), 'LRB', 0, 'R');
+            $pdf->Cell(24, $rowHeight, $row['avqty'], 'LRB', 0, 'R');
+            $pdf->Cell(20, $rowHeight, $row['status'], 'LRB', 1, 'C');
         }
 
         if (empty($data)) {
@@ -4093,6 +4246,7 @@ ORDER BY createddate DESC
         );
         $data['module']   = "report";
         $data['page']     = "purchasereport_productwise";
+         $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
     }
 
@@ -4103,8 +4257,9 @@ ORDER BY createddate DESC
         $empid = $this->input->post('empid');
         $productid = $this->input->post('productid');
         $branch = $this->input->post('branch');
+       $incident_type = $this->input->post('incident_type');
 
-        $report_data = $this->report_model->retrieve_product_purchase_report($from_date, $to_date, $productid, $empid, $branch);
+        $report_data = $this->report_model->retrieve_product_purchase_report($from_date, $to_date, $productid, $empid, $branch,$incident_type);
         $_SESSION['purchase_reportsrp'] =  $report_data;
         $_SESSION['prp_istype'] =   $this->input->post('istype');
         $_SESSION['prpfrom_date'] = $from_date;
@@ -4112,7 +4267,7 @@ ORDER BY createddate DESC
         echo json_encode($_SESSION['purchase_reportsrp']);
     }
 
-    public function generate_purchasereportproduct()
+      public function generate_purchasereportproduct()
     {
         $page = 1;
         $pdf = new SalesReportInvoicewise('P', 'mm', 'A4', true, 'UTF-8', false);
@@ -4130,15 +4285,15 @@ ORDER BY createddate DESC
         $this->header($pdf, $page, "Purchase Report (Product Wise)", $_SESSION['prp_istype'], $_SESSION['prpfrom_date'], $_SESSION['prpto_date']);
 
 
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(24, 10, 'Purchase Date', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(36, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(23, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(22, 10, 'Invoice Type', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(15, 10, 'Supplier Name', 'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(27, 10, 'Rate', 'TB', 0, 'R', 0, '', 1);
-        $pdf->Cell(15, 10, 'Qty', 'TB', 0, 'R', 0, '', 1);
-        $pdf->Cell(27, 10, 'Total', 'TB', 0, 'R', 0, '', 1);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(24, 9, 'Purchase Date', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(36, 9, 'Product Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(23, 9, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(22, 9, 'Incident Type', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(20, 9, 'Supplier Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(24, 9, 'Rate', 'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(15, 9, 'Qty', 'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(27, 9, 'Total', 'TB', 0, 'R', 0, '', 1);
 
 
         $pdf->Ln(10);
@@ -4160,13 +4315,13 @@ ORDER BY createddate DESC
                 $pdf->AddPage();
                 $page = $page + 1;
                 $this->header($pdf, $page, "Purchase Report (Product Wise)", $_SESSION['prp_istype'], $_SESSION['prpfrom_date'], $_SESSION['prpto_date']);
-                $pdf->SetFont('helvetica', 'B', 12);
+                $pdf->SetFont('helvetica', 'B', 9);
                 $pdf->Cell(24, 10, 'Purchase Date', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(36, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(23, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(22, 10, 'Invoice Type', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(15, 10, 'Supplier Name', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(27, 10, 'Rate', 'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(22, 10, 'Incident Type', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(20, 10, 'Supplier Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(24, 10, 'Rate', 'TB', 0, 'R', 0, '', 1);
                 $pdf->Cell(15, 10, 'Qty', 'TB', 0, 'R', 0, '', 1);
                 $pdf->Cell(27, 10, 'Total', 'TB', 0, 'R', 0, '', 1);
         
@@ -4175,13 +4330,13 @@ ORDER BY createddate DESC
             $patotal = $patotal + $row['total'];
             $total = $total + $row['total'];
 
-            $pdf->SetFont('', '', 10);
+            $pdf->SetFont('', '', 8);
             $pdf->MultiCell(24, 8, $row['date'],'', 'L', 0, 0);
             $pdf->MultiCell(36, 8,  $row['product_name'], '', 'L', 0, 0);
             $pdf->MultiCell(23, 8,  $row['chalan_no'], '', 'L', 0, 0);
             $pdf->MultiCell(22, 8,  $row['incidenttype'], '', 'L', 0, 0);
-            $pdf->MultiCell(15, 8,  $row['supplier_name'], '', 'L', 0, 0);
-            $pdf->MultiCell(27, 8, number_format($row['product_rate'], 2), '', 'R', 0, 0);
+            $pdf->MultiCell(20, 8,  $row['supplier_name'], '', 'L', 0, 0);
+            $pdf->MultiCell(24, 8, number_format($row['product_rate'], 2), '', 'R', 0, 0);
             $pdf->MultiCell(15, 8,  $row['quantity']." ". $row['unit_name'], '', 'R', 0, 0);
             $pdf->MultiCell(27, 8, number_format($row['total'], 2), '', 'R', 0, 0);
             $pdf->Ln(8);
@@ -4192,7 +4347,7 @@ ORDER BY createddate DESC
         }
         $pdf->SetFont('', 'B', 12);
         $pdf->Cell(50, 10, "Total Amount:", 'TB', 0, 'L');
-        $pdf->Cell(100, 10, "", 'TB', 0, 'L');
+        $pdf->Cell(107, 10, "", 'TB', 0, 'L');
         $pdf->Cell(35, 10, number_format($total, 2), 'TB', 1, 'R');
 
         $pdf->updatePageTotal($patotal);
@@ -4221,6 +4376,7 @@ ORDER BY createddate DESC
         $data['module']   = "report";
         $data['type'] = 1;
         $data['page']     = "voucher_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
 
     }
@@ -4242,6 +4398,7 @@ ORDER BY createddate DESC
         $data['module']   = "report";
         $data['type'] = 2;
         $data['page']     = "voucher_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
 
     }
@@ -4264,6 +4421,7 @@ ORDER BY createddate DESC
         $data['module']   = "report";
         $data['type'] = 3;
         $data['page']     = "voucher_report";
+        $_SESSION['reporttype'] =   1;
         echo modules::run('template/layout', $data);
 
     }

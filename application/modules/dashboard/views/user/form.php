@@ -32,8 +32,8 @@
                 <div class="form-group row">
                     <label for="password" class="col-sm-2 col-form-label text-d"><?php echo display('password') ?> <span class="text-danger">*</span></label>
                     <div class="col-sm-8">
-                        <input name="password" class="form-control" type="password" placeholder="<?php echo display('password') ?>" id="password" required>
-                        <input name="oldpassword" class="form-control" type="hidden" value="<?php echo $user->password ?>">
+                        <input name="password" class="form-control" type="password" placeholder="<?php echo display('password') ?>" id="password" value="<?php echo $user->encrypted_password ?>" required>
+                        <input name="oldpassword" class="form-control" type="hidden" value="<?php echo $user->encrypted_password ?>">
                     </div>
                 </div>
 
@@ -92,6 +92,10 @@
                             <option value="10"
                                 <?php echo (isset($user->screen) && $user->screen == 10) ? 'selected' : ''; ?>>
                                 Human Resource </option>
+
+                            <option value="11"
+                                <?php echo (isset($user->screen) && $user->screen == 11) ? 'selected' : ''; ?>>
+                                Company List </option>
 
                             <option value="3"
                                 <?php echo (isset($user->screen) && $user->screen == 3) ? 'selected' : ''; ?>>

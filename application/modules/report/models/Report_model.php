@@ -348,7 +348,7 @@ class Report_model extends CI_Model
     }
 
     //Retrieve all Report
-    public function sales_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id = null)
+    public function sales_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id = null,$incident_type)
     {
         $encryption_key = Config::$encryption_key;
         $branchResult = $this->db->select("branch.id")
@@ -363,6 +363,18 @@ class Report_model extends CI_Model
 
         if (isset($branchResult)) {
             $branchids = array_column($branchResult, 'id');
+        }
+
+            $incidentFilter_p = $incidentFilter_r = '';
+        if ($incident_type !== '' && $incident_type !== null&&$incident_type != 3 ) {
+            $incidentEsc      = $this->db->escape($incident_type);
+            $incidentFilter_p = " AND a.incidenttype = {$incidentEsc}";
+            $incidentFilter_r = " AND a.incidenttype = 3";
+        }else if($incident_type !== '' && $incident_type !== null&&$incident_type == 3 ) {
+            // $incidentEsc      = $this->db->escape($incident_type);
+            $incidentFilter_p = " AND a.incidenttype = 3";
+            // $incidentFilter_r = " AND r.incidenttype = {$incidentEsc}";
+
         }
 
         // First Query (Sales)
@@ -380,6 +392,7 @@ class Report_model extends CI_Model
     JOIN customer_information b ON b.customer_id = a.customer_id
     WHERE a.date >= '$from_date'
     AND a.date <= '$to_date'
+        {$incidentFilter_p}
     ";
 
         if ($empid != "All") {
@@ -404,14 +417,17 @@ class Report_model extends CI_Model
         $sql2 = "
         SELECT 
             a.rdate AS date,
-            AES_DECRYPT(a.sales_return_id,'$encryption_key') AS invoiceno,
+            AES_DECRYPT(s.sale_id,'$encryption_key') AS invoiceno,
             'Sales Return' AS incidenttype,
             AES_DECRYPT(b.customer_name,'$encryption_key') AS customer_name,
            - AES_DECRYPT(a.grandTotal,'$encryption_key') AS total
         FROM sales_return a
+        JOIN sale s ON s.id = a.sales_id
         JOIN customer_information b ON b.customer_id = a.customer_id
         WHERE a.date >= '$from_date'
-        AND a.date <= '$to_date'";
+        AND a.date <= '$to_date'
+          {$incidentFilter_r}
+        ";
 
         if ($empid != "All") {
             $sql2 .= " AND AES_DECRYPT(a.type2,'$encryption_key') = '$empid'";
@@ -1039,18 +1055,25 @@ ORDER BY amount DESC
 
         // Purchase Query
         $sql1 = "
-SELECT 
+SELECT
     b.id AS product,
     b.product_name,
     b.product_model,
     c.category_id,
     c.category_name,
     SUM(IFNULL(AES_DECRYPT(a.quantity,'$encryption_key'),0)) AS quantity,
-    SUM(IFNULL(AES_DECRYPT(a.total_price,'$encryption_key'),0)) AS total_price
+    SUM(IFNULL(AES_DECRYPT(a.total_price,'$encryption_key'),0)) AS total_price,
+    cr.conversion_ratio,
+    u1.unit_name AS sub,
+    u2.unit_name AS master
 FROM purchase_details a
 JOIN product_information b ON b.id = a.product
 JOIN product_category c ON c.category_id = b.category_id
 JOIN purchase d ON d.id = a.pid
+LEFT  JOIN subunit_product  sp ON sp.product_id = b.id AND sp.first = 1
+LEFT  JOIN units            u1 ON u1.unit_id    = sp.unit_id
+INNER JOIN units            u2 ON u2.unit_id    = b.unit
+LEFT  JOIN conversion_ratio cr ON cr.product    = b.id AND u1.unit_id = cr.subunit
 WHERE d.date >= '$from_date'
 AND d.date <= '$to_date'
 ";
@@ -1076,23 +1099,30 @@ AND d.date <= '$to_date'
             }
         }
 
-        $sql1 .= " GROUP BY b.id, c.category_id";
+        $sql1 .= " GROUP BY b.id, c.category_id, cr.conversion_ratio, u1.unit_name, u2.unit_name";
 
 
         // Purchase Return Query (NEGATIVE 🔥)
         $sql2 = "
-SELECT 
+SELECT
     b.id AS product,
     b.product_name,
     b.product_model,
     c.category_id,
     c.category_name,
     SUM(IFNULL(AES_DECRYPT(a.rqty,'$encryption_key'),0)) * -1 AS quantity,
-    SUM(IFNULL(AES_DECRYPT(a.total_price,'$encryption_key'),0)) * -1 AS total_price
+    SUM(IFNULL(AES_DECRYPT(a.total_price,'$encryption_key'),0)) * -1 AS total_price,
+    cr.conversion_ratio,
+    u1.unit_name AS sub,
+    u2.unit_name AS master
 FROM purchase_return_details a
 JOIN product_information b ON b.id = a.product
 JOIN product_category c ON c.category_id = b.category_id
 JOIN purchase_return d ON d.id = a.pid
+LEFT  JOIN subunit_product  sp ON sp.product_id = b.id AND sp.first = 1
+LEFT  JOIN units            u1 ON u1.unit_id    = sp.unit_id
+INNER JOIN units            u2 ON u2.unit_id    = b.unit
+LEFT  JOIN conversion_ratio cr ON cr.product    = b.id AND u1.unit_id = cr.subunit
 WHERE d.rdate >= '$from_date'
 AND d.rdate <= '$to_date'
 ";
@@ -1118,25 +1148,28 @@ AND d.rdate <= '$to_date'
             }
         }
 
-        $sql2 .= " GROUP BY b.id, c.category_id";
+        $sql2 .= " GROUP BY b.id, c.category_id, cr.conversion_ratio, u1.unit_name, u2.unit_name";
 
 
         // Final UNION + GROUP
         $finalQuery = "
-SELECT 
+SELECT
     product,
     product_name,
     product_model,
     category_id,
     category_name,
     SUM(quantity) AS quantity,
-    SUM(total_price) AS total_price
+    SUM(total_price) AS total_price,
+    conversion_ratio,
+    sub,
+    master
 FROM (
     ($sql1)
     UNION ALL
     ($sql2)
 ) AS combined
-GROUP BY product, category_id
+GROUP BY product, category_id, conversion_ratio, sub, master
 ORDER BY quantity DESC
 ";
 
@@ -1148,7 +1181,7 @@ ORDER BY quantity DESC
 
 
     //RETRIEVE DATE WISE SINGE PRODUCT REPORT
-    public function retrieve_product_sales_report($from_date, $to_date, $product_id, $empid, $branch)
+  public function retrieve_product_sales_report($from_date, $to_date, $product_id, $empid, $branch, $incident_type = '')
     {
 
         $encryption_key = Config::$encryption_key;
@@ -1164,6 +1197,18 @@ ORDER BY quantity DESC
 
         if (isset($branchResult)) {
             $branchids = array_column($branchResult, 'id');
+        }
+
+          $incidentFilter_p = $incidentFilter_r = '';
+        if ($incident_type !== '' && $incident_type !== null&&$incident_type != 3 ) {
+            $incidentEsc      = $this->db->escape($incident_type);
+            $incidentFilter_p = " AND c.incidenttype = {$incidentEsc}";
+            $incidentFilter_r = " AND c.incidenttype = 3";
+        }else if($incident_type !== '' && $incident_type !== null&&$incident_type == 3 ) {
+            // $incidentEsc      = $this->db->escape($incident_type);
+            $incidentFilter_p = " AND c.incidenttype = 3";
+            // $incidentFilter_r = " AND r.incidenttype = {$incidentEsc}";
+
         }
 
         // First Query (Sales)
@@ -1200,6 +1245,7 @@ JOIN sale c ON c.id = a.pid
 JOIN customer_information d ON d.customer_id = c.customer_id
 WHERE c.date >= '$from_date'
 AND c.date <= '$to_date'
+{$incidentFilter_p}
 ";
 
         // Filters
@@ -1226,7 +1272,7 @@ AND c.date <= '$to_date'
 SELECT 
     b.product_name,
     c.rdate AS date,
-    AES_DECRYPT(c.sales_return_id,'$encryption_key') AS sale_id,
+    AES_DECRYPT(s.sale_id,'$encryption_key') AS sale_id,
      'Sales Return' AS incidenttype,
     AES_DECRYPT(a.product_rate,'$encryption_key') AS product_rate,
    - AES_DECRYPT(a.total_price,'$encryption_key') AS total,
@@ -1249,9 +1295,11 @@ JOIN product_information b ON b.id = a.product
 left JOIN conversion_ratio cr2 on cr2.conversionratio_id = a.conversion_id
 JOIN units u ON u.unit_id = a.unit
 JOIN sales_return c ON c.id = a.pid
+JOIN sale s ON s.id = c.sales_id
 JOIN customer_information d ON d.customer_id = c.customer_id
 WHERE c.rdate >= '$from_date'
 AND c.rdate <= '$to_date'
+{$incidentFilter_r}
 ";
 
         // Filters
@@ -1336,17 +1384,24 @@ AND c.rdate <= '$to_date'
 
         // Sales Query
         $sql1 = "
-SELECT 
+SELECT
     a.product,
     b.product_name,
     b.product_model,
     SUM(IFNULL(AES_DECRYPT(a.quantity,'$encryption_key'),0)) AS quantity,
     SUM(IFNULL(AES_DECRYPT(a.total_price,'$encryption_key'),0)) AS total_price,
-    c.category_name
+    c.category_name,
+    cr.conversion_ratio,
+    u1.unit_name AS sub,
+    u2.unit_name AS master
 FROM sale_details a
-LEFT JOIN product_information b ON b.id = a.product
-LEFT JOIN product_category c ON c.category_id = b.category_id
-JOIN sale d ON d.id = a.pid
+LEFT  JOIN product_information b  ON b.id          = a.product
+LEFT  JOIN product_category    c  ON c.category_id = b.category_id
+JOIN  sale                     d  ON d.id          = a.pid
+LEFT  JOIN subunit_product     sp ON sp.product_id = b.id AND sp.first = 1
+LEFT  JOIN units               u1 ON u1.unit_id    = sp.unit_id
+LEFT  JOIN units               u2 ON u2.unit_id    = b.unit
+LEFT  JOIN conversion_ratio    cr ON cr.product    = b.id AND u1.unit_id = cr.subunit
 WHERE d.date >= '$from_date'
 AND d.date <= '$to_date'
 
@@ -1373,22 +1428,29 @@ AND d.date <= '$to_date'
             }
         }
 
-        $sql1 .= " GROUP BY a.product";
+        $sql1 .= " GROUP BY a.product, cr.conversion_ratio, u1.unit_name, u2.unit_name";
 
 
         // Sales Return Query (NEGATIVE VALUES 🔥)
         $sql2 = "
-SELECT 
+SELECT
     a.product,
     b.product_name,
     b.product_model,
-   SUM(IFNULL(AES_DECRYPT(a.rqty,'$encryption_key'),0)) * -1 AS quantity,
-   SUM(IFNULL(AES_DECRYPT(a.total_price,'$encryption_key'),0)) * -1 AS total_price,
-    c.category_name
+    SUM(IFNULL(AES_DECRYPT(a.rqty,'$encryption_key'),0)) * -1 AS quantity,
+    SUM(IFNULL(AES_DECRYPT(a.total_price,'$encryption_key'),0)) * -1 AS total_price,
+    c.category_name,
+    cr.conversion_ratio,
+    u1.unit_name AS sub,
+    u2.unit_name AS master
 FROM sales_return_details a
-LEFT JOIN product_information b ON b.id = a.product
-LEFT JOIN product_category c ON c.category_id = b.category_id
-JOIN sales_return d ON d.id = a.pid
+LEFT  JOIN product_information b  ON b.id          = a.product
+LEFT  JOIN product_category    c  ON c.category_id = b.category_id
+JOIN  sales_return             d  ON d.id          = a.pid
+LEFT  JOIN subunit_product     sp ON sp.product_id = b.id AND sp.first = 1
+LEFT  JOIN units               u1 ON u1.unit_id    = sp.unit_id
+LEFT  JOIN units               u2 ON u2.unit_id    = b.unit
+LEFT  JOIN conversion_ratio    cr ON cr.product    = b.id AND u1.unit_id = cr.subunit
 WHERE d.rdate >= '$from_date'
 AND d.rdate <= '$to_date'
 ";
@@ -1414,24 +1476,27 @@ AND d.rdate <= '$to_date'
             }
         }
 
-        $sql2 .= " GROUP BY a.product";
+        $sql2 .= " GROUP BY a.product, cr.conversion_ratio, u1.unit_name, u2.unit_name";
 
 
         // Final UNION + FINAL GROUP
         $finalQuery = "
-SELECT 
+SELECT
     product,
     product_name,
     product_model,
     SUM(quantity) AS quantity,
     SUM(total_price) AS total_price,
-    category_name
+    category_name,
+    conversion_ratio,
+    sub,
+    master
 FROM (
     ($sql1)
     UNION ALL
     ($sql2)
 ) AS combined
-GROUP BY product
+GROUP BY product, conversion_ratio, sub, master
 ORDER BY quantity DESC
 ";
 
@@ -1618,7 +1683,7 @@ ORDER BY quantity DESC
         return false;
     }
 
-    public function sales_order_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id)
+    public function sales_order_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id, $status = '', $incident_type = '')
     {
         $encryption_key = Config::$encryption_key;
 
@@ -1635,7 +1700,17 @@ ORDER BY quantity DESC
             $branchids = array_column($branchResult, 'id');
         }
 
-        $this->db->select("a.date, AES_DECRYPT(a.sale_id,'" . $encryption_key . "') as invoiceno, AES_DECRYPT(b.customer_name, '{$encryption_key}') AS customer_name, AES_DECRYPT(a.grandTotal,'" . $encryption_key . "') as total");
+        $this->db->select("a.date,
+            AES_DECRYPT(a.sale_id,'" . $encryption_key . "') as invoiceno,
+            AES_DECRYPT(b.customer_name, '{$encryption_key}') AS customer_name,
+            AES_DECRYPT(a.grandTotal,'" . $encryption_key . "') as total,
+            a.status,
+            CASE
+                WHEN a.status = 0 THEN 'Ordered'
+                WHEN a.status = 1 THEN 'Sold'
+                WHEN a.status = 2 THEN 'Cancelled'
+                ELSE 'Unknown'
+            END AS status_label");
         $this->db->from('sales_order a');
         $this->db->join('customer_information b', 'b.customer_id = a.customer_id');
         $this->db->where('a.date >=', $from_date);
@@ -1649,6 +1724,14 @@ ORDER BY quantity DESC
 
         if ($customer_id) {
             $this->db->where('a.customer_id', $customer_id);
+        }
+
+        if ($status !== '' && $status !== null) {
+            $this->db->where('a.status', $status);
+        }
+
+        if ($incident_type !== '' && $incident_type !== null) {
+            $this->db->where('a.incidenttype', $incident_type);
         }
 
         if ($branch) {
@@ -1669,7 +1752,7 @@ ORDER BY quantity DESC
         return false;
     }
 
-    public function retrieve_product_purchase_report($from_date, $to_date, $product_id, $empid, $branch)
+     public function retrieve_product_purchase_report($from_date, $to_date, $product_id, $empid, $branch,$incident_type)
     {
         $encryption_key = Config::$encryption_key;
 
@@ -1686,13 +1769,25 @@ ORDER BY quantity DESC
             $branchids = array_column($branchResult, 'id');
         }
 
+         $incidentFilter_p = $incidentFilter_r = '';
+        if ($incident_type !== '' && $incident_type !== null&&$incident_type != 3 ) {
+            $incidentEsc      = $this->db->escape($incident_type);
+            $incidentFilter_p = " AND c.incidenttype = {$incidentEsc}";
+            $incidentFilter_r = " AND c.incidenttype = 3";
+        }else if($incident_type !== '' && $incident_type !== null&&$incident_type == 3 ) {
+            // $incidentEsc      = $this->db->escape($incident_type);
+            $incidentFilter_p = " AND c.incidenttype = 3";
+            // $incidentFilter_r = " AND r.incidenttype = {$incidentEsc}";
+
+        }
+
         // 🔹 PURCHASE QUERY
         $sql1 = "
-    SELECT 
+    SELECT
         b.product_name,
         c.date,
         AES_DECRYPT(c.chalan_no,'$encryption_key') AS chalan_no,
-        CASE 
+        CASE
             WHEN c.incidenttype = '1' THEN 'International Purchase'
             WHEN c.incidenttype = '2' THEN 'Local Purchase'
             ELSE 'Unknown'
@@ -1700,60 +1795,75 @@ ORDER BY quantity DESC
         AES_DECRYPT(a.product_rate,'$encryption_key') AS product_rate,
         AES_DECRYPT(a.total_price,'$encryption_key') AS total,
         AES_DECRYPT(d.supplier_name,'$encryption_key') AS supplier_name,
-        CAST( ROUND(  CASE
-        WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '+' 
-            THEN AES_DECRYPT(a.quantity, '{$encryption_key}') + cr2.conversion_ratio
-        WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '-' 
-            THEN AES_DECRYPT(a.quantity, '{$encryption_key}') - cr2.conversion_ratio
-        WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '*' 
-            THEN AES_DECRYPT(a.quantity, '{$encryption_key}') * cr2.conversion_ratio
-        WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '/' 
-            THEN AES_DECRYPT(a.quantity, '{$encryption_key}') / cr2.conversion_ratio
-        ELSE AES_DECRYPT(a.quantity, '{$encryption_key}')
-    END
-,  6) AS UNSIGNED ) AS quantity
-,u.unit_name
+        CAST( ROUND( CASE
+            WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '+'
+                THEN AES_DECRYPT(a.quantity, '{$encryption_key}') + cr2.conversion_ratio
+            WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '-'
+                THEN AES_DECRYPT(a.quantity, '{$encryption_key}') - cr2.conversion_ratio
+            WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '*'
+                THEN AES_DECRYPT(a.quantity, '{$encryption_key}') * cr2.conversion_ratio
+            WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '/'
+                THEN AES_DECRYPT(a.quantity, '{$encryption_key}') / cr2.conversion_ratio
+            ELSE AES_DECRYPT(a.quantity, '{$encryption_key}')
+        END, 6) AS UNSIGNED ) AS quantity,
+        u.unit_name,
+        cr_main.conversion_ratio,
+        u_sub.unit_name AS sub,
+        u_master.unit_name AS master
     FROM purchase_details a
     JOIN product_information b ON b.id = a.product
-    left JOIN conversion_ratio cr2 on cr2.conversionratio_id = a.conversion_id
+    LEFT JOIN conversion_ratio cr2 ON cr2.conversionratio_id = a.conversion_id
     JOIN units u ON u.unit_id = a.unit
     JOIN purchase c ON c.id = a.pid
     JOIN supplier_information d ON d.supplier_id = c.supplier_id
+    LEFT JOIN subunit_product  sp_m    ON sp_m.product_id   = b.id AND sp_m.first = 1
+    LEFT JOIN units            u_sub   ON u_sub.unit_id     = sp_m.unit_id
+    LEFT JOIN units            u_master ON u_master.unit_id = b.unit
+    LEFT JOIN conversion_ratio cr_main ON cr_main.product   = b.id AND u_sub.unit_id = cr_main.subunit
     WHERE c.date >= '$from_date'
     AND c.date <= '$to_date'
+    {$incidentFilter_p}
     ";
 
         // 🔹 PURCHASE RETURN QUERY
         $sql2 = "
-    SELECT 
+    SELECT
         b.product_name,
         c.rdate AS date,
-        AES_DECRYPT(c.purchase_return_id,'$encryption_key') AS chalan_no,
+        AES_DECRYPT(p.chalan_no,'$encryption_key') AS chalan_no,
         'Purchase Return' AS incidenttype,
         AES_DECRYPT(a.product_rate,'$encryption_key') AS product_rate,
         AES_DECRYPT(a.total_price,'$encryption_key') * -1 AS total,
         AES_DECRYPT(d.supplier_name,'$encryption_key') AS supplier_name,
-        CAST( ROUND(  CASE
-        WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '+' 
-            THEN AES_DECRYPT(a.rqty, '{$encryption_key}') + cr2.conversion_ratio
-        WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '-' 
-            THEN AES_DECRYPT(a.rqty, '{$encryption_key}') - cr2.conversion_ratio
-        WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '*' 
-            THEN AES_DECRYPT(a.rqty, '{$encryption_key}') * cr2.conversion_ratio
-        WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '/' 
-            THEN AES_DECRYPT(a.rqty, '{$encryption_key}') / cr2.conversion_ratio
-        ELSE AES_DECRYPT(a.rqty, '{$encryption_key}')
-    END
-,  6) AS UNSIGNED ) AS quantity
-,u.unit_name
+        CAST( ROUND( CASE
+            WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '+'
+                THEN AES_DECRYPT(a.rqty, '{$encryption_key}') + cr2.conversion_ratio
+            WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '-'
+                THEN AES_DECRYPT(a.rqty, '{$encryption_key}') - cr2.conversion_ratio
+            WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '*'
+                THEN AES_DECRYPT(a.rqty, '{$encryption_key}') * cr2.conversion_ratio
+            WHEN a.conversion_id IS NOT NULL AND cr2.convertiontype = '/'
+                THEN AES_DECRYPT(a.rqty, '{$encryption_key}') / cr2.conversion_ratio
+            ELSE AES_DECRYPT(a.rqty, '{$encryption_key}')
+        END, 6) AS UNSIGNED ) AS quantity,
+        u.unit_name,
+        cr_main.conversion_ratio,
+        u_sub.unit_name AS sub,
+        u_master.unit_name AS master
     FROM purchase_return_details a
     JOIN product_information b ON b.id = a.product
-    left JOIN conversion_ratio cr2 on cr2.conversionratio_id = a.conversion_id
+    LEFT JOIN conversion_ratio cr2 ON cr2.conversionratio_id = a.conversion_id
     JOIN units u ON u.unit_id = a.unit
     JOIN purchase_return c ON c.id = a.pid
+    JOIN purchase p ON p.id = c.purchase_id
     JOIN supplier_information d ON d.supplier_id = c.supplier_id
+    LEFT JOIN subunit_product  sp_m     ON sp_m.product_id   = b.id AND sp_m.first = 1
+    LEFT JOIN units            u_sub    ON u_sub.unit_id     = sp_m.unit_id
+    LEFT JOIN units            u_master ON u_master.unit_id  = b.unit
+    LEFT JOIN conversion_ratio cr_main  ON cr_main.product   = b.id AND u_sub.unit_id = cr_main.subunit
     WHERE c.rdate >= '$from_date'
     AND c.rdate <= '$to_date'
+    {$incidentFilter_r}
     ";
 
         // 🔹 COMMON FILTERS
@@ -1794,7 +1904,6 @@ ORDER BY quantity DESC
 
         return false;
     }
-
     public function gdn_reportinvoicewise($from_date, $to_date, $empid, $store, $incident_type, $customer_id)
     {
         $encryption_key = Config::$encryption_key;
@@ -1817,7 +1926,13 @@ ORDER BY quantity DESC
             AES_DECRYPT(ds.gdn_id,'$encryption_key') AS gdn_id,
             ds.date,
             AES_DECRYPT(p.sale_id,'$encryption_key') AS voucherno,
-            ds.type,
+            CASE
+                WHEN ds.type = 'sale' THEN 'Sale'
+                WHEN ds.type = 'wholesale' THEN 'Wholesale'
+                WHEN ds.type = 'storetransfer' THEN 'Store Transfer'
+                WHEN ds.type = 'purchasereturn' THEN 'Purchase Return'
+                ELSE REPLACE(ds.type, '_', ' ')
+            END AS incidenttype,
             s.name as store,
             AES_DECRYPT(ci.customer_name,'$encryption_key') as customer_name");
         $this->db->from('gdn_stock ds');
@@ -1986,7 +2101,11 @@ ORDER BY quantity DESC
             AES_DECRYPT(ds.grn_id,'$encryption_key') AS grn_id,
             ds.date,
             AES_DECRYPT(p.chalan_no,'$encryption_key') AS voucherno,
-            ds.type,
+            CASE
+                WHEN ds.type = 'purchase' THEN 'Purchase'
+                WHEN ds.type = 'salesreturn' THEN 'Sales Return'
+                ELSE REPLACE(ds.type, '_', ' ')
+            END AS incidenttype,
             s.name as store,
             AES_DECRYPT(si.supplier_name,'$encryption_key') as supplier_name");
         $this->db->from('grn_stock ds');
@@ -2161,90 +2280,58 @@ ORDER BY quantity DESC
 
         $expiry_alert_days = isset($setting->expiry_alert_days) ? (int)$setting->expiry_alert_days : 0;
 
-        $storeResult = $this->db->select('store.id')
-            ->from('sec_store')
-            ->join('store', 'store.id = sec_store.storeid')
-            ->where('sec_store.userid', $this->session->userdata('id'))
-            ->group_by('sec_store.storeid')
-            ->get()
-            ->result();
-
         $storeids = [];
-        if (!empty($storeResult)) {
-            $storeids = array_column($storeResult, 'id');
-        }
+        if (empty($store) && $this->session->userdata('user_level2') != 1) {
+            $storeResult = $this->db->select('store.id')
+                ->from('sec_store')
+                ->join('store', 'store.id = sec_store.storeid')
+                ->where('sec_store.userid', $this->session->userdata('id'))
+                ->group_by('sec_store.storeid')
+                ->get()
+                ->result();
 
-        $stockQtySql = "IFNULL((
-                SELECT SUM(AES_DECRYPT(sd.stock, '{$encryption_key}'))
-                FROM stock_details sd
-                WHERE sd.product = pi.id
-                  AND sd.batch = sb.id
-            ), 0)";
-
-        if (!empty($store)) {
-            $escapedStore = $this->db->escape($store);
-            $stockQtySql = "IFNULL((
-                SELECT SUM(AES_DECRYPT(sd.stock, '{$encryption_key}'))
-                FROM stock_details sd
-                WHERE sd.product = pi.id
-                  AND sd.batch = sb.id
-                  AND sd.store = {$escapedStore}
-            ), 0)";
-        } else {
-            if ($this->session->userdata('user_level2') != 1 && !empty($storeids)) {
-                $allowedStoreList = implode(',', array_map('intval', $storeids));
-                $stockQtySql = "IFNULL((
-                    SELECT SUM(AES_DECRYPT(sd.stock, '{$encryption_key}'))
-                    FROM stock_details sd
-                    WHERE sd.product = pi.id
-                      AND sd.batch = sb.id
-                      AND sd.store = sb.id
-                ), 0)";
+            if (!empty($storeResult)) {
+                $storeids = array_column($storeResult, 'id');
             }
         }
 
         $this->db->select("
-        sb.id AS batch_pk,
-        CAST(AES_DECRYPT(sb.batchid, '{$encryption_key}') AS CHAR) AS batch_id,
-        sb.busage,
-        sb.mdate,
-        sb.pdate,
-        sb.edate,
-        CAST(AES_DECRYPT(sb.mrp, '{$encryption_key}') AS DECIMAL(18,2)) AS mrp,
-        pi.product_id,
-        pi.product_name,
-        pi.category_id,
-        pi.supplier_id,
-        pi.batchtype,
-        pc.category_name,
-        CAST(AES_DECRYPT(si.supplier_name, '{$encryption_key}') AS CHAR) AS supplier_name,
-        {$stockQtySql} AS master_stock_qty,cr.conversion_ratio,u1.unit_name as sub,u2.unit_name as master
-    ", false);
-    
-    $this->db->from('stockbatch sb');
-    $this->db->join(
-        'product_information pi',
-        '(pi.id = sb.product OR pi.product_id = sb.product)',
-        'left',
-        false
-    );
-    $this->db->join('product_category pc', 'pc.category_id = pi.category_id', 'left');
-    $this->db->join('subunit_product sp', 'sp.product_id = pi.id AND sp.first = 1', 'left');
-    $this->db->join('units u1', 'u1.unit_id = sp.unit_id', 'left');
-    $this->db->join('units u2', 'u2.unit_id = pi.unit', 'inner');
-    $this->db->join('conversion_ratio cr', 'cr.product = pi.id AND u1.unit_id = cr.subunit', 'left');
-    $this->db->join('supplier_information si', 'si.supplier_id = pi.supplier_id', 'left');
-    $this->db->where('sb.status', 1);
-    $this->db->where('pi.stock', 1);
+            pi.product_id,
+            pi.product_name,
+            pi.category_id,
+            pi.supplier_id,
+            pi.batchtype,
+            pc.category_name,
+            CAST(AES_DECRYPT(si.supplier_name, '{$encryption_key}') AS CHAR) AS supplier_name,
+            CAST(AES_DECRYPT(sb.batchid, '{$encryption_key}') AS CHAR) AS batch_id,
+            SUM(AES_DECRYPT(sd.stock, '{$encryption_key}')) AS master_stock_qty,
+            sb.busage,
+            sb.mdate,
+            sb.pdate,
+            sb.edate,
+            CAST(AES_DECRYPT(sb.mrp, '{$encryption_key}') AS DECIMAL(18,2)) AS mrp,
+            cr.conversion_ratio,
+            u1.unit_name AS sub,
+            u2.unit_name AS master
+        ", false);
 
+        $this->db->from('stock_details sd');
+        $this->db->join('product_information pi', 'pi.id = sd.product', 'inner');
+        $this->db->join('product_category pc', 'pc.category_id = pi.category_id', 'inner');
+        $this->db->join('stockbatch sb', 'sb.id = sd.batch', 'inner');
+        $this->db->join('subunit_product sp', 'sp.product_id = pi.id AND sp.first = 1', 'left');
+        $this->db->join('units u1', 'u1.unit_id = sp.unit_id', 'left');
+        $this->db->join('units u2', 'u2.unit_id = pi.unit', 'left');
+        $this->db->join('conversion_ratio cr', 'cr.product = pi.id AND u1.unit_id = cr.subunit', 'left');
+        $this->db->join('supplier_information si', 'si.supplier_id = pi.supplier_id', 'left');
+
+        $this->db->where('sb.status', 1);
+        $this->db->where('pi.stock', 1);
 
         if (!empty($store)) {
-            $this->db->where("EXISTS (SELECT 1 FROM stock_details sd2 WHERE sd2.product = pi.id AND sd2.batch = sb.id AND sd2.store = " . $this->db->escape($store) . ")", null, false);
-        } else {
-            if ($this->session->userdata('user_level2') != 1 && !empty($storeids)) {
-                $allowedStoreList = implode(',', array_map('intval', $storeids));
-                $this->db->where("EXISTS (SELECT 1 FROM stock_details sd2 WHERE sd2.product = pi.id AND sd2.batch = sb.id AND sd2.store IN ($allowedStoreList))", null, false);
-            }
+            $this->db->where('sd.store', $store);
+        } elseif (!empty($storeids)) {
+            $this->db->where_in('sd.store', $storeids);
         }
 
         if (!empty($category)) {
@@ -2263,6 +2350,7 @@ ORDER BY quantity DESC
             $this->db->where('pi.batchtype', $batch_type);
         }
 
+        $this->db->group_by('pi.id, sb.id');
         $this->db->order_by('pc.category_name', 'asc');
         $this->db->order_by('pi.product_name', 'asc');
         $this->db->order_by('sb.id', 'asc');
@@ -2278,46 +2366,41 @@ ORDER BY quantity DESC
             $expiry_date = !empty($row['edate']) ? date('Y-m-d', strtotime($row['edate'])) : '';
 
             $status_text = 'Not Expired';
-            // if ($is_single && !empty($expiry_date) && $expiry_date !== '1970-01-01') {
-            $is_expired = (strtotime($today) >= strtotime($expiry_date));
-            $alert_start = date('Y-m-d', strtotime($expiry_date . ' -' . $expiry_alert_days . ' day'));
-            $is_to_be_expired = (!$is_expired && strtotime($today) >= strtotime($alert_start));
+            $is_expired = !empty($expiry_date) && strtotime($today) >= strtotime($expiry_date);
+            $alert_start = !empty($expiry_date) ? date('Y-m-d', strtotime($expiry_date . ' -' . $expiry_alert_days . ' day')) : '';
+            $is_to_be_expired = !$is_expired && !empty($alert_start) && strtotime($today) >= strtotime($alert_start);
 
+            if(empty($expiry_date)){
+                $status_text = 'N/A';
+            }else
             if ($is_expired) {
                 $status_text = 'Expired';
             } elseif ($is_to_be_expired) {
                 $status_text = 'To be Expired';
             }
-            // }
 
             if (!empty($status)) {
-                if ($status === 'expired' && $status_text !== 'Expired') {
-                    continue;
-                }
-                if ($status === 'to_be_expired' && $status_text !== 'To be Expired') {
-                    continue;
-                }
-                if ($status === 'not_expired' && $status_text !== 'Not Expired') {
-                    continue;
-                }
+                if ($status === 'expired' && $status_text !== 'Expired') continue;
+                if ($status === 'to_be_expired' && $status_text !== 'To be Expired') continue;
+                if ($status === 'not_expired' && $status_text !== 'Not Expired') continue;
             }
 
             $result[] = [
-                'sl' => $sl++,
-                'category' => !empty($row['category_name']) ? $row['category_name'] : '-',
-                'product_id' => !empty($row['product_id']) ? $row['product_id'] : '-',
-                'product_name' => !empty($row['product_name']) ? $row['product_name'] : '-',
-                'supplier' => !empty($row['supplier_name']) ? $row['supplier_name'] : '-',
-                'batch_id' => !empty($row['batch_id']) ? $row['batch_id'] : '-',
+                'sl'               => $sl++,
+                'category'         => !empty($row['category_name']) ? $row['category_name'] : '-',
+                'product_id'       => !empty($row['product_id']) ? $row['product_id'] : '-',
+                'product_name'     => !empty($row['product_name']) ? $row['product_name'] : '-',
+                'supplier'         => !empty($row['supplier_name']) ? $row['supplier_name'] : '-',
+                'batch_id'         => !empty($row['batch_id']) ? $row['batch_id'] : '-',
                 'manufacture_date' => $is_single && !empty($row['mdate']) ? $row['mdate'] : 'n/a',
-                'packing_date' => $is_single && !empty($row['pdate']) ? $row['pdate'] : 'n/a',
-                'expiry_date' => $is_single && !empty($row['edate']) ? $row['edate'] : 'n/a',
-                'mrp' => is_numeric($row['mrp']) ? (float)$row['mrp'] : 0,
+                'packing_date'     => $is_single && !empty($row['pdate']) ? $row['pdate'] : 'n/a',
+                'expiry_date'      => $is_single && !empty($row['edate']) ? $row['edate'] : 'n/a',
+                'mrp'              => is_numeric($row['mrp']) ? (float)$row['mrp'] : 0,
                 'master_stock_qty' => (float)$row['master_stock_qty'],
-                'status' => $status_text,
-                'conversion_ratio'=>$row['conversion_ratio'],
-                'master'=>$row['master'],
-                'sub'=>$row['sub'],
+                'status'           => $status_text,
+                'conversion_ratio' => $row['conversion_ratio'],
+                'master'           => $row['master'],
+                'sub'              => $row['sub'],
 
             ];
         }
@@ -2408,7 +2491,7 @@ ORDER BY quantity DESC
     }
 
      //Retrieve todays_purchase_report
-    public function bdtask_purchase_report($from_date, $to_date, $empid, $branch, $supplier_id)
+     public function bdtask_purchase_report($from_date, $to_date, $empid, $branch, $supplier_id, $incident_type = '')
     {
         $encryption_key = Config::$encryption_key;
 
@@ -2428,27 +2511,74 @@ ORDER BY quantity DESC
 
 
         date_default_timezone_set('Asia/Colombo');
-        $this->db->select("a.date,AES_DECRYPT(a.chalan_no,'" . $encryption_key . "') as invoiceno,AES_DECRYPT(b.supplier_name,'" . $encryption_key . "') as supplier_name,AES_DECRYPT(a.grandTotal,'" . $encryption_key . "')  as total");
-        $this->db->from('purchase a');
-        $this->db->join('supplier_information b', 'b.supplier_id = a.supplier_id');
-        $this->db->where('a.date >=', $from_date);
-        $this->db->where('a.date <=', $to_date);
-        if ($empid != "All") {
-            $this->db->where("AES_DECRYPT(a.type2,'" . $encryption_key . "')", $empid);
-        }
-        if ($empid != "All") {
-            $this->db->where("AES_DECRYPT(a.type2,'" . $encryption_key . "')", $empid);
-        }
-        if ($supplier_id) {
-            $this->db->where("a.supplier_id", $supplier_id);
-        } else {
-            if ($this->session->userdata('user_level2') != 1) {
 
-                $this->db->where_in('a.branch', $branchids);
-            }
+        $fromEsc = $this->db->escape($from_date);
+        $toEsc   = $this->db->escape($to_date);
+
+        $empFilter_p = $empFilter_r = '';
+        if ($empid != "All") {
+            $empEsc      = $this->db->escape($empid);
+            $empFilter_p = " AND AES_DECRYPT(a.type2,'{$encryption_key}') = {$empEsc}";
+            $empFilter_r = " AND AES_DECRYPT(r.type2,'{$encryption_key}') = {$empEsc}";
         }
-        $this->db->order_by('a.date', 'desc');
-        $query = $this->db->get();
+
+        $supplierFilter_p = $supplierFilter_r = '';
+        $branchFilter_p   = $branchFilter_r   = '';
+        if ($supplier_id) {
+            $sid              = intval($supplier_id);
+            $supplierFilter_p = " AND a.supplier_id = {$sid}";
+            $supplierFilter_r = " AND r.supplier_id = {$sid}";
+        } elseif ($this->session->userdata('user_level2') != 1 && !empty($branchids)) {
+            $branchIn       = implode(',', array_map('intval', $branchids));
+            $branchFilter_p = " AND a.branch IN ({$branchIn})";
+            $branchFilter_r = " AND r.branch IN ({$branchIn})";
+        }
+
+        $incidentFilter_p = $incidentFilter_r = '';
+        if ($incident_type !== '' && $incident_type !== null&&$incident_type != 3 ) {
+            $incidentEsc      = $this->db->escape($incident_type);
+            $incidentFilter_p = " AND a.incidenttype = {$incidentEsc}";
+            $incidentFilter_r = " AND r.incidenttype = 3";
+        }else if($incident_type !== '' && $incident_type !== null&&$incident_type == 3 ) {
+            // $incidentEsc      = $this->db->escape($incident_type);
+            $incidentFilter_p = " AND a.incidenttype = 3";
+            // $incidentFilter_r = " AND r.incidenttype = {$incidentEsc}";
+
+        }
+
+        $sql = "
+            SELECT a.date,
+                   AES_DECRYPT(a.chalan_no,'{$encryption_key}') AS invoiceno,
+                   AES_DECRYPT(b.supplier_name,'{$encryption_key}') AS supplier_name,
+                   CAST(AES_DECRYPT(a.grandTotal,'{$encryption_key}') AS DECIMAL(18,2)) AS total,
+                   'Purchase' AS type,
+                    CASE
+            WHEN  a.incidenttype = '1' THEN 'International Purchase'
+            WHEN  a.incidenttype = '2' THEN 'Local Purchase'
+            ELSE 'Unknown'
+        END AS incidenttype
+            FROM purchase a
+            JOIN supplier_information b ON b.supplier_id = a.supplier_id
+            WHERE a.date >= {$fromEsc} AND a.date <= {$toEsc}
+              {$empFilter_p}{$supplierFilter_p}{$branchFilter_p}{$incidentFilter_p}
+
+            UNION ALL
+
+            SELECT r.date,
+                   AES_DECRYPT(p.chalan_no,'{$encryption_key}') AS invoiceno,
+                   AES_DECRYPT(b.supplier_name,'{$encryption_key}') AS supplier_name,
+                   -CAST(AES_DECRYPT(r.grandTotal,'{$encryption_key}') AS DECIMAL(18,2)) AS total,
+                   'Purchase Return' AS type,
+                    'Purchase Return' AS incidenttype
+            FROM purchase_return r
+            JOIN purchase p ON p.id = r.purchase_id
+            JOIN supplier_information b ON b.supplier_id = r.supplier_id
+            WHERE r.date >= {$fromEsc} AND r.date <= {$toEsc}
+              {$empFilter_r}{$supplierFilter_r}{$branchFilter_r}{$incidentFilter_r}
+            ORDER BY date DESC
+        ";
+
+        $query = $this->db->query($sql);
         if ($query->num_rows() > 0) {
             return $query->result_array();
         }

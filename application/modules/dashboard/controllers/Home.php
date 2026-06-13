@@ -248,6 +248,10 @@ class Home extends MX_Controller
     public function out_of_stock()
     {
         $data['title']  = display('out_of_stock');
+         if (!$this->permission1->method('stock_alert', 'create')->access()) {
+            $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
+            redirect($previous_url);
+        }
         $data['module'] = "dashboard";
         $data['page']   = "home/out_of_stock";
         echo Modules::run('template/layout', $data);
@@ -269,6 +273,10 @@ class Home extends MX_Controller
     public function expiry_alert()
     {
         $data['title']  = 'Expiry Alert';
+         if (!$this->permission1->method('expiry_alert', 'create')->access()) {
+            $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
+            redirect($previous_url);
+        }
         $data['module'] = "dashboard";
         $data['page']   = "home/expiry_alert";
         echo Modules::run('template/layout', $data);

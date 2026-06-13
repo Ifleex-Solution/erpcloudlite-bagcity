@@ -1488,7 +1488,7 @@ class Service extends MX_Controller
             'currency_details' => $currency_details,
             'date'    =>  $sale[0]['date'],
             'details'    => "",
-            'invoiceno' => $sale[0]['sale_id'],
+            'invoiceno' => $sale[0]['service_id'],
             'payment' => ""
         );
 

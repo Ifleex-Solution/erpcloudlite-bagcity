@@ -419,9 +419,6 @@
 
                                     </td>
 
-                                    <td class="rate vathidden">
-                                    </td>
-
                                     <td class="product_field">
                                         <p id="total_price<?php echo $i; ?>" style="text-align: right;padding-right: 20px;font-weight: bold;"></p>
                                     </td>
@@ -1010,8 +1007,8 @@ echo "</script>";
         const invoicetypeElement = document.getElementById('invoicetypeInput');
         const query = invoicetypeElement.value;
 
-        invoiceTypes = ['Cash', 'Credit', 'Non VAT Cash', 'Non VAT Credit',
-            'Cash VAT', 'Credit VAT', 'SVAT'
+        invoiceTypes = ['Cash', 'Credit',
+            'Cash VAT', 'Credit VAT'
         ]
         const results = invoiceTypes
             .filter(invoiceType => invoiceType.toLowerCase().includes(query));
@@ -1196,13 +1193,9 @@ echo "</script>";
 
         } else if (event.key === "Backspace") {
             clearResults()
-            document.getElementById('invoiceType').value = "";
-
-            if (document.getElementById('incidenttypeInput').value == "") {
-                document.getElementById('incidenttypeInput').value = "";
-                displayResultsIncidentType(incidentTypes, count);
-
-            }
+            document.getElementById('incidenttype').value = "";
+            document.getElementById('incidenttypeInput').value = "";
+            displayResultsIncidentType(incidentTypes, count);
         } else {
             document.getElementById('incidenttype').value = "";
             currentIndex = -1;
@@ -2490,9 +2483,8 @@ echo "</script>";
 
 
 
-                    document.getElementById('batchInput').value = "Default";
-                    document.getElementById('batchInput').select()
-                    document.getElementById('batchId0').value = 1;
+
+
 
                     let element2 = document.getElementById("storeInput");
                     element2.focus();
@@ -3792,6 +3784,17 @@ echo "</script>";
 
                 if (response2 != "not") {
                     batches = JSON.parse(response2);
+
+
+
+                    let defaultBatch = batches.find(b => b.id == 1);
+                    if (defaultBatch) {
+                        document.getElementById('batchInput').value = "Default";
+                        // document.getElementById('batchInput').select();
+                        document.getElementById('batchId0').value = defaultBatch.id;
+                    }
+
+
 
                 }
 

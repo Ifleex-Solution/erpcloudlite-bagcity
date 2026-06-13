@@ -289,7 +289,8 @@ class Invoice extends MX_Controller
         $sale = $this->sale($invoice_id);
         $saledetails = $this->saledetails($invoice_id);
         $customer_info    = $this->customer_info($sale[0]['customer_id']);
-        $company_info     = $this->company_info();
+        // $company_info     = $this->company_info();
+         $company_info     = $this->invoice_model->retrieve_company();
         $currency_details = $this->service_model->web_setting();
 
 
@@ -306,7 +307,7 @@ class Invoice extends MX_Controller
             'customer_address' => $customer_info->customer_address,
             'customer_mobile' => $customer_info->customer_mobile,
             'customer_email'  => $customer_info->customer_email,
-            'company_info2'    => $company_info,
+            'company_info'    => $company_info,
             'currency_details' => $currency_details,
             'date'    =>  $sale[0]['date'],
             'details'    => "",

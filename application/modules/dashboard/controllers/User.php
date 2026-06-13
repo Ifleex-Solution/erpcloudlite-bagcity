@@ -16,8 +16,8 @@ class User extends MX_Controller {
              'user_model'  
          ));
          
-        if (! $this->session->userdata('isAdmin'))
-            redirect('login');
+        // if (! $this->session->userdata('isAdmin'))
+        //     redirect('login');
      }
  
     

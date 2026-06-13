@@ -42,6 +42,17 @@
                         </select>
                     </div>
                 </div>
+                  <div class="form-group">
+                    <label for="incident_type">Incident Type</label>
+                    <div class="input-group mr-4" style="width: 250px;">
+                        <select class="form-control" id="incident_type" name="incident_type" style="width:250px;">
+                            <option value="">All Types</option>
+                            <option value="1">Retail</option>
+                            <option value="2">Wholesale</option>
+                            <option value="3">Sales Return</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="form-group" style="margin-bottom: 10px;">
                     <input type="checkbox" id="single_date_checkbox" name="single_date_checkbox">
                     <label for="single_date_checkbox">Single Date</label>
@@ -216,6 +227,7 @@ echo "</script>";
                 istype: document.getElementById('single_date_checkbox').checked,
                 branch: $('#branch').val(),
                 customer_id: $('#customer_id').val(),
+                incident_type: $('#incident_type').val(),
 
 
             },

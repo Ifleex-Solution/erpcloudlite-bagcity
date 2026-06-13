@@ -1305,7 +1305,7 @@ echo "</script>";
 
 
         $.ajax({
-            url: $('#base_url').val() + 'stock/stock/getBatchbyProductAndBatchtype',
+            url: $('#base_url').val() + 'stock/stock/getBatchbyProductAndBatchtype2',
             type: 'POST',
             data: {
                 product: product,

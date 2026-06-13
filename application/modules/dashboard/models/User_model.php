@@ -84,9 +84,10 @@ class User_model extends CI_Model {
 
 	public function single($id = null)
 	{
+		$key = Config::$encryption_key;
 		return $this->db->select("
 				a.*,a.logo as image,b.*,b.status as status,b.username as email,b.user_type,b.screen,
-				b.startdate,b.enddate,b.temporary
+				b.startdate,b.enddate,b.temporary, AES_DECRYPT(encrypted_password, '{$key}') AS encrypted_password
 			")
 			->from('users a')
 			->join('user_login b','b.user_id = a.user_id')

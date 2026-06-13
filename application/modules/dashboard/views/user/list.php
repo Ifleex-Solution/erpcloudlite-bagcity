@@ -110,7 +110,6 @@
 
                                 <td><?php echo (($value->status==1)?display('active'):display('inactive')); ?></td>
                                 <td>
-                                    <?php if ($this->session->userdata('isAdmin') == 1) { ?>
                                     <a href="<?php echo base_url("add_user/$value->user_id") ?>"
                                         class="btn btn-info btn-sm" data-toggle="tooltip" data-placement="left"
                                         title="Update"><i class="fa fa-pencil" aria-hidden="true"></i></a>
@@ -118,8 +117,7 @@
                                         onclick="return confirm('<?php echo display('are_you_sure') ?>')"
                                         class="btn btn-danger btn-sm" data-toggle="tooltip" data-placement="right"
                                         title="Delete "><i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                                    <?php } 
-                                    else if($this->session->userdata('id') == $value->user_id){ ?>
+                                    <?php  if($this->session->userdata('id') == $value->user_id){ ?>
                                     <a href="<?php echo base_url("add_user/$value->user_id") ?>"
                                         class="btn btn-info btn-sm" data-toggle="tooltip" data-placement="left"
                                         title="Update"><i class="fa fa-pencil" aria-hidden="true"></i></a>

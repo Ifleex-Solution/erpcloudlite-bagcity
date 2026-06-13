@@ -483,6 +483,15 @@ echo "</script>";
         $customerDropdown.val(1)
 
 
+        var $employeeDropdown = $('#employee_id');
+        $employeeDropdown.empty();
+        $employeeDropdown.append('<option value="" disabled selected>Select Employee</option>'); // Add default option
+        $employeeDropdown.append('<option value="1">N/A</option>');
+        $.each(employees, function(index, employee) {
+            $employeeDropdown.append('<option value="' + employee.id + '">' + employee.first_name + " " + employee.last_name + '</option>');
+        });
+        $employeeDropdown.val(1)
+
 
         if (id != null) {
             $.ajax({

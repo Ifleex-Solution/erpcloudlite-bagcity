@@ -223,18 +223,43 @@ echo "</script>";
             },
             success: function(data1) {
                 datas = JSON.parse(data1);
-                if (datas) {
-                    window.open(`generate_purchasereportcategory`, '_blank');
+                if (datas && datas.length > 0) {
+                    datas.forEach(function(data) {
+                        data.quantity = convertmasterstock(data.quantity, data.conversion_ratio, data.master, data.sub);
+                    });
 
+                    $.ajax({
+                        type: "post",
+                        url: $('#baseUrl2').val() + 'report/report/set_purchase_category_session',
+                        data: { datas: datas },
+                        success: function() {
+                            window.open('generate_purchasereportcategory', '_blank');
+                        }
+                    });
                 } else {
-                    alert("There is no data available for the selected parameters.")
+                    alert("There is no data available for the selected parameters.");
                 }
-
-                // updateTable(datas)
-                // $("#exampleModal").modal('hide');
-
             }
         });
+    }
+
+    function convertmasterstock(avstock, conversion_ratio, mastername, subname) {
+        if (!subname || !conversion_ratio) {
+            return ((avstock ? avstock : 0) + ' ' + (mastername ? mastername : ''));
+        }
+        let mas = conversion_ratio * avstock / conversion_ratio;
+        let sub = conversion_ratio * avstock % conversion_ratio;
+
+        let mas2 = Math.floor(mas);
+        let totalcount = isNaN(mas2) ? Math.floor(Number(mas).toFixed(6)) : mas2;
+
+        let sub2 = Math.floor(sub);
+        let subcount = isNaN(sub2) ? Math.floor(Number(sub).toFixed(6)) : sub2;
+
+        if (isNaN(totalcount)) totalcount = 0;
+        if (isNaN(subcount)) subcount = 0;
+
+        return (totalcount + ' ' + mastername + ' ' + subcount + ' ' + subname);
     }
 </script>
 <script>
