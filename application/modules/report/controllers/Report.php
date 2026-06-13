@@ -1007,7 +1007,7 @@ class Report extends MX_Controller
         $pdf->Output($filename, 'I');
     }
 
-    public function generate_salesreportproduct()
+     public function generate_salesreportproduct()
     {
         $page = 1;
         $pdf = new SalesReportInvoicewise('P', 'mm', 'A4', true, 'UTF-8', false);
@@ -1024,148 +1024,71 @@ class Report extends MX_Controller
 
         $this->header($pdf, $page, "Sales Report (Product Wise)", $_SESSION['srp_istype'], $_SESSION['srpfrom_date'], $_SESSION['srpto_date']);
 
+
+        $pdf->SetFont('helvetica', 'B', 12);
+        $pdf->Cell(24, 10, 'Sale Date', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(36, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(23, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(22, 10, 'Invoice Type', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(15, 10, 'Customer', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(27, 10, 'Rate', 'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(15, 10, 'Qty', 'TB', 0, 'R', 0, '', 1);
+        $pdf->Cell(27, 10, 'Total', 'TB', 0, 'R', 0, '', 1);
+
+
+        $pdf->Ln(10);
+
         $data = isset($_SESSION['sale_reportsrp']) ? $_SESSION['sale_reportsrp'] : [];
-        $headers = [
-            'Sale Date',
-            'Product Name',
-            'Invoice No',
-            'Invoice Type',
-            'Customer',
-            'Rate',
-            'Qty',
-            'Total',
-        ];
+        $lineHeight = 10;
+        $maxY = 270;
 
-        $rows = [];
-        $amounts = [];
-        foreach ($data as $row) {
-            $rawTotal = (float) $row['total'];
-            $rows[] = [
-                (string) $row['date'],
-                (string) $row['product_name'],
-                (string) $row['sale_id'],
-                (string) $row['incidenttype'],
-                (string) $row['customer_name'],
-                number_format((float) $row['product_rate'], 2),
-                (string) $row['quantity'],
-                number_format($rawTotal, 2),
-            ];
-            $amounts[] = $rawTotal;
-        }
 
-        $leftMargin = 15;
-        $rightMargin = 10;
-        $usableWidth = $pdf->getPageWidth() - $leftMargin - $rightMargin;
-        $minimumWidths = [18, 28, 18, 20, 24, 14, 10, 12];
-        $alignments = ['C', 'L', 'C', 'C', 'L', 'R', 'R', 'R'];
-        $widths = [];
-
-        $pdf->SetFont('helvetica', 'B', 8);
-        foreach ($headers as $index => $label) {
-            $widths[$index] = max($minimumWidths[$index], $pdf->GetStringWidth($label) + 4);
-        }
-
-        $pdf->SetFont('helvetica', '', 7.5);
-        foreach ($rows as $row) {
-            foreach ($row as $index => $value) {
-                $widths[$index] = max($widths[$index], $pdf->GetStringWidth($value) + 4);
-            }
-        }
-
-        $totalWidth = array_sum($widths);
-        if ($totalWidth > $usableWidth) {
-            $scale = $usableWidth / $totalWidth;
-            foreach ($widths as $index => $width) {
-                $widths[$index] = max($minimumWidths[$index], round($width * $scale, 2));
-            }
-            $adjustedWidth = array_sum($widths);
-            if ($adjustedWidth > $usableWidth) {
-                $overflow = $adjustedWidth - $usableWidth;
-                $flexIndexes = [1, 4, 7, 2, 0, 3, 5, 6];
-                foreach ($flexIndexes as $index) {
-                    if ($overflow <= 0) {
-                        break;
-                    }
-                    $room = $widths[$index] - $minimumWidths[$index];
-                    if ($room <= 0) {
-                        continue;
-                    }
-                    $shrink = min($room, $overflow);
-                    $widths[$index] -= $shrink;
-                    $overflow -= $shrink;
-                }
-            }
-        } elseif ($totalWidth < $usableWidth) {
-            $extraWidth = $usableWidth - $totalWidth;
-            $widths[1] += $extraWidth * 0.45;
-            $widths[4] += $extraWidth * 0.20;
-            $widths[2] += $extraWidth * 0.10;
-            $widths[0] += $extraWidth * 0.10;
-            $widths[7] += $extraWidth * 0.15;
-        }
-
-        $finalWidth = array_sum($widths);
-        if (abs($finalWidth - $usableWidth) > 0.01) {
-            $widths[7] += $usableWidth - $finalWidth;
-        }
-
-        $renderHeaderRow = function () use ($pdf, $headers, $widths) {
-            $pdf->SetFont('helvetica', 'B', 8);
-            foreach ($headers as $index => $label) {
-                $align = ($index === 1 || $index === 4) ? 'L' : (($index >= 5) ? 'R' : 'C');
-                $pdf->Cell($widths[$index], 9, $label, 'TB', 0, $align, 0, '', 1);
-            }
-            $pdf->Ln(9);
-        };
-
-        $renderHeaderRow();
-
-        $lineHeight = 8;
-        $maxY = $pdf->getPageHeight() - $pdf->getBreakMargin() - 8;
 
         $patotal = 0;
         $total = 0;
 
-        foreach ($rows as $rowIndex => $row) {
-            $amount = $amounts[$rowIndex] ?? 0;
-            $patotal += $amount;
-            $total += $amount;
+        foreach ($data as $row) {
 
-            $rowHeight = $lineHeight;
-            foreach ($row as $index => $value) {
-                $rowHeight = max($rowHeight, $pdf->getStringHeight($widths[$index], $value));
-            }
-
-            if ($pdf->GetY() + $rowHeight > $maxY) {
-                $pdf->updatePageTotal($patotal - $amount);
-                $patotal = $amount;
+            if ($pdf->GetY() + $lineHeight > $maxY) {
+                $pdf->updatePageTotal($patotal);
+                $patotal = 0;
                 $pdf->AddPage();
-                $page++;
+                $page = $page + 1;
                 $this->header($pdf, $page, "Sales Report (Product Wise)", $_SESSION['srp_istype'], $_SESSION['srpfrom_date'], $_SESSION['srpto_date']);
-                $renderHeaderRow();
+                $pdf->SetFont('helvetica', 'B', 12);
+                $pdf->Cell(24, 10, 'Sale Date', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(36, 10, 'Product Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(23, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(22, 10, 'Invoice Type', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(15, 10, 'Customer', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(27, 10, 'Rate', 'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(15, 10, 'Qty', 'TB', 0, 'R', 0, '', 1);
+                $pdf->Cell(27, 10, 'Total', 'TB', 0, 'R', 0, '', 1);
+
+                $pdf->Ln(10);
             }
+            $patotal = $patotal + $row['total'];
+            $total = $total + $row['total'];
 
-            $rowY = $pdf->GetY();
-            $x = $pdf->GetX();
-            $pdf->SetFont('helvetica', '', 7.5);
-
-            foreach ($row as $index => $value) {
-                $cellX = $x;
-                for ($i = 0; $i < $index; $i++) {
-                    $cellX += $widths[$i];
-                }
-                $pdf->MultiCell($widths[$index], $rowHeight, $value, '0', $alignments[$index], false, 0, $cellX, $rowY, true, 0, false, true, $rowHeight, 'M', false);
-            }
-
-            $pdf->SetXY($x, $rowY + $rowHeight);
+            $pdf->SetFont('', '', 10);
+            $pdf->MultiCell(24, 8, $row['date'],'', 'L', 0, 0);
+            $pdf->MultiCell(36, 8,  $row['product_name'], '', 'L', 0, 0);
+            $pdf->MultiCell(23, 8,  $row['sale_id'], '', 'L', 0, 0);
+            $pdf->MultiCell(22, 8,  $row['incidenttype'], '', 'L', 0, 0);
+            $pdf->MultiCell(15, 8,  $row['customer_name'], '', 'L', 0, 0);
+            $pdf->MultiCell(27, 8, number_format($row['product_rate'], 2), '', 'R', 0, 0);
+            $pdf->MultiCell(15, 8,  $row['quantity']." ". $row['unit_name'], '', 'R', 0, 0);
+            $pdf->MultiCell(27, 8, number_format($row['total'], 2), '', 'R', 0, 0);
+            $pdf->Ln(10);
 
 
 
             // $pdf->Cell(40, 8, number_format($row['total'], 2), 0, 1, 'R');
         }
-        $pdf->SetFont('helvetica', 'B', 8.5);
-        $pdf->Cell(array_sum(array_slice($widths, 0, 7)), 10, "Total Amount:", 'TB', 0, 'L');
-        $pdf->Cell($widths[7], 10, number_format($total, 2), 'TB', 1, 'R');
+        $pdf->SetFont('', 'B', 12);
+        $pdf->Cell(50, 10, "Total Amount:", 'TB', 0, 'L');
+        $pdf->Cell(108, 10, "", 'TB', 0, 'L');
+        $pdf->Cell(35, 10, number_format($total, 2), 'TB', 1, 'R');
 
         $pdf->updatePageTotal($patotal);
 
