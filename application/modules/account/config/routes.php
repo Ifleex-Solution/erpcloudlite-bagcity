@@ -18,7 +18,8 @@ $route['journal_voucher'] = "account/accounts/journal_voucher";
 $route['bank_reconciliation'] = "account/accounts/bank_reconciliation";
 $route['add_payment_method']   = "account/accounts/bdtask_payment_method_form";
 $route['add_payment_method/(:num)']   = "account/accounts/bdtask_payment_method_form/$1";
-$route['payment_method_list']   = "account/accounts/payment_method_list";
+$route['payment_method_list']          = "account/accounts/payment_method_list";
+$route['save_paymentmethod_from_csv']  = "account/accounts/save_paymentmethod_from_csv";
 
 
 $route['new_payment_voucher'] = "account/accounts/create_debit_voucher";

@@ -13,3 +13,4 @@ $route['edit_supplier/(:num)'] = 'supplier/supplier/bdtask_form/$1';
 // $route['supplier_ledgerinfo/(:any)']= "supplier/supplier/bdtask_supplier_ledgerinfo/$1";
 // $route['supplier_advance']     = "supplier/supplier/bdtask_supplier_advance";
 // $route['supplier_advance_receipt/(:any)/(:num)']= "supplier/supplier/supplier_advancercpt/$1/$1";
+$route['save_supplier_from_csv'] = "supplier/supplier/save_supplier_from_csv";

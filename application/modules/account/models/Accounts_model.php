@@ -4600,6 +4600,13 @@ class Accounts_model extends CI_Model
         return $this->db->insert('payment_type', $data);
     }
 
+    public function all_payment_method_names()
+    {
+        return $this->db->select('name')
+            ->from('payment_type')
+            ->get()->result_array();
+    }
+
 
     public function payment_methoddata($id)
     {

@@ -30,6 +30,35 @@ class Invoice extends MX_Controller
     }
 
 
+    function touch_invoice_form($id = null)
+    {
+        $data['sale_id']      = null;
+        if ($id) {
+            $encryption_key   = Config::$encryption_key;
+            $row = $this->db->select("AES_DECRYPT(sale_id, '" . $encryption_key . "') AS sale_id")
+                            ->from('sale')->where('id', (int)$id)->get()->row();
+            $data['sale_id']  = $row ? $row->sale_id : null;
+        }
+        $data['title']        = $id ? 'Edit Touch Invoice' : 'Touch Invoice';
+        $data['all_customer'] = $this->customer_list();
+        $data['all_employee'] = $this->employee_list();
+        $data['all_pmethod']  = $this->pmethod_dropdown();
+        $data['store_list']   = $this->product_model->active_store();
+        $data['batches']      = $this->active_batch();
+        $data['units']        = $this->active_units();
+        $data['categories']   = $this->product_model->active_category();
+        $data['unit_list']    = $this->product_model->active_unit();
+        $this->load->model('purchase/purchase_model');
+        $data['all_supplier'] = $this->purchase_model->supplier_list();
+        $data['module']       = 'invoice';
+        $data['page']         = 'touch_invoice_form';
+        $data['id']           = $id ? (int)$id : null;
+        $data['pagetype']     = '';
+        $ws = $this->db->select('vk_enable')->from('web_setting')->where('setting_id', 1)->get()->row();
+        $data['vk_enable']    = $ws ? (int)$ws->vk_enable : 1;
+        echo modules::run('template/layout', $data);
+    }
+
     function bdtask_invoice_form($id = null)
     {
         $data['title']       = display('add_invoice');
@@ -45,6 +74,10 @@ class Invoice extends MX_Controller
         }
         $data["batches"] = $this->active_batch();
         $data['units'] = $this->active_units();
+        $data['category_list'] = $this->product_model->active_category();
+        $data['unit_list']     = $this->product_model->active_unit();
+        $this->load->model('purchase/purchase_model');
+        $data['all_supplier']  = $this->purchase_model->supplier_list();
         $data['module']      = "invoice";
         $data['page']        = "add_invoice_form";
         $data['pagetype']        = "";
@@ -221,7 +254,7 @@ class Invoice extends MX_Controller
     }
     public function active_product()
     {
-        $this->db->select('id,product_name');
+        $this->db->select('id,product_id,product_name,product_image');
         $this->db->from('product_information');
         $this->db->where('status', 1);
         $query = $this->db->get();
@@ -229,6 +262,31 @@ class Invoice extends MX_Controller
             return $query->result_array();
         }
         return false;
+    }
+
+    public function ti_search_products()
+    {
+        $q           = trim($this->input->post('q',           TRUE));
+        $category_id = trim($this->input->post('category_id', TRUE));
+        $limit       = $q ? 100 : 20;
+
+        $this->db->select('id, product_id, product_name, product_image');
+        $this->db->from('product_information');
+        $this->db->where('status', 1);
+
+        if ($category_id) {
+            $this->db->where('category_id', $category_id);
+        }
+        if ($q) {
+            $this->db->group_start();
+            $this->db->like('product_name', $q);
+            $this->db->or_like('product_id',   $q);
+            $this->db->group_end();
+        }
+
+        $this->db->limit($limit);
+        $rows = $this->db->get()->result_array();
+        echo json_encode($rows ?: []);
     }
 
 
@@ -3328,7 +3386,7 @@ CAST( ROUND(    CASE
 
             if (!empty($deletedIds)) {
                 $this->db->where_in('id', $deletedIds);
-                $this->db->delete('purchase_details');
+                $this->db->delete('sale_details');
             }
 
      $incidentType=   $this->input->post('incidenttype', TRUE)==1?"Retail":"Wholesale";
@@ -4558,6 +4616,10 @@ AES_DECRYPT(sd.quantity, '{$encryption_key}') AS quantity
         } else {
             $data['store_list'] = $this->product_model->active_store();
         }
+        $data['category_list'] = $this->product_model->active_category();
+        $data['unit_list']     = $this->product_model->active_unit();
+        $this->load->model('purchase/purchase_model');
+        $data['all_supplier']  = $this->purchase_model->supplier_list();
         $data['module']      = "invoice";
         $data['page']        = "new_quotation";
         $data['id'] = $id;

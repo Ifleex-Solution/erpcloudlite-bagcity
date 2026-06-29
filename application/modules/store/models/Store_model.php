@@ -502,6 +502,15 @@ public function delete_branch($id)
         return $this->db->insert('storefloor', $data);
     }
 
+    public function all_branch_data() {
+        $key = Config::$encryption_key;
+        return $this->db->query("SELECT code, AES_DECRYPT(name, '$key') AS name FROM branch")->result_array();
+    }
+
+    public function all_store_data() {
+        return $this->db->select('code, name')->from('store')->get()->result_array();
+    }
+
 
     public function storelist($postData = null)
     {

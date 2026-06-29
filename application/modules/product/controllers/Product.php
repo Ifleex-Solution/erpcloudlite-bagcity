@@ -17,7 +17,8 @@ class Product extends MX_Controller
 
         $this->load->model(array(
             'product_model',
-            'supplier/supplier_model'
+            'supplier/supplier_model',
+            'hrm/country_model'
         ));
         $this->load->library('ciqrcode');
         if (!$this->session->userdata('isLogIn'))
@@ -555,6 +556,7 @@ class Product extends MX_Controller
 
             $data['brand_list'] = $this->product_model->active_brand();
             $data['oop_list'] = $this->product_model->active_oop();
+            $data['country_list'] = $this->country_model->country();
 
 
             $data['store_list'] = $this->product_model->active_store();
@@ -641,9 +643,712 @@ class Product extends MX_Controller
             $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
             redirect($previous_url);
         }
+        $data['categories']    = $this->product_model->active_category();
+        $data['subcategories'] = $this->product_model->active_subcategory();
+        $data['brands']        = $this->product_model->active_brand();
+        $data['oops']          = $this->product_model->active_oop();
+        $data['stores']        = $this->product_model->active_store();
+        $data['units']         = $this->product_model->active_unit();
+        $data['suppliers']     = $this->product_model->supplier_list();
+        $data['all_product_ids'] = $this->product_model->all_product_ids();
         echo modules::run('template/layout', $data);
     }
 
+    public function bdtask_data_loader()
+    {
+        $data['title']         = 'DUPL - Data up Loader';
+        $data['module']        = 'product';
+        $data['page']          = 'data_uploader';
+        if (!$this->permission1->method('add_product_csv', 'create')->access()) {
+            $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
+            redirect($previous_url);
+        }
+        $data['categories']    = $this->product_model->active_category();
+        $data['subcategories'] = $this->product_model->active_subcategory();
+        $data['brands']        = $this->product_model->active_brand();
+        $data['oops']          = $this->product_model->active_oop();
+        $data['stores']        = $this->product_model->active_store();
+        $data['units']         = $this->product_model->active_unit();
+        $data['suppliers']     = $this->product_model->supplier_list();
+        $data['products']                   = $this->product_model->active_product();
+        $data['all_product_names']          = $this->product_model->all_product_names();
+        $data['product_subunits']           = $this->product_model->all_product_subunits();
+        $data['existing_conversionratios']  = $this->product_model->all_existing_conversionratios();
+        $data['all_brand_names']            = $this->product_model->all_brand_names();
+        $data['all_category_names']         = $this->product_model->all_category_names();
+        $data['all_subcategory_names']      = $this->product_model->all_subcategory_names();
+        $data['all_unit_names']             = $this->product_model->all_unit_names();
+        $this->load->model('account/accounts_model');
+        $data['all_payment_method_names']   = $this->accounts_model->all_payment_method_names();
+        $this->load->model('store/store_model');
+        $data['all_branch_data']            = $this->store_model->all_branch_data();
+        $data['all_store_data']             = $this->store_model->all_store_data();
+        $this->load->model('customer/customer_model');
+        $data['all_customer_names']         = $this->customer_model->all_customer_names();
+        $this->load->model('supplier/supplier_model');
+        $data['all_supplier_names']         = $this->supplier_model->all_supplier_names();
+        $this->load->model('service/service_model');
+        $data['all_service_names']          = $this->service_model->all_service_names();
+        $data['all_productgroup_codes']     = $this->product_model->all_productgroup_codes();
+        $data['all_stockbatches']           = $this->product_model->all_stockbatches_for_csv();
+        $data['all_stockbatch_batchids']    = $this->product_model->all_stockbatch_batchids_for_csv();
+        $data['all_conversion_ratios']      = $this->product_model->all_conversion_ratios_for_csv();
+        $data['all_designation_names']      = $this->product_model->all_designation_names_for_csv();
+        $data['all_designations']           = $this->product_model->all_designations_for_csv();
+        $data['all_employee_ids']           = $this->product_model->all_employee_ids_for_csv();
+        echo modules::run('template/layout', $data);
+    }
+
+
+    public function save_product_bulk_log()
+    {
+        $encryption_key = Config::$encryption_key;
+        $product_ids    = $this->input->post('product_ids', TRUE);
+        $lastupdate     = date('Y-m-d H:i:s');
+        $ids_string     = is_array($product_ids) ? implode(',', $product_ids) : $product_ids;
+
+        $this->db->query("INSERT INTO bulk_product_details (uploaded_id, date, uploadedby, product_ids)
+            VALUES (NULL, '{$lastupdate}', '{$this->session->userdata('id')}', '{$ids_string}')");
+        $inserted_id = $this->db->insert_id();
+        $batch_label = 'PROD-' . $inserted_id;
+        $this->db->query("UPDATE bulk_product_details SET uploaded_id = AES_ENCRYPT('{$batch_label}', '{$encryption_key}') WHERE id = {$inserted_id}");
+
+        echo json_encode('Success');
+    }
+
+    public function checkBulkProductUpload()
+    {
+        $postData = $this->input->post();
+        $data     = $this->product_model->BulkProductUpload($postData);
+        echo json_encode($data);
+    }
+
+    public function get_bulk_product_details($id)
+    {
+        $row = $this->db->select('product_ids')->where('id', (int)$id)->get('bulk_product_details')->row();
+        if (!$row || empty($row->product_ids)) { echo json_encode([]); return; }
+
+        $ids = array_filter(array_map('intval', explode(',', $row->product_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+
+        $products = $this->db->select('id, product_id, product_name')
+            ->where_in('id', $ids)
+            ->get('product_information')
+            ->result();
+
+        echo json_encode($products);
+    }
+
+    public function delete_bulk_product($id)
+    {
+        $row = $this->db->select('product_ids')->where('id', (int)$id)->get('bulk_product_details')->row();
+
+        if ($row && !empty($row->product_ids)) {
+            $product_ids = array_filter(array_map('intval', explode(',', $row->product_ids)));
+            if (!empty($product_ids)) {
+                $this->db->where_in('product_id', $product_ids)->delete('subunit_product');
+                $this->db->where_in('id', $product_ids)->delete('product_information');
+            }
+        }
+
+        $this->db->where('id', (int)$id)->delete('bulk_product_details');
+        echo json_encode('Success');
+    }
+
+    // ── Bulk Conversion Ratio CSV ─────────────────────────────────
+    public function bdtask_csv_conversionratio()
+    {
+        $data['title']    = 'Bulk Conversion Ratio Upload';
+        $data['module']   = 'product';
+        $data['page']     = 'add_conversionratio_csv';
+        if (!$this->permission1->method('add_product_csv', 'create')->access()) {
+            $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
+            redirect($previous_url);
+        }
+        $data['products'] = $this->product_model->active_product();
+        $data['units']    = $this->product_model->active_unit();
+        echo modules::run('template/layout', $data);
+    }
+
+    public function save_conversionratio_from_csv()
+    {
+        $product  = $this->input->post('product', TRUE);
+        $subunit  = $this->input->post('subunit', TRUE);
+        $ratio    = $this->input->post('conversion_ratio', TRUE);
+
+        if ($this->product_model->check_duplicate_conversionratio($product, $subunit)) {
+            echo json_encode(['status' => 'Error', 'message' => 'Duplicate: this product + subunit already exists']);
+            return;
+        }
+
+        $row = ['product' => $product, 'subunit' => $subunit, 'conversion_ratio' => $ratio, 'convertiontype' => '*', 'status' => 1];
+        if ($this->product_model->create_conversionratio($row)) {
+            echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+        } else {
+            echo json_encode(['status' => 'Error', 'message' => 'Database insert failed']);
+        }
+    }
+
+    public function save_conversionratio_bulk_log()
+    {
+        $encryption_key = Config::$encryption_key;
+        $ids        = $this->input->post('conversionratio_ids', TRUE);
+        $lastupdate = date('Y-m-d H:i:s');
+        $ids_string = is_array($ids) ? implode(',', $ids) : $ids;
+
+        $this->db->query("INSERT INTO bulk_conversionratio_details (uploaded_id, date, uploadedby, conversionratio_ids)
+            VALUES (NULL, '{$lastupdate}', '{$this->session->userdata('id')}', '{$ids_string}')");
+        $inserted_id = $this->db->insert_id();
+        $batch_label = 'CR-' . $inserted_id;
+        $this->db->query("UPDATE bulk_conversionratio_details SET uploaded_id = AES_ENCRYPT('{$batch_label}', '{$encryption_key}') WHERE id = {$inserted_id}");
+
+        echo json_encode('Success');
+    }
+
+    public function checkBulkConversionratioUpload()
+    {
+        $postData = $this->input->post();
+        $data     = $this->product_model->BulkConversionratioUpload($postData);
+        echo json_encode($data);
+    }
+
+    public function get_bulk_conversionratio_details($id)
+    {
+        $row = $this->db->select('conversionratio_ids')->where('id', (int)$id)->get('bulk_conversionratio_details')->row();
+        if (!$row || empty($row->conversionratio_ids)) { echo json_encode([]); return; }
+
+        $ids = array_filter(array_map('intval', explode(',', $row->conversionratio_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+
+        $products = $this->db->select('cr.conversionratio_id, pi.product_name, um.unit_name as master_unit, us.unit_name as subunit_name, cr.conversion_ratio')
+            ->from('conversion_ratio cr')
+            ->join('product_information pi', 'pi.id = cr.product', 'left')
+            ->join('units um', 'um.unit_id = pi.unit', 'left')
+            ->join('units us', 'us.unit_id = cr.subunit', 'left')
+            ->where_in('cr.conversionratio_id', $ids)
+            ->get()->result();
+        echo json_encode($products);
+    }
+
+    public function delete_bulk_conversionratio($id)
+    {
+        $row = $this->db->select('conversionratio_ids')->where('id', (int)$id)->get('bulk_conversionratio_details')->row();
+
+        if ($row && !empty($row->conversionratio_ids)) {
+            $ids = array_filter(array_map('intval', explode(',', $row->conversionratio_ids)));
+            if (!empty($ids)) {
+                $this->db->where_in('conversionratio_id', $ids)->delete('conversion_ratio');
+            }
+        }
+
+        $this->db->where('id', (int)$id)->delete('bulk_conversionratio_details');
+        echo json_encode('Success');
+    }
+
+    public function save_brand_from_csv()
+    {
+        $brand_name = trim($this->input->post('brand_name', TRUE));
+        $status     = (int)$this->input->post('status', TRUE);
+        if (empty($brand_name)) { echo json_encode(['status' => 'Error', 'message' => 'Brand name is required']); return; }
+        $exists = $this->db->select('brand_id')->from('product_brand')
+            ->where('LOWER(brand_name)', strtolower($brand_name))->get()->row();
+        if ($exists) { echo json_encode(['status' => 'Error', 'message' => 'Brand already exists: ' . $brand_name]); return; }
+        if ($this->product_model->create_brand(['brand_name' => $brand_name, 'status' => $status])) {
+            echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+        } else {
+            echo json_encode(['status' => 'Error', 'message' => 'Database insert failed']);
+        }
+    }
+
+    public function save_category_from_csv()
+    {
+        $category_name = trim($this->input->post('category_name', TRUE));
+        $status        = (int)$this->input->post('status', TRUE);
+        if (empty($category_name)) { echo json_encode(['status' => 'Error', 'message' => 'Category name is required']); return; }
+        $exists = $this->db->select('category_id')->from('product_category')
+            ->where('LOWER(category_name)', strtolower($category_name))->get()->row();
+        if ($exists) { echo json_encode(['status' => 'Error', 'message' => 'Category already exists: ' . $category_name]); return; }
+        if ($this->product_model->create_category(['category_name' => $category_name, 'status' => $status])) {
+            echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+        } else {
+            echo json_encode(['status' => 'Error', 'message' => 'Database insert failed']);
+        }
+    }
+
+    public function save_subcategory_from_csv()
+    {
+        $subcategory_name = trim($this->input->post('subcategory_name', TRUE));
+        $category_id      = (int)$this->input->post('category_id', TRUE);
+        $status           = (int)$this->input->post('status', TRUE);
+        if (empty($subcategory_name) || empty($category_id)) {
+            echo json_encode(['status' => 'Error', 'message' => 'Subcategory name and category are required']); return;
+        }
+        $exists = $this->db->select('subcategory_id')->from('product_subcategory')
+            ->where('LOWER(subcategory_name)', strtolower($subcategory_name))
+            ->where('category_id', $category_id)->get()->row();
+        if ($exists) { echo json_encode(['status' => 'Error', 'message' => 'Subcategory already exists in this category']); return; }
+        if ($this->product_model->create_subcategory(['subcategory_name' => $subcategory_name, 'category_id' => $category_id, 'status' => $status])) {
+            echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+        } else {
+            echo json_encode(['status' => 'Error', 'message' => 'Database insert failed']);
+        }
+    }
+
+    public function save_unit_from_csv()
+    {
+        $unit_name         = trim($this->input->post('unit_name', TRUE));
+        $unit_display_name = trim($this->input->post('unit_display_name', TRUE));
+        $status            = (int)$this->input->post('status', TRUE);
+        if (empty($unit_name)) { echo json_encode(['status' => 'Error', 'message' => 'Unit name is required']); return; }
+        $exists = $this->db->select('unit_id')->from('units')
+            ->where('LOWER(unit_name)', strtolower($unit_name))->get()->row();
+        if ($exists) { echo json_encode(['status' => 'Error', 'message' => 'Unit already exists: ' . $unit_name]); return; }
+        $row = ['unit_name' => $unit_name, 'unit_display_name' => $unit_display_name ?: $unit_name, 'status' => $status];
+        if ($this->product_model->create_unit($row)) {
+            echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+        } else {
+            echo json_encode(['status' => 'Error', 'message' => 'Database insert failed']);
+        }
+    }
+
+    /* ── Generic bulk-log helper ─────────────────────────────────── */
+    private function _saveBulkLog($table, $idsField, $prefix, $ids)
+    {
+        $encryption_key = Config::$encryption_key;
+        $lastupdate     = date('Y-m-d H:i:s');
+        $ids_string     = is_array($ids) ? implode(',', $ids) : $ids;
+        $this->db->query("INSERT INTO {$table} (uploaded_id, date, uploadedby, {$idsField})
+            VALUES (NULL, '{$lastupdate}', '{$this->session->userdata('id')}', '{$ids_string}')");
+        $inserted_id = $this->db->insert_id();
+        $batch_label = $prefix . $inserted_id;
+        $this->db->query("UPDATE {$table} SET uploaded_id = AES_ENCRYPT('{$batch_label}', '{$encryption_key}') WHERE id = {$inserted_id}");
+        echo json_encode('Success');
+    }
+
+    private function _getBulkDetails($id, $table, $idsField, $dataTable, $idCol, $labelCols)
+    {
+        $row = $this->db->select($idsField)->where('id', (int)$id)->get($table)->row();
+        if (!$row || empty($row->$idsField)) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('intval', explode(',', $row->$idsField)));
+        if (empty($ids)) { echo json_encode([]); return; }
+        $records = $this->db->select($idCol . ', ' . implode(', ', $labelCols))->where_in($idCol, $ids)->get($dataTable)->result();
+        echo json_encode($records);
+    }
+
+    private function _deleteBulkRecord($id, $table, $idsField, $dataTable, $idCol)
+    {
+        $id  = (int)$id;
+        $row = $this->db->select($idsField)->where('id', $id)->get($table)->row();
+        if ($row && !empty($row->$idsField)) {
+            $ids = array_filter(array_map('intval', explode(',', $row->$idsField)));
+            if (!empty($ids)) $this->db->where_in($idCol, $ids)->delete($dataTable);
+        }
+        $this->db->where('id', $id)->delete($table);
+        echo json_encode('Success');
+    }
+
+    /* ── Brand bulk log ──────────────────────────────────────────── */
+    public function save_brand_bulk_log()               { $this->_saveBulkLog('bulk_brand_details',        'brand_ids',        'BRAND-',  $this->input->post('brand_ids', TRUE)); }
+    public function checkBulkBrandUpload()              { echo json_encode($this->product_model->BulkBrandUpload($this->input->post())); }
+    public function get_bulk_brand_details($id = null)  { $this->_getBulkDetails($id, 'bulk_brand_details',        'brand_ids',        'product_brand',      'brand_id',      ['brand_name']); }
+    public function delete_bulk_brand($id = null)       { $this->_deleteBulkRecord($id, 'bulk_brand_details',       'brand_ids',        'product_brand',      'brand_id'); }
+
+    /* ── Category bulk log ───────────────────────────────────────── */
+    public function save_category_bulk_log()               { $this->_saveBulkLog('bulk_category_details',    'category_ids',    'CAT-',    $this->input->post('category_ids', TRUE)); }
+    public function checkBulkCategoryUpload()              { echo json_encode($this->product_model->BulkCategoryUpload($this->input->post())); }
+    public function get_bulk_category_details($id = null)  { $this->_getBulkDetails($id, 'bulk_category_details',    'category_ids',    'product_category',   'category_id',   ['category_name']); }
+    public function delete_bulk_category($id = null)       { $this->_deleteBulkRecord($id, 'bulk_category_details',   'category_ids',    'product_category',   'category_id'); }
+
+    /* ── Subcategory bulk log ─────────────────────────────────────── */
+    public function save_subcategory_bulk_log()               { $this->_saveBulkLog('bulk_subcategory_details', 'subcategory_ids', 'SUBCAT-', $this->input->post('subcategory_ids', TRUE)); }
+    public function checkBulkSubcategoryUpload()              { echo json_encode($this->product_model->BulkSubcategoryUpload($this->input->post())); }
+    public function get_bulk_subcategory_details($id = null)  {
+        $row = $this->db->select('subcategory_ids')->where('id', (int)$id)->get('bulk_subcategory_details')->row();
+        if (!$row || empty($row->subcategory_ids)) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('intval', explode(',', $row->subcategory_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+        $records = $this->db->select('ps.subcategory_id, ps.subcategory_name, pc.category_name')
+            ->from('product_subcategory ps')
+            ->join('product_category pc', 'pc.category_id = ps.category_id', 'left')
+            ->where_in('ps.subcategory_id', $ids)->get()->result();
+        echo json_encode($records);
+    }
+    public function delete_bulk_subcategory($id = null)       { $this->_deleteBulkRecord($id, 'bulk_subcategory_details', 'subcategory_ids', 'product_subcategory', 'subcategory_id'); }
+
+    /* ── Unit bulk log ───────────────────────────────────────────── */
+    public function save_unit_bulk_log()               { $this->_saveBulkLog('bulk_unit_details',         'unit_ids',         'UNIT-',   $this->input->post('unit_ids', TRUE)); }
+    public function checkBulkUnitUpload()              { echo json_encode($this->product_model->BulkUnitUpload($this->input->post())); }
+    public function get_bulk_unit_details($id = null)  { $this->_getBulkDetails($id, 'bulk_unit_details',         'unit_ids',         'units',              'unit_id',       ['unit_name', 'unit_display_name']); }
+    public function delete_bulk_unit($id = null)       { $this->_deleteBulkRecord($id, 'bulk_unit_details',        'unit_ids',         'units',              'unit_id'); }
+
+    /* ── Payment Method bulk log ──────────────────────────────────── */
+    public function save_paymentmethod_bulk_log()               { $this->_saveBulkLog('bulk_paymentmethod_details', 'paymentmethod_ids', 'PAY-', $this->input->post('paymentmethod_ids', TRUE)); }
+    public function checkBulkPaymentMethodUpload()              { echo json_encode($this->product_model->BulkPaymentMethodUpload($this->input->post())); }
+    public function get_bulk_paymentmethod_details($id = null)  { $this->_getBulkDetails($id, 'bulk_paymentmethod_details', 'paymentmethod_ids', 'payment_type',       'id',            ['name']); }
+    public function delete_bulk_paymentmethod($id = null)       { $this->_deleteBulkRecord($id, 'bulk_paymentmethod_details', 'paymentmethod_ids', 'payment_type',       'id'); }
+
+    /* ── Branch bulk log ─────────────────────────────────────────── */
+    public function save_branch_bulk_log()               { $this->_saveBulkLog('bulk_branch_details', 'branch_ids', 'BRANCH-', $this->input->post('branch_ids', TRUE)); }
+    public function checkBulkBranchUpload()              { echo json_encode($this->product_model->BulkBranchUpload($this->input->post())); }
+    public function get_bulk_branch_details($id = null)  {
+        $id  = (int)$id;
+        $row = $this->db->select('branch_ids')->where('id', $id)->get('bulk_branch_details')->row();
+        if (!$row || empty($row->branch_ids)) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('intval', explode(',', $row->branch_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+        $enc = Config::$encryption_key;
+        $records = $this->db->query("SELECT id, code, AES_DECRYPT(name,'$enc') AS name FROM branch WHERE id IN (".implode(',', $ids).")")->result();
+        echo json_encode($records);
+    }
+    public function delete_bulk_branch($id = null)       { $this->_deleteBulkRecord($id, 'bulk_branch_details', 'branch_ids', 'branch', 'id'); }
+
+    /* ── Store bulk log ──────────────────────────────────────────── */
+    public function save_store_bulk_log()               { $this->_saveBulkLog('bulk_store_details', 'store_ids', 'STORE-', $this->input->post('store_ids', TRUE)); }
+    public function checkBulkStoreUpload()              { echo json_encode($this->product_model->BulkStoreUpload($this->input->post())); }
+    public function get_bulk_store_details($id = null)  { $this->_getBulkDetails($id, 'bulk_store_details', 'store_ids', 'store', 'id', ['code', 'name']); }
+    public function delete_bulk_store($id = null)       { $this->_deleteBulkRecord($id, 'bulk_store_details', 'store_ids', 'store', 'id'); }
+
+    /* ── Customer bulk log ───────────────────────────────────────── */
+    public function save_customer_bulk_log()               { $this->_saveBulkLog('bulk_customer_details', 'customer_ids', 'CUST-', $this->input->post('customer_ids', TRUE)); }
+    public function checkBulkCustomerUpload()              { echo json_encode($this->product_model->BulkCustomerUpload($this->input->post())); }
+    public function get_bulk_customer_details($id = null)  {
+        $id  = (int)$id;
+        $row = $this->db->select('customer_ids')->where('id', $id)->get('bulk_customer_details')->row();
+        if (!$row || empty($row->customer_ids)) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('intval', explode(',', $row->customer_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+        $enc = Config::$encryption_key;
+        $records = $this->db->query("SELECT customer_id, AES_DECRYPT(customer_name,'$enc') AS customer_name, AES_DECRYPT(customer_mobile,'$enc') AS mobile, AES_DECRYPT(email_address,'$enc') AS email_address FROM customer_information WHERE customer_id IN (".implode(',', $ids).")")->result();
+        echo json_encode($records);
+    }
+    public function delete_bulk_customer($id = null)       { $this->_deleteBulkRecord($id, 'bulk_customer_details', 'customer_ids', 'customer_information', 'customer_id'); }
+
+    /* ── Supplier bulk log ───────────────────────────────────────── */
+    public function save_supplier_bulk_log()               { $this->_saveBulkLog('bulk_supplier_details', 'supplier_ids', 'SUPP-', $this->input->post('supplier_ids', TRUE)); }
+    public function checkBulkSupplierUpload()              { echo json_encode($this->product_model->BulkSupplierUpload($this->input->post())); }
+    public function get_bulk_supplier_details($id = null)  {
+        $id  = (int)$id;
+        $row = $this->db->select('supplier_ids')->where('id', $id)->get('bulk_supplier_details')->row();
+        if (!$row || empty($row->supplier_ids)) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('intval', explode(',', $row->supplier_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+        $enc = Config::$encryption_key;
+        $records = $this->db->query("SELECT supplier_id, AES_DECRYPT(supplier_name,'$enc') AS supplier_name, AES_DECRYPT(mobile,'$enc') AS mobile, AES_DECRYPT(email_address,'$enc') AS email_address FROM supplier_information WHERE supplier_id IN (".implode(',', $ids).")")->result();
+        echo json_encode($records);
+    }
+    public function delete_bulk_supplier($id = null)       { $this->_deleteBulkRecord($id, 'bulk_supplier_details', 'supplier_ids', 'supplier_information', 'supplier_id'); }
+
+    /* ── Service bulk log ────────────────────────────────────────── */
+    public function save_service_bulk_log()               { $this->_saveBulkLog('bulk_service_details', 'service_ids', 'SVC-', $this->input->post('service_ids', TRUE)); }
+    public function checkBulkServiceUpload()              { echo json_encode($this->product_model->BulkServiceUpload($this->input->post())); }
+    public function get_bulk_service_details($id = null)  { $this->_getBulkDetails($id, 'bulk_service_details', 'service_ids', 'product_service', 'service_id', ['service_name', 'charge', 'service_vat']); }
+    public function delete_bulk_service($id = null)       { $this->_deleteBulkRecord($id, 'bulk_service_details', 'service_ids', 'product_service', 'service_id'); }
+
+    /* ── Product Group bulk log ──────────────────────────────────── */
+    public function save_productgroup_from_csv()
+    {
+        $enc        = Config::$encryption_key;
+        $groupcode  = trim($this->input->post('groupcode', TRUE));
+        $name       = trim($this->input->post('name', TRUE));
+        $status     = (int)$this->input->post('status', TRUE);
+        $inv_group  = (int)$this->input->post('invoice_group', TRUE);
+        $items_json = $this->input->post('items_json', TRUE);
+        if (empty($groupcode) || empty($name)) { echo json_encode(['status'=>'Error','message'=>'Group code and name are required']); return; }
+        $exists = $this->db->select('id')->from('product_group')->where('groupcode', $groupcode)->get()->row();
+        if ($exists) { echo json_encode(['status'=>'Error','message'=>'Group code already exists: '.$groupcode]); return; }
+        $this->db->insert('product_group', ['groupcode'=>$groupcode,'name'=>$name,'status'=>$status,'invoice_group'=>$inv_group]);
+        $gid   = $this->db->insert_id();
+        $items = json_decode($items_json, true);
+        if (is_array($items)) {
+            foreach ($items as $item) {
+                $pid = (int)$item['product_id'];
+                $uid = (int)$item['unit_id'];
+                $qty = addslashes($item['qty']);
+                $par = (int)$item['parent'];
+                $this->db->query("INSERT INTO product_group_details (id,pid,product,qty,unit,parent) VALUES (0,$gid,$pid,AES_ENCRYPT('$qty','$enc'),$uid,$par)");
+            }
+        }
+        echo json_encode(['status'=>'Success','id'=>$gid]);
+    }
+    public function save_productgroup_bulk_log()               { $this->_saveBulkLog('bulk_productgroup_details', 'productgroup_ids', 'PG-', $this->input->post('productgroup_ids', TRUE)); }
+    public function checkBulkProductGroupUpload()              { echo json_encode($this->product_model->BulkProductGroupUpload($this->input->post())); }
+    public function get_bulk_productgroup_details($id = null)  {
+        $id  = (int)$id;
+        $row = $this->db->select('productgroup_ids')->where('id', $id)->get('bulk_productgroup_details')->row();
+        if (!$row || empty($row->productgroup_ids)) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('intval', explode(',', $row->productgroup_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+        $records = $this->db->select('id, groupcode, name')->where_in('id', $ids)->get('product_group')->result();
+        echo json_encode($records);
+    }
+    public function delete_bulk_productgroup($id = null)       { $this->_deleteBulkRecord($id, 'bulk_productgroup_details', 'productgroup_ids', 'product_group', 'id'); }
+
+    /* ── Opening Stock bulk log ─────────────────────────────────── */
+    public function save_openingstock_bulk_log()               { $this->_saveBulkLog('bulk_openingstock_details', 'openingstock_ids', 'OS-', $this->input->post('openingstock_ids', TRUE)); }
+    public function checkBulkOpeningStockUpload()              { echo json_encode($this->product_model->BulkOpeningStockUpload($this->input->post())); }
+    public function get_bulk_openingstock_details($id = null)  {
+        $enc = Config::$encryption_key;
+        $id  = (int)$id;
+        $row = $this->db->select('openingstock_ids')->where('id', $id)->get('bulk_openingstock_details')->row();
+        if (!$row || empty($row->openingstock_ids)) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('intval', explode(',', $row->openingstock_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+        $id_list = implode(',', $ids);
+        $records = $this->db->query("
+            SELECT
+                a.id          AS adj_id,
+                a.date,
+                a.reason,
+                pi.product_name,
+                s.name        AS store_name,
+                CAST(AES_DECRYPT(sb.batchid, '$enc') AS CHAR) AS batch_name,
+                u.unit_name,
+                CAST(AES_DECRYPT(sd.stock, '$enc') AS DECIMAL(15,4)) AS qty
+            FROM stock_details sd
+            JOIN adj_stock           a  ON a.id        = sd.pid
+            JOIN product_information pi ON pi.id       = sd.product
+            JOIN store               s  ON s.id        = sd.store
+            JOIN stockbatch          sb ON sb.id       = sd.batch
+            JOIN units               u  ON u.unit_id   = sd.unit
+            WHERE sd.pid IN ($id_list) AND sd.type = 'adj_stock'
+            ORDER BY a.id, pi.product_name
+        ")->result_array();
+        echo json_encode($records);
+    }
+    public function delete_bulk_openingstock($id = null)       {
+        $id  = (int)$id;
+        $row = $this->db->select('openingstock_ids')->where('id', $id)->get('bulk_openingstock_details')->row();
+        if ($row && !empty($row->openingstock_ids)) {
+            $ids = array_filter(array_map('intval', explode(',', $row->openingstock_ids)));
+            if (!empty($ids)) {
+                $this->db->where_in('id', $ids)->delete('adj_stock');
+                $this->db->where_in('pid', $ids)->where('type', 'adj_stock')->delete('stock_details');
+                $this->db->where_in('pid', $ids)->where('type', 'adj_stock')->delete('phystock_details');
+                $this->db->where_in('pid', $ids)->where('scenario', 'Inventory Transaction')->delete('audit_stock');
+                $this->db->where_in('pid', $ids)->where('screen', 'stock')->delete('logs');
+            }
+        }
+        $this->db->where('id', $id)->delete('bulk_openingstock_details');
+    }
+
+    /* ── Stock Batch CSV upload ──────────────────────────────────── */
+    public function save_stockbatch_from_csv()
+    {
+        $enc          = Config::$encryption_key;
+        $batchid      = $this->input->post('batchid',      TRUE);
+        $busage       = $this->input->post('busage',       TRUE);
+        $product      = (int)$this->input->post('product', TRUE);
+        $edate_enabled= (int)$this->input->post('edate_enabled', TRUE);
+        $mdate        = $this->input->post('mdate',        TRUE) ?: '';
+        $pdate        = $this->input->post('pdate',        TRUE) ?: '';
+        $edate        = $edate_enabled ? ($this->input->post('edate', TRUE) ?: '') : '';
+        $mrp          = (float)$this->input->post('mrp',   TRUE);
+        $details      = $this->input->post('details',      TRUE) ?: '';
+        $status       = (int)$this->input->post('status',  TRUE);
+
+        if (empty($batchid) || empty($busage)) {
+            echo json_encode(['status' => 'Error', 'message' => 'Required fields missing']);
+            return;
+        }
+
+        /* duplicate check */
+        $exists = $this->db->query(
+            "SELECT id FROM stockbatch WHERE batchid = AES_ENCRYPT('$batchid', '$enc') LIMIT 1"
+        )->num_rows();
+        if ($exists) {
+            echo json_encode(['status' => 'Error', 'message' => 'Batch ID already exists: "'.$batchid.'"']);
+            return;
+        }
+
+        if ($busage !== 'single') {
+            $product = 0; $mdate = ''; $pdate = ''; $edate = ''; $mrp = 0; $edate_enabled = 0;
+        }
+
+        $ok = $this->db->query(
+            "INSERT INTO stockbatch (batchid, details, status, opening, busage, product, mdate, pdate, edate, mrp, edate_enabled)
+             VALUES (
+                AES_ENCRYPT('$batchid', '$enc'),
+                '$details', '$status', 0, '$busage', '$product',
+                '$mdate', '$pdate', '$edate',
+                AES_ENCRYPT('$mrp', '$enc'),
+                '$edate_enabled'
+             )"
+        );
+        if ($ok) {
+            echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+        } else {
+            echo json_encode(['status' => 'Error', 'message' => 'Database error']);
+        }
+    }
+
+    public function save_stockbatch_bulk_log() { $this->_saveBulkLog('bulk_stockbatch_details', 'stockbatch_ids', 'SB-', $this->input->post('stockbatch_ids', TRUE)); }
+    public function checkBulkStockBatchUpload() { echo json_encode($this->product_model->BulkStockBatchUpload($this->input->post())); }
+
+    public function get_bulk_stockbatch_details($id = null)
+    {
+        $enc = Config::$encryption_key;
+        $id  = (int)$id;
+        $row = $this->db->select('stockbatch_ids')->where('id', $id)->get('bulk_stockbatch_details')->row();
+        if (!$row || empty($row->stockbatch_ids)) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('intval', explode(',', $row->stockbatch_ids)));
+        if (empty($ids)) { echo json_encode([]); return; }
+        $id_list = implode(',', $ids);
+        $records = $this->db->query("
+            SELECT
+                CAST(AES_DECRYPT(sb.batchid, '$enc') AS CHAR)  AS batchid,
+                sb.busage,
+                COALESCE(pi.product_name, '—')                  AS product_name,
+                sb.mdate,
+                sb.pdate,
+                sb.edate,
+                CAST(AES_DECRYPT(sb.mrp, '$enc') AS CHAR)       AS mrp,
+                sb.details,
+                IF(sb.status=1,'Active','Inactive')              AS status_label
+            FROM stockbatch sb
+            LEFT JOIN product_information pi ON pi.id = sb.product
+            WHERE sb.id IN ($id_list)
+            ORDER BY sb.id ASC
+        ")->result_array();
+        echo json_encode($records);
+    }
+
+    public function delete_bulk_stockbatch($id = null)
+    {
+        /* only removes the log record — batch entries stay in the system */
+        $this->db->where('id', (int)$id)->delete('bulk_stockbatch_details');
+    }
+
+    /* ── Designation CSV upload ─────────────────────────────────── */
+    public function save_designation_from_csv()
+    {
+        $designation = $this->input->post('designation', TRUE);
+        $details     = $this->input->post('details',     TRUE);
+        $status      = (int)$this->input->post('status', TRUE);
+
+        if (!$designation) {
+            echo json_encode(['status' => 'Error', 'message' => 'Designation is required']);
+            return;
+        }
+        $exists = $this->db->where('LOWER(designation)', strtolower($designation))->count_all_results('designation');
+        if ($exists) {
+            echo json_encode(['status' => 'Error', 'message' => 'Designation already exists: ' . $designation]);
+            return;
+        }
+        $this->db->insert('designation', [
+            'designation' => $designation,
+            'details'     => $details,
+            'status'      => $status,
+        ]);
+        echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+    }
+
+    public function save_designation_bulk_log()
+    {
+        $this->_saveBulkLog('bulk_designation_details', 'designation_ids', 'DG-');
+    }
+
+    public function checkBulkDesignationUpload() { echo json_encode($this->product_model->BulkDesignationUpload($this->input->post())); }
+
+    public function get_bulk_designation_details($id = null)
+    {
+        $log = $this->db->where('id', (int)$id)->get('bulk_designation_details')->row_array();
+        if (!$log) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('trim', explode(',', $log['designation_ids'] ?? '')));
+        if (!$ids) { echo json_encode([]); return; }
+        $rows = $this->db->select('id, designation, details, status')
+            ->from('designation')
+            ->where_in('id', $ids)
+            ->get()->result_array();
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'designation'  => $r['designation'],
+                'details'      => $r['details'],
+                'status_label' => $r['status'] ? '<span class="label label-success">Active</span>' : '<span class="label label-default">Inactive</span>',
+            ];
+        }
+        echo json_encode($out);
+    }
+
+    public function delete_bulk_designation($id = null)
+    {
+        $this->db->where('id', (int)$id)->delete('bulk_designation_details');
+    }
+
+    /* ── Employee CSV upload ────────────────────────────────────── */
+    public function save_employee_from_csv()
+    {
+        $last_name  = $this->input->post('last_name',  TRUE);
+        $first_name = $this->input->post('first_name', TRUE);
+        $status     = (int)$this->input->post('status', TRUE);
+
+        if (!$last_name) {
+            echo json_encode(['status' => 'Error', 'message' => 'Employee ID is required']);
+            return;
+        }
+        $exists = $this->db->where('LOWER(last_name)', strtolower($last_name))->count_all_results('employee_history');
+        if ($exists) {
+            echo json_encode(['status' => 'Error', 'message' => 'Employee ID already exists: ' . $last_name]);
+            return;
+        }
+        $this->db->insert('employee_history', [
+            'last_name'      => $last_name,
+            'first_name'     => $first_name,
+            'designation'    => (int)$this->input->post('designation',    TRUE),
+            'rate_type'      => (int)$this->input->post('rate_type',      TRUE),
+            'hrate'          => (float)$this->input->post('hrate',        TRUE),
+            'blood_group'    => $this->input->post('blood_group',         TRUE),
+            'phone'          => $this->input->post('phone',               TRUE),
+            'email'          => $this->input->post('email',               TRUE),
+            'address_line_1' => $this->input->post('address_line_1',      TRUE),
+            'address_line_2' => $this->input->post('address_line_2',      TRUE),
+            'country'        => $this->input->post('country',             TRUE),
+            'city'           => $this->input->post('city',                TRUE),
+            'zip'            => $this->input->post('zip',                 TRUE),
+            'status'         => $status,
+        ]);
+        echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+    }
+
+    public function save_employee_bulk_log()
+    {
+        $this->_saveBulkLog('bulk_employee_details', 'employee_ids', 'EMP-');
+    }
+
+    public function checkBulkEmployeeUpload() { echo json_encode($this->product_model->BulkEmployeeUpload($this->input->post())); }
+
+    public function get_bulk_employee_details($id = null)
+    {
+        $log = $this->db->where('id', (int)$id)->get('bulk_employee_details')->row_array();
+        if (!$log) { echo json_encode([]); return; }
+        $ids = array_filter(array_map('trim', explode(',', $log['employee_ids'] ?? '')));
+        if (!$ids) { echo json_encode([]); return; }
+        $rows = $this->db->select('eh.id, eh.last_name, eh.first_name, d.designation AS desig_name, eh.rate_type, eh.hrate, eh.phone, eh.email, eh.status')
+            ->from('employee_history eh')
+            ->join('designation d', 'd.id = eh.designation', 'left')
+            ->where_in('eh.id', $ids)
+            ->get()->result_array();
+        $rateLabels = [1 => 'Hourly', 2 => 'Salary'];
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'emp_id'       => $r['last_name'],
+                'emp_name'     => $r['first_name'],
+                'designation'  => $r['desig_name'],
+                'pay_type'     => $rateLabels[$r['rate_type']] ?? '—',
+                'hrate'        => $r['hrate'],
+                'phone'        => $r['phone'],
+                'email'        => $r['email'],
+                'status_label' => $r['status'] ? '<span class="label label-success">Active</span>' : '<span class="label label-default">Inactive</span>',
+            ];
+        }
+        echo json_encode($out);
+    }
+
+    public function delete_bulk_employee($id = null)
+    {
+        $this->db->where('id', (int)$id)->delete('bulk_employee_details');
+    }
 
     function uploadCsv()
     {
@@ -1649,9 +2354,10 @@ class Product extends MX_Controller
 
         if ($this->db->query($query)) {
             $inserted_id = $this->db->insert_id();
+            $product_code = $generate_product_id ? str_pad($inserted_id, 6, '0', STR_PAD_LEFT) : $product_id;
 
             if ($generate_product_id) {
-                $generated_product_id = str_pad($inserted_id, 6, '0', STR_PAD_LEFT);
+                $generated_product_id = $product_code;
                 $this->db->query("UPDATE product_information SET product_id = '{$generated_product_id}' WHERE id = '{$inserted_id}'");
             }
 
@@ -1662,12 +2368,25 @@ class Product extends MX_Controller
                 }
             }
 
-            echo json_encode("Success");
+            // Create a default single-use batch so the product is immediately usable in invoices
+            $today = date('Y-m-d');
+            $this->db->query("INSERT INTO stockbatch (batchid, details, status, opening, busage, product, mdate, pdate, edate, mrp, edate_enabled)
+                VALUES (AES_ENCRYPT('Default', '{$encryption_key}'), '', 1, 0, 'single', '{$inserted_id}', '{$today}', '{$today}', '{$today}', AES_ENCRYPT('0', '{$encryption_key}'), 0)");
+
+            echo json_encode(["status" => "Success", "id" => $inserted_id, "product_code" => $product_code]);
         } else {
             $db_error = $this->db->error();
             $error_message = !empty($db_error['message']) ? $db_error['message'] : 'Database query failed';
-            echo json_encode("Error: " . $error_message . " | Query: " . $query);
+            echo json_encode(["status" => "Error", "message" => "Error: " . $error_message]);
         }
+    }
+
+    public function get_product_form_data()
+    {
+        echo json_encode([
+            'categories' => $this->product_model->active_category() ?: [],
+            'units'      => $this->product_model->active_unit()     ?: [],
+        ]);
     }
 
 
@@ -1744,20 +2463,20 @@ class Product extends MX_Controller
             if (!empty($entries) && is_array($entries)) {
                 foreach ($entries as $item) {
                     if($item['id']==0){
-                        $subunit_query = "INSERT INTO subunit_product (product_id, unit_id, subsell_price, subcost_price, first) VALUES ('{$this->input->post('id', TRUE)}', '{$item['subunitid']}', AES_ENCRYPT('{$item['subsell_price']}', '{$encryption_key}'), AES_ENCRYPT('{$item['subcost_price']}', '{$encryption_key}'), '{$item['selectedInt']}')";
+                        $subunit_query = "INSERT INTO subunit_product (product_id, unit_id, subsell_price, subcost_price, first) VALUES ('{$edit_id}', '{$item['subunitid']}', AES_ENCRYPT('{$item['subsell_price']}', '{$encryption_key}'), AES_ENCRYPT('{$item['subcost_price']}', '{$encryption_key}'), '{$item['selectedInt']}')";
                         $this->db->query($subunit_query);
                     }else{
-                        $subunit_query = "UPDATE subunit_product SET subsell_price = AES_ENCRYPT('{$item['subsell_price']}', '{$encryption_key}'), subcost_price = AES_ENCRYPT('{$item['subcost_price']}', '{$encryption_key}'), first = '{$item['selectedInt']}', product_id = '{$this->input->post('id', TRUE)}', unit_id = '{$item['subunitid']}' WHERE id = '{$item['id']}'";
+                        $subunit_query = "UPDATE subunit_product SET subsell_price = AES_ENCRYPT('{$item['subsell_price']}', '{$encryption_key}'), subcost_price = AES_ENCRYPT('{$item['subcost_price']}', '{$encryption_key}'), first = '{$item['selectedInt']}', product_id = '{$edit_id}', unit_id = '{$item['subunitid']}' WHERE id = '{$item['id']}'";
                         $this->db->query($subunit_query);
                     }
                 }
             }
 
-            echo json_encode("Success");
+            echo json_encode(["status" => "Success"]);
         } else {
             $db_error = $this->db->error();
             $error_message = !empty($db_error['message']) ? $db_error['message'] : 'Database query failed';
-            echo json_encode("Error: " . $error_message . " | Query: " . $query);
+            echo json_encode(["status" => "Error", "message" => $error_message]);
         }
     }
     public function update_subunit()
@@ -2100,6 +2819,71 @@ class Product extends MX_Controller
         $data['module']        = "product";
         $data['page']          = "barcode_print_page";
         echo modules::run('template/layout', $data);
+    }
+
+    public function upload_product_image()
+    {
+        $product_id = $this->input->post('product_id', TRUE);
+        if (!$product_id) {
+            echo json_encode(['status' => 'Error', 'message' => 'No product_id']);
+            return;
+        }
+
+        $dir      = FCPATH . 'assets/img/products/';
+        $filename = $product_id . '.jpg';
+        $filepath = $dir . $filename;
+
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        // Remove image
+        if ($this->input->post('remove_image') == '1') {
+            @unlink($filepath);
+            $this->db->query("UPDATE product_information SET product_image = NULL WHERE id = '{$product_id}'");
+            echo json_encode(['status' => 'Success']);
+            return;
+        }
+
+        // Upload image file
+        if (empty($_FILES['product_image']['tmp_name'])) {
+            echo json_encode(['status' => 'Error', 'message' => 'No file received']);
+            return;
+        }
+
+        $tmp = $_FILES['product_image']['tmp_name'];
+        $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $mime = mime_content_type($tmp);
+        if (!in_array($mime, $allowed)) {
+            echo json_encode(['status' => 'Error', 'message' => 'Invalid file type: ' . $mime]);
+            return;
+        }
+
+        if (move_uploaded_file($tmp, $filepath)) {
+            $rel_path = 'assets/img/products/' . $filename;
+            $this->db->query("UPDATE product_information SET product_image = '{$rel_path}' WHERE id = '{$product_id}'");
+            echo json_encode(['status' => 'Success', 'path' => $rel_path]);
+        } else {
+            echo json_encode(['status' => 'Error', 'message' => 'move_uploaded_file failed. Check folder permissions for: ' . $dir]);
+        }
+    }
+
+    private function _saveProductImage($base64Data, $productId)
+    {
+        $base64Data = preg_replace('#^data:image/\w+;base64,#i', '', $base64Data);
+        // POST decodes '+' as spaces — restore before base64_decode
+        $base64Data = str_replace(' ', '+', $base64Data);
+        $imageData  = base64_decode($base64Data, true);
+        if (!$imageData) return false;
+
+        $dir = FCPATH . 'assets/img/products/';
+        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+
+        $filename = $productId . '.jpg';
+        if (file_put_contents($dir . $filename, $imageData) !== false) {
+            return 'assets/img/products/' . $filename;
+        }
+        return false;
     }
 
 }

@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(\"c:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root betalite -e \"DESCRIBE stockbatch;\")",
-      "Bash(c:/xampp/mysql/bin/mysql.exe -u root betalite -e \"DESCRIBE stockbatch;\")"
+      "Bash(c:/xampp/mysql/bin/mysql.exe -u root betalite -e \"DESCRIBE stockbatch;\")",
+      "Bash(gh pr *)",
+      "WebFetch(domain:github.com)",
+      "PowerShell(git remote add erpcloudlite2 https://github.com/Ifleex-Solution/erpcloudlite2.git 2>&1)",
+      "PowerShell(git fetch erpcloudlite2 pull/146/head:pr-146 2>&1)",
+      "PowerShell(git checkout pr-146 -- application/modules/purchase/views/add_purchase_form.php application/modules/stock/views/newstockadjustment_form.php application/modules/stock/views/stockbatch_form.php application/config/database.php application/config/autoload.php application/config/config.php application/config/constants.php application/config/routes.php application/config/doctypes.php application/config/foreign_chars.php application/config/hooks.php application/config/index.html application/config/memcached.php application/config/migration.php application/config/mimes.php application/config/profiler.php application/config/smileys.php application/config/user_agents.php .gitignore .htaccess application/cache/index.html 2>&1)",
+      "PowerShell(\\(Get-ChildItem -Recurse \"application/modules/report/controllers/TCPDF-main\" | Measure-Object\\).Count 2>&1)",
+      "PowerShell(git checkout pr-146 -- \"application/modules/report/controllers/TCPDF-main\" 2>&1)"
     ]
   }
 }

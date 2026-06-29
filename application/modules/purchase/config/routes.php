@@ -22,6 +22,7 @@ $route['convert_purchase/(:any)']         = "purchase/purchase/bdtask_convertpur
 $route['new_purchase_return']         = "purchase/purchase/bdtask_purchasereturn_form";
 $route['manage_purchase_return']         = "purchase/purchase/bdtask_purchasereturn_list";
 $route['edit_purchase_return/(:num)']         = "purchase/purchase/bdtask_purchasereturn_form/$1";
+$route['save_supplier_ajax']                  = "purchase/purchase/save_supplier_ajax";
 
 
 

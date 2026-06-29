@@ -96,14 +96,17 @@ class Template_model extends CI_Model
 
         $expiry_alert_days = isset($setting->expiry_alert_days) ? (int)$setting->expiry_alert_days : 0;
 
-        $this->db->select(" 
+        $this->db->select("
             sb.id,
             sb.edate,
             (
-                SELECT IFNULL(SUM(CAST(AES_DECRYPT(pd.stock, '{$encryption_key}') AS DECIMAL(18,4))),0)
-                                FROM stock_details pd
-                WHERE pd.product = sb.product
-                  AND pd.batch = sb.id
+                SELECT IFNULL(SUM(CAST(AES_DECRYPT(sd.stock, '{$encryption_key}') AS DECIMAL(18,4))), 0)
+                  FROM stock_details sd
+                 WHERE sd.product = sb.product AND sd.batch = sb.id
+            ) + (
+                SELECT IFNULL(SUM(CAST(AES_DECRYPT(pd.stock, '{$encryption_key}') AS DECIMAL(18,4))), 0)
+                  FROM phystock_details pd
+                 WHERE pd.product = sb.product AND pd.batch = sb.id
             ) AS master_stock_qty
         ", false);
         $this->db->from('stockbatch sb');
@@ -132,7 +135,7 @@ class Template_model extends CI_Model
             $alert_start = date('Y-m-d', strtotime($expiry_date . ' -' . $expiry_alert_days . ' day'));
             $is_to_be_expired = (!$is_expired && strtotime($today) >= strtotime($alert_start));
 
-            if ($is_expired || $is_to_be_expired) {
+            if (($is_expired || $is_to_be_expired) && $master_stock_qty > 0) {
                 $count++;
             }
         }

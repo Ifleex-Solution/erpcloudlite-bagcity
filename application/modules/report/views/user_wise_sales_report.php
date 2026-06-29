@@ -213,6 +213,7 @@ echo "</script>";
             },
             success: function(data1) {
                 datas = JSON.parse(data1);
+                console.log(datas)
                 if (datas.length > 0) {
                     window.open(`generate_salesreportemployee`, '_blank');
 

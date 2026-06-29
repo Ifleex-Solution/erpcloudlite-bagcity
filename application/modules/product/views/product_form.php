@@ -117,21 +117,10 @@
 
                     <div class="col-sm-6">
                         <div class="form-group row">
-                            <label for="brand_id" class="col-sm-4 col-form-label text-nowrap">Origin of Product
+                            <label for="oop_id" class="col-sm-4 col-form-label text-nowrap">Origin of Product
                             </label>
                             <div class="col-sm-8">
-                                <select class="form-control" id="oop_id" required name="oop_id" tabindex="3">
-                                    <option value=""></option>
-                                    <?php if ($oop_list) { ?>
-                                        <?php foreach ($oop_list as $categories) { ?>
-                                            <option value="<?php echo $categories['oop_id'] ?>" <?php if ($product->oop_id == $categories['oop_id']) {
-                                                                                                    echo 'selected';
-                                                                                                } ?>>
-                                                <?php echo $categories['oop_name'] ?></option>
-
-                                    <?php }
-                                    } ?>
-                                </select>
+                                <?php echo form_dropdown('oop_id', $country_list, isset($product->oop_id) ? $product->oop_id : '', 'id="oop_id" class="form-control" tabindex="3"') ?>
                             </div>
                         </div>
                     </div>
@@ -514,18 +503,56 @@
 
                 </div>
 
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12">
+        <div class="panel panel-bd lobidrag">
+            <div class="panel-heading">
+                <div class="panel-title">
+                    <h4>Product Image</h4>
+                </div>
+            </div>
+            <div class="panel-body">
+
                 <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Product Image</label>
+                    <div class="col-sm-10">
+                        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                            <div id="img_preview_wrap" style="width:180px; height:180px; border:2px dashed #d0d7e6; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#f7f9fc; overflow:hidden; flex-shrink:0;">
+                                <?php if (!empty($product->product_image)): ?>
+                                    <img id="img_preview" src="<?php echo base_url($product->product_image); ?>" style="width:100%; height:100%; object-fit:cover;">
+                                <?php else: ?>
+                                    <img id="img_preview" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+                                    <i class="fa fa-image" id="img_placeholder_icon" style="font-size:56px; color:#ccc;"></i>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <input type="file" id="product_image_file" accept="image/*" style="display:none;" onchange="handleProductImage(this)">
+                                <input type="hidden" id="product_image_data" name="product_image_data">
+                                <button type="button" class="btn btn-default btn-sm" onclick="document.getElementById('product_image_file').click()">
+                                    <i class="fa fa-upload"></i> Choose Image
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" id="btn_remove_img" onclick="removeProductImage()" style="<?php echo empty($product->product_image) ? 'display:none;' : ''; ?>">
+                                    <i class="fa fa-times"></i> Remove
+                                </button>
+                                <p class="text-muted" style="font-size:11px; margin-top:6px; margin-bottom:0;">Auto-compressed to lightweight JPEG. Max display: 300×300px.</p>
+                            </div>
+                        </div>
+                        <canvas id="img_canvas" style="display:none;"></canvas>
+                    </div>
+                </div>
 
+                <div class="form-group row">
                     <div class="col-sm-12 text-right">
-
-                        <button type="submit" class="btn btn-success " name="save" onclick="save('save')">
+                        <button type="submit" class="btn btn-success" name="save" onclick="save('save')">
                             <?php echo (empty($id) ? display('save') : display('update')) ?></button>
-
                         <?php if (empty($id)) { ?>
                             <button type="submit" class="btn btn-success" name="add-another" onclick="save('save_add')">
                                 <?php echo display('save_and_add_another'); ?>
                             </button>
-
                         <?php } ?>
                     </div>
                 </div>
@@ -1005,11 +1032,13 @@ echo "</script>";
                 success: function(response) {
                     let result = JSON.parse(response);
 
-                    if (result === "Success") {
-                        alert("Product Details Updated Successfully");
-                        window.location.href = $('#base_url').val() + 'product_list';
+                    if (result && result.status === "Success") {
+                        uploadProductImage(id).always(function() {
+                            alert("Product Details Updated Successfully");
+                            window.location.href = $('#base_url').val() + 'product_list';
+                        });
                     } else {
-                        alert("Error: " + result);
+                        alert("Error: " + (result && result.message ? result.message : JSON.stringify(result)));
                     }
                 },
                 error: function(error) {
@@ -1054,15 +1083,17 @@ echo "</script>";
                 success: function(response) {
                     let result = JSON.parse(response);
 
-                    if (result === "Success") {
-                        alert("Product Details saved Successfully");
-                        if (value == "save_add") {
-                            window.location.href = $('#base_url').val() + 'product_form';
-                        } else {
-                            window.location.href = $('#base_url').val() + 'product_list';
-                        }
+                    if (result && result.status === "Success") {
+                        uploadProductImage(result.id).always(function() {
+                            alert("Product Details saved Successfully");
+                            if (value == "save_add") {
+                                window.location.href = $('#base_url').val() + 'product_form';
+                            } else {
+                                window.location.href = $('#base_url').val() + 'product_list';
+                            }
+                        });
                     } else {
-                        alert("Error: " + result);
+                        alert("Error: " + (result && result.message ? result.message : JSON.stringify(result)));
                     }
                 },
                 error: function(error) {
@@ -1134,4 +1165,66 @@ echo "</script>";
     //         }
     //     });
     // }
+
+let productImageBlob = null;   // holds compressed Blob ready to upload
+let productImageRemoved = false;
+
+function handleProductImage(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const MAX = 300;
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+            else        { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+            const canvas = document.getElementById('img_canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            canvas.toBlob(function(blob) {
+                productImageBlob    = blob;
+                productImageRemoved = false;
+                const preview = document.getElementById('img_preview');
+                preview.src = URL.createObjectURL(blob);
+                preview.style.display = 'block';
+                const icon = document.getElementById('img_placeholder_icon');
+                if (icon) icon.style.display = 'none';
+                document.getElementById('btn_remove_img').style.display = '';
+            }, 'image/jpeg', 0.75);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function uploadProductImage(productId) {
+    if (!productImageBlob && !productImageRemoved) return $.when(); // jQuery no-op deferred
+    const fd = new FormData();
+    fd.append('product_id', productId);
+    if (productImageBlob) {
+        fd.append('product_image', productImageBlob, productId + '.jpg');
+    } else {
+        fd.append('remove_image', '1');
+    }
+    return $.ajax({
+        url: $('#baseUrl2').val() + 'product/product/upload_product_image',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false
+    });
+}
+
+function removeProductImage() {
+    productImageBlob    = null;
+    productImageRemoved = true;
+    document.getElementById('product_image_file').value = '';
+    const preview = document.getElementById('img_preview');
+    preview.src = ''; preview.style.display = 'none';
+    const icon = document.getElementById('img_placeholder_icon');
+    if (icon) icon.style.display = '';
+    document.getElementById('btn_remove_img').style.display = 'none';
+}
 </script>

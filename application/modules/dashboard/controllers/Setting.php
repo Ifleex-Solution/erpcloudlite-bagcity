@@ -237,6 +237,7 @@ class Setting extends MX_Controller
 		} else {
 			$is_autoapprove_v = 0;
 		}
+		$vk_enable = ($this->input->post('vk_enable', true) == 1) ? 1 : 0;
 
 		$old_invoice_logo = $this->input->post('old_invoice_logo', true);
 		$old_favicon = $this->input->post('old_favicon', true);
@@ -257,6 +258,7 @@ class Setting extends MX_Controller
 			'discount_type'     => $this->input->post('discount_type', true),
 			'is_qr'     		=> $is_qr,
 			'is_autoapprove_v'  => $is_autoapprove_v,
+			'vk_enable'         => $vk_enable,
 
 		];
 		#-------------------------------#

@@ -647,4 +647,36 @@ class Store extends MX_Controller
             echo json_encode($store_reult);
         }
     }
+
+    /* ── CSV Upload: Branch ──────────────────────────────────────── */
+    public function save_branch_from_csv()
+    {
+        $enc_key = Config::$encryption_key;
+        $code    = trim($this->input->post('code', TRUE));
+        $name    = trim($this->input->post('name', TRUE));
+        $nature  = trim($this->input->post('nature', TRUE));
+        $status  = (int)$this->input->post('status', TRUE);
+        if (empty($code) || empty($name)) { echo json_encode(['status'=>'Error','message'=>'Code and Name are required']); return; }
+        $exists = $this->db->select('id')->from('branch')->where('code', $code)->get()->row();
+        if ($exists) { echo json_encode(['status'=>'Error','message'=>'Branch code already exists: '.$code]); return; }
+        $this->store_model->create_branch("INSERT INTO branch (code, name, status, nature) VALUES ('".addslashes($code)."', AES_ENCRYPT('".addslashes($name)."', '$enc_key'), $status, '".addslashes($nature)."')");
+        echo json_encode(['status'=>'Success', 'id'=>$this->db->insert_id()]);
+    }
+
+    /* ── CSV Upload: Store ───────────────────────────────────────── */
+    public function save_store_from_csv()
+    {
+        $code        = trim($this->input->post('code', TRUE));
+        $name        = trim($this->input->post('name', TRUE));
+        $store_nature= trim($this->input->post('store_nature', TRUE));
+        $auto_grn    = (int)$this->input->post('auto_grn', TRUE);
+        $auto_gdn    = (int)$this->input->post('auto_gdn', TRUE);
+        $dstock      = (int)$this->input->post('dstock', TRUE);
+        $status      = (int)$this->input->post('status', TRUE);
+        if (empty($code) || empty($name)) { echo json_encode(['status'=>'Error','message'=>'Code and Name are required']); return; }
+        $exists = $this->db->select('id')->from('store')->where('code', $code)->get()->row();
+        if ($exists) { echo json_encode(['status'=>'Error','message'=>'Store code already exists: '.$code]); return; }
+        $id = $this->store_model->create_store(['code'=>$code,'name'=>$name,'store_nature'=>$store_nature,'auto_grn'=>$auto_grn,'auto_gdn'=>$auto_gdn,'dstock'=>$dstock,'status'=>$status]);
+        echo json_encode(['status'=>'Success', 'id'=>$id]);
+    }
 }

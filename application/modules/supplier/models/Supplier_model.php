@@ -496,4 +496,9 @@ class Supplier_model extends CI_Model
     }
     return false;
   }
+
+  public function all_supplier_names() {
+      $key = Config::$encryption_key;
+      return $this->db->query("SELECT AES_DECRYPT(supplier_name, '$key') AS supplier_name FROM supplier_information")->result_array();
+  }
 }

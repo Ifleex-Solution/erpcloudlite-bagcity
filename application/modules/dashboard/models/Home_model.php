@@ -681,7 +681,11 @@ class Home_model extends CI_Model
                 CAST(AES_DECRYPT(sb.batchid, '$encryption_key') AS CHAR) AS batch_id,
                 DATE_FORMAT(sb.edate, '%Y-%m-%d') AS expiry_date,
                 IFNULL(pi.product_name, '') AS product_name,
-                IFNULL(SUM(AES_DECRYPT(sd.stock, '$encryption_key')), 0) AS master_stock_qty,
+                IFNULL(SUM(AES_DECRYPT(sd.stock, '$encryption_key')), 0)
+                  + IFNULL((SELECT SUM(CAST(AES_DECRYPT(pd.stock, '$encryption_key') AS DECIMAL(18,4)))
+                              FROM phystock_details pd
+                             WHERE pd.batch = sb.id AND pd.product = CAST(sb.product AS CHAR)), 0)
+                  AS master_stock_qty,
                 cr.conversion_ratio,
                 u1.unit_name AS sub,
                 u2.unit_name AS master,
@@ -701,6 +705,7 @@ class Home_model extends CI_Model
               AND sb.edate != '0000-00-00'
               AND DATE(sb.edate) <= DATE_ADD(CURDATE(), INTERVAL $expiry_alert_days DAY)
             GROUP BY pi.id, sb.id
+            HAVING master_stock_qty > 0
             ORDER BY pi.id, sb.id DESC
         ";
 

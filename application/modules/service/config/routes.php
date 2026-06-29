@@ -17,3 +17,5 @@ $route['serviceorder_invoice']   = "service/service/bdtask_serviceorder_invoice_
 $route['manage_serviceorder_invoice']= "service/service/manage_serviceorder_invoice";
 $route['edit_serviceorder_invoice/(:any)']= "service/service/bdtask_serviceorder_invoice_form/$1";
 $route['convert_service/(:any)']         = "service/service/bdtask_convertservice_form/$1";
+
+$route['save_service_from_csv']  = "service/service/save_service_from_csv";

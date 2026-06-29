@@ -315,7 +315,9 @@ class Auth extends MX_Controller
                     } 
                     else if ($this->session->userdata('screen') == 3) {
                         redirect('product_list');
-                    }
+                    } else if ($this->session->userdata('screen') == 11) {
+                redirect('company_list');
+            }
                 }
             } else {
 

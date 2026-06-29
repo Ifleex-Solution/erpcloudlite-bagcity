@@ -865,4 +865,9 @@ class Customer_model extends CI_Model
       ->get()
       ->result_array();
   }
+
+  public function all_customer_names() {
+      $key = Config::$encryption_key;
+      return $this->db->query("SELECT AES_DECRYPT(customer_name, '$key') AS customer_name FROM customer_information")->result_array();
+  }
 }

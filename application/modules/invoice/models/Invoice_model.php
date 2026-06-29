@@ -2003,8 +2003,10 @@ class Invoice_model extends CI_Model
                 $button .= '  <a  style="margin-left:7px;" href="' . $base_url . 'invoice/invoice/update_salestatus/' . $record->id . '" class="btn btn-xs btn-success "  onclick="' . $jsaction . '"><i class="fa fa-check"></i></a>';
                 if ($this->permission1->method('manage_invoice', 'update')->access()) {
                     $button .= ' <a  style="margin-left:7px;" href="' . $base_url . 'edit_invoice/' . $record->id . '" class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="left" title="' . display('update') . '"><i class="fa fa-pencil" aria-hidden="true"></i></a>';
-                    // $button .= ' <a  style="margin-left:7px;" href="' . $base_url . 'edit_invoice2/' . $record->id . '" class="btn btn-success btn-xs" data-toggle="tooltip" data-placement="left" title="' . display('update') . '"><i class="fa fa-pencil" aria-hidden="true"></i></a>';
+                }
 
+                 if ($this->permission1->method('touch_invoice', 'update')->access()) {
+                    $button .= ' <a  style="margin-left:7px;" href="' . $base_url . 'touch_invoice/' . $record->id . '" class="btn btn-primary btn-xs" data-toggle="tooltip" data-placement="left" title="Edit (Touch)"><i class="fa fa-tablet" aria-hidden="true"></i></a>';
                 }
                 if ($this->permission1->method('manage_invoice', 'delete')->access()) {
 

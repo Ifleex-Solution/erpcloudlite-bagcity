@@ -3826,6 +3826,21 @@ class Accounts extends MX_Controller
     }
   }
 
+  public function save_paymentmethod_from_csv()
+  {
+      $name   = trim($this->input->post('name', TRUE));
+      $status = (int)$this->input->post('status', TRUE);
+      if (empty($name)) { echo json_encode(['status' => 'Error', 'message' => 'Payment method name is required']); return; }
+      $exists = $this->db->select('id')->from('payment_type')
+          ->where('LOWER(name)', strtolower($name))->get()->row();
+      if ($exists) { echo json_encode(['status' => 'Error', 'message' => 'Payment method already exists: ' . $name]); return; }
+      if ($this->accounts_model->create_method2(['name' => $name, 'status' => $status])) {
+          echo json_encode(['status' => 'Success', 'id' => $this->db->insert_id()]);
+      } else {
+          echo json_encode(['status' => 'Error', 'message' => 'Database insert failed']);
+      }
+  }
+
   public function payment_method_list()
   {
     $data['title']      = display('payment_method_list');

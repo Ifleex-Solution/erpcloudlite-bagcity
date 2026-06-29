@@ -294,7 +294,6 @@
             $this->permission1->method('create_product', 'create')->access()  || $this->permission1->method('manage_product', 'read')->access()
             || $this->permission1->method('brand_form', 'create')->access()  || $this->permission1->method('brand_list', 'read')->access()
             || $this->permission1->method('subcategory_form', 'create')->access()  || $this->permission1->method('subcategory_list', 'read')->access() ||
-            $this->permission1->method('oop_form', 'create')->access()  || $this->permission1->method('oop_list', 'read')->access() ||
             $this->permission1->method('conversionratio_form', 'create')->access()
             || $this->permission1->method('conversionratio_list', 'read')->access()
             || $this->permission1->method('add_product_group', 'create')->access()
@@ -305,7 +304,6 @@
                 class="treeview <?php echo (($this->uri->segment(1) == "category_form" || $this->uri->segment(1) == "category_list"
                                     || $this->uri->segment(1) == "brand_form" || $this->uri->segment(1) == "brand_list"
                                     || $this->uri->segment(1) == "subcategory_form" || $this->uri->segment(1) == "subcategory_list"
-                                    || $this->uri->segment(1) == "oop_form" || $this->uri->segment(1) == "oop_list"
                                     || $this->uri->segment(1) == "unit_form" || $this->uri->segment(1) == "unit_list" || $this->uri->segment(1) == "product_form" || $this->uri->segment(1) == "product_list" || $this->uri->segment(1) == "barcode"
                                     || $this->uri->segment(1) == "qrcode"  || $this->uri->segment(1) == "product_details"
                                     || $this->uri->segment(1) == "labelprint"
@@ -343,24 +341,6 @@
                             <a href="<?php echo base_url('brand_list') ?>">
 
                                 <?php echo display('brand_list') ?>
-
-                            </a>
-
-                        </li>
-                    <?php } ?>
-                    <?php if ($this->permission1->method('oop_form', 'create')->access()) { ?>
-                        <li class="<?php echo (($this->uri->segment(1) == "oop_form") ? "active" : '') ?>">
-                            <a href="<?php echo base_url('oop_form') ?>"> <?php echo display('add_oop') ?>
-
-                            </a>
-
-                        </li>
-                    <?php } ?>
-                    <?php if ($this->permission1->method('oop_list', 'read')->access() || $this->permission1->method('oop_list', 'update')->access() || $this->permission1->method('oop_list', 'delete')->access()) { ?>
-                        <li class="<?php echo (($this->uri->segment(1) == "oop_list") ? "active" : '') ?>">
-                            <a href="<?php echo base_url('oop_list') ?>">
-
-                                <?php echo display('oop_list') ?>
 
                             </a>
 
@@ -738,6 +718,9 @@
             || $this->permission1->method('manage_stock_adjustment', 'read')->access()
             || $this->permission1->method('add_stockbatch', 'create')->access()
             || $this->permission1->method('stockbatchlist', 'read')->access()
+            || $this->permission1->method('new_stock', 'create')->access()
+            || $this->permission1->method('new_inventory_transection', 'create')->access()
+
 
         ) { ?>
             <li class="treeview <?php echo (
@@ -745,6 +728,8 @@
                                     ||  $this->uri->segment(1) == "manage_stock_adjustment"
                                     || $this->uri->segment(1) == "stockbatch_form"
                                     || $this->uri->segment(1) == "stockbatchlist"
+                                    || $this->uri->segment(1) == "new_inventory_transection"
+                                    || $this->uri->segment(1) == "manage_inventory_transection"
 
                                     ? "active" : '') ?>">
 
@@ -789,6 +774,18 @@
                         <li class="<?php echo (($this->uri->segment(1) == "manage_stock_adjustment") ? "active" : '') ?>">
                             <a href="<?php echo base_url('manage_stock_adjustment') ?>">
                                 <?php echo display('manage_stock_adjustment') ?> </a>
+                        </li>
+                    <?php } ?>
+
+                    <?php if ($this->permission1->method('new_inventory_transection', 'create')->access()) { ?>
+                        <li class="<?php echo (($this->uri->segment(1) == "new_inventory_transection") ? "active" : '') ?>">
+                            <a href="<?php echo base_url('new_inventory_transection') ?>">  <?php echo display('new_inventory_transection') ?> </a>
+                        </li>
+                    <?php } ?>
+
+                    <?php if ($this->permission1->method('manage_stock_adjustment', 'read')->access()) { ?>
+                        <li class="<?php echo (($this->uri->segment(1) == "manage_inventory_transection") ? "active" : '') ?>">
+                            <a href="<?php echo base_url('manage_inventory_transection') ?>">  <?php echo display('manage_inventory_transection') ?> </a>
                         </li>
                     <?php } ?>
 
@@ -1001,7 +998,7 @@
         ) { ?>
             <li class="treeview <?php
                                 if (
-                                    $this->uri->segment('1') == ("add_invoice") || $this->uri->segment('1') == ("new_pos") || $this->uri->segment('1') == ("invoice_list")
+                                    $this->uri->segment('1') == ("add_invoice") || $this->uri->segment('1') == ("new_pos") || $this->uri->segment('1') == ("touch_invoice") || $this->uri->segment('1') == ("invoice_list")
                                     || $this->uri->segment('1') == ("invoice_details") || $this->uri->segment('1') == ("invoice_pad_print")
                                     || $this->uri->segment('1') == ("pos_print") || $this->uri->segment('1') == ("invoice_edit")
                                     || $this->uri->segment('1') == ("new_quotation") || $this->uri->segment('1') == ("manage_quotation")
@@ -1068,6 +1065,16 @@
                                             }
                                             ?>"><a
                                 href="<?php echo base_url('new_pos') ?>"><?php echo display('new_pos') ?></a></li>
+                    <?php } ?>
+                    <?php if ($this->permission1->method('touch_invoice', 'create')->access()) { ?>
+                        <li class="treeview <?php
+                                            if ($this->uri->segment('1') == ("touch_invoice")) {
+                                                echo "active";
+                                            } else {
+                                                echo " ";
+                                            }
+                                            ?>"><a
+                                href="<?php echo base_url('touch_invoice') ?>">New GUI POS</a></li>
                     <?php } ?>
                     <?php if ($this->permission1->method('manage_invoice', 'read')->access()) { ?>
                         <li class="treeview <?php
@@ -1363,18 +1370,9 @@
             </li>
         <?php } ?>
         <!-- Human resource management menu end -->
-        <?php if (
-            $this->permission1->method('add_product_csv', 'create')->access() ||
-            $this->permission1->method('dupl_sales', 'create')->access()
-        ) { ?>
-            <li class="treeview <?php
-                                if ($this->uri->segment('1') == ("bulk_products") || $this->uri->segment('1') == ("dupl_sales")) {
-                                    echo "active";
-                                } else {
-                                    echo " ";
-                                }
-                                ?>">
-                <a href="javascript:void(0)" style="display:flex; align-items:center;">
+        <?php if ($this->permission1->method('data_uploader', 'create')->access()) { ?>
+            <li class="treeview <?php echo (($this->uri->segment(1) == "data_uploader") ? "active" : '') ?>">
+                <a href="<?php echo base_url('data_uploader') ?>" style="display:flex; align-items:center;">
 
                     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24"
                         height="24" viewBox="0 0 24 24">
@@ -1385,32 +1383,7 @@
                     <span style="margin-left: 10px;">
                         <?php echo display('datauploader') ?>
                     </span>
-                    <span class="pull-right-container">
-                        <i class="fa fa-angle-left pull-right"></i>
-                    </span>
                 </a>
-                <ul class="treeview-menu">
-                    <?php if ($this->permission1->method('add_product_csv', 'create')->access()) { ?>
-                        <li class="<?php echo (($this->uri->segment(1) == "bulk_products") ? "active" : '') ?>">
-                            <a href="<?php echo base_url('bulk_products') ?>">
-
-                                <?php echo display('add_product_csv') ?>
-
-                            </a>
-
-                        </li>
-                    <?php } ?>
-                    <?php if ($this->permission1->method('dupl_sales', 'create')->access()) { ?>
-                        <li class="<?php echo (($this->uri->segment(1) == "dupl_sales") ? "active" : '') ?>">
-                            <a href="<?php echo base_url('dupl_sales') ?>">
-
-                                <?php echo display('dupl_sales') ?>
-
-                            </a>
-
-                        </li>
-                    <?php } ?>
-                </ul>
             </li>
         <?php } ?>
 
@@ -1892,7 +1865,7 @@
                                             }
                                             ?>">
                             <a href="#">
-                                <span> Stock Reports</span>
+                                <span> Inventory Reports</span>
                                 <span class="pull-right-container">
                                     <i class="fa fa-angle-left pull-right"></i>
                                 </span>

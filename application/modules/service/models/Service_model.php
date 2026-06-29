@@ -1348,5 +1348,9 @@ class Service_model extends CI_Model {
 
         return $response;
     }
+
+    public function all_service_names() {
+        return $this->db->select('service_name')->from('product_service')->get()->result_array();
+    }
 }
 

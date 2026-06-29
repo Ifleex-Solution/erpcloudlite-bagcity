@@ -375,4 +375,36 @@ class Customer extends MX_Controller
         $data['page']          = "customer_advance_receipt";
         echo Modules::run('template/layout', $data);
     }
+
+    /* ── CSV Upload: Customer ────────────────────────────────────── */
+    public function save_customer_from_csv()
+    {
+        $enc  = Config::$encryption_key;
+        $name = trim($this->input->post('customer_name', TRUE));
+        if (empty($name)) { echo json_encode(['status'=>'Error','message'=>'Customer name is required']); return; }
+        $exists = $this->db->query("SELECT customer_id FROM customer_information WHERE AES_DECRYPT(customer_name,'$enc')='".addslashes($name)."' LIMIT 1")->row();
+        if ($exists) { echo json_encode(['status'=>'Error','message'=>'Customer already exists: '.$name]); return; }
+
+        $e = function($v) use ($enc) { return "AES_ENCRYPT('".addslashes($v)."','$enc')"; };
+        $calling = trim($this->input->post('customer_calling_name', TRUE));
+        $billing = trim($this->input->post('customer_billing_name', TRUE));
+        $mobile  = trim($this->input->post('customer_mobile', TRUE));
+        $phone   = trim($this->input->post('phone', TRUE));
+        $email   = trim($this->input->post('email_address', TRUE));
+        $nic     = trim($this->input->post('nic_no', TRUE));
+        $country = trim($this->input->post('country', TRUE));
+        $state   = trim($this->input->post('state', TRUE));
+        $city    = trim($this->input->post('city', TRUE));
+        $zip     = trim($this->input->post('zip', TRUE));
+        $addr1   = trim($this->input->post('customer_address', TRUE));
+        $addr2   = trim($this->input->post('address2', TRUE));
+        $status  = (int)$this->input->post('status', TRUE);
+        $by      = $this->session->userdata('id');
+
+        $sql = "INSERT INTO customer_information
+            (customer_name,customer_calling_name,customer_billing_name,customer_mobile,phone,email_address,nic_no,country,state,city,zip,customer_address,address2,status,create_by)
+            VALUES ({$e($name)},{$e($calling)},{$e($billing)},{$e($mobile)},{$e($phone)},{$e($email)},{$e($nic)},'".addslashes($country)."','".addslashes($state)."','".addslashes($city)."','".addslashes($zip)."',{$e($addr1)},{$e($addr2)},$status,'$by')";
+        $this->customer_model->create($sql);
+        echo json_encode(['status'=>'Success','id'=>$this->db->insert_id()]);
+    }
 }

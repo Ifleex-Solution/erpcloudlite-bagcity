@@ -1,42 +1,398 @@
 <script src="<?php echo base_url() ?>my-assets/js/admin_js/purchase.js" type="text/javascript"></script>
 
 <style>
-    .highlight {
-        background-color: #007BFF;
-        color: white;
+    /* JS-required */
+    .highlight { background-color: #337ab7; color: #fff; }
+
+    .star-icon {
+        background: #5cb85c; color: #fff;
+        width: 22px; height: 22px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 11px; cursor: pointer; transition: opacity .2s;
+    }
+    .star-icon:hover { opacity: .8; }
+
+    .star-icon-red {
+        background: #d9534f; color: #fff;
+        width: 22px; height: 22px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 11px; cursor: pointer; transition: opacity .2s;
+    }
+    .star-icon-red:hover { opacity: .8; }
+
+    /* Panel */
+    .inv-panel { border-radius: 6px; box-shadow: 0 2px 10px rgba(0,0,0,.1); }
+    .inv-panel > .panel-heading { border-radius: 5px 5px 0 0; }
+
+    /* Header */
+    .inv-header { padding: 12px 18px !important; }
+    .inv-header-flex { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .inv-page-title { font-size: 16px; font-weight: 600; }
+    .inv-header-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Form section */
+    .inv-form-section { padding: 16px 18px 8px; }
+    .inv-form-section .form-group { margin-bottom: 10px; }
+    .inv-form-section label { font-weight: 600; font-size: 13px; }
+
+    /* hide mobile labels on desktop */
+    .td-mobile-label { display: none; }
+
+    /* Table desktop */
+    #purchaseTable { font-size: 12px; }
+    #purchaseTable thead th { white-space: nowrap; font-size: 11px; padding: 8px 6px; font-weight: 700; }
+    #purchaseTable tbody tr td { padding: 4px 5px; vertical-align: middle; }
+    #purchaseTable tbody td .form-control { height: 30px; font-size: 12px; padding: 2px 6px; }
+    #purchaseTable tbody td select.form-control { padding: 2px 4px; }
+    #purchaseTable tfoot tr td { font-size: 13px; padding: 6px 8px; }
+    #purchaseTable tfoot .form-control { height: 32px; font-size: 13px; }
+
+    /* Batch column — desktop only */
+    @media (min-width: 1025px) {
+        #purchaseTable thead th:nth-child(3),
+        #purchaseTable tbody td:nth-child(3) { min-width: 120px; width: 120px; }
     }
 
-    .col-big {
-        width: 15% !important;
+    /* Av.Qty column */
+    #purchaseTable thead th:nth-child(5),
+    #purchaseTable tbody td:nth-child(5) { min-width: 140px; width: 140px; }
+
+    /* Delete button size consistency */
+    #purchaseTable tbody td .btn-danger.btn-sm {
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 1.42857;
     }
 
-    .col-total {
-        width: 20% !important;
+    /* Column widths */
+    .col-big { width: 15% !important; }
+    .col-total { width: 20% !important; }
+    .col-medium { width: 8% !important; }
+    .vathidden { width: 8% !important; }
+    .col-small { width: 7% !important; }
+
+    /* ── Tablet: 768px – 1024px ── */
+    @media (min-width: 768px) and (max-width: 1024px) {
+
+        .inv-panel { border-radius: 10px; }
+        .inv-header { padding: 14px 22px !important; }
+        .inv-page-title { font-size: 17px; }
+
+        .inv-form-section { padding: 18px 20px 14px; }
+
+        .inv-form-section > .row:not(.form-group) {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 20px;
+            margin: 0;
+        }
+        .inv-form-section > .row:not(.form-group) > [class*="col-sm"] {
+            width: 100% !important;
+            float: none !important;
+            padding: 0;
+        }
+        .inv-form-section > .row:not(.form-group) > .col-sm-6:last-child { grid-column: 1 / -1; }
+
+        .inv-form-section .form-group.row { display: block; margin: 0; padding: 0; }
+        .inv-form-section .form-group.row label.col-form-label {
+            display: block; width: 100% !important; float: none !important;
+            font-size: 10.5px; font-weight: 700; color: #777;
+            text-transform: uppercase; letter-spacing: .4px;
+            padding: 0 0 5px 0; margin: 0;
+        }
+        .inv-form-section .form-group.row > div[class*="col-sm"] {
+            display: block; width: 100% !important; float: none !important; padding: 0;
+        }
+        .inv-form-section .form-group.row .form-control { width: 100%; height: 38px; font-size: 13px; border-radius: 5px; }
+        .inv-form-section .form-group.row div[style*="position: relative"] { width: 100% !important; }
+
+        .table-responsive { overflow: visible !important; }
+        #purchaseTable { display: block; width: 100%; }
+        #purchaseTable tbody { display: block; width: 100%; padding: 4px 2px; background: #f4f6f8; border-radius: 8px; }
+        #purchaseTable thead { display: none; }
+
+        .td-mobile-label { display: block; }
+
+        #purchaseTable tbody tr {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 24px;
+            border: 1px solid #ebebeb;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,.07);
+        }
+        #purchaseTable tbody tr[style*="table-row"] {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            width: 100% !important;
+        }
+
+        #purchaseTable tbody td {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px 12px;
+            border: none !important;
+            border-bottom: 1px solid #f0f0f0 !important;
+            border-right: 1px solid #f0f0f0 !important;
+            white-space: normal;
+        }
+        #purchaseTable tbody td.vathidden { width: 100% !important; }
+        #purchaseTable tbody td:nth-child(even) { border-right: none !important; }
+
+        #purchaseTable tbody td:last-child {
+            grid-column: 1 / -1;
+            border-bottom: none !important;
+            border-right: none !important;
+            padding: 0;
+        }
+        #purchaseTable tbody td:last-child .td-mobile-label { display: none; }
+        #purchaseTable tbody td:last-child button,
+        #purchaseTable tbody td:last-child .btn {
+            width: 100%;
+            border-radius: 0;
+            margin: 0;
+            display: block;
+        }
+        #purchaseTable tbody td:last-child > div { width: 100% !important; }
+        #purchaseTable tbody td:last-child > div .btn { flex: 1; }
+
+        #purchaseTable tbody td .form-control,
+        #purchaseTable tbody td > select,
+        #purchaseTable tbody td > div,
+        #purchaseTable tbody td .chosen-container,
+        #purchaseTable tbody td .select2-container { width: 100% !important; box-sizing: border-box; }
+
+        #purchaseTable tfoot {
+            display: block;
+            margin-top: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fff;
+        }
+        #purchaseTable tfoot tr { display: flex; flex-direction: column; }
+        #purchaseTable tfoot td { display: none !important; border: none !important; padding: 0; }
+        #purchaseTable tfoot td[data-label] {
+            display: block !important;
+            width: 100%; box-sizing: border-box;
+            padding: 9px 14px;
+            border-bottom: 1px solid #f0f0f0 !important;
+        }
+        #purchaseTable tfoot td[data-label]::before {
+            content: attr(data-label);
+            display: block;
+            font-size: 10px; font-weight: 700; color: #999;
+            text-transform: uppercase; letter-spacing: .4px;
+            margin-bottom: 5px;
+        }
+        #purchaseTable tfoot td[data-label] .form-control,
+        #purchaseTable tfoot td[data-label] input[type="text"] {
+            display: block; width: 100% !important; box-sizing: border-box;
+            font-size: 13px; font-weight: 600; height: 34px !important; text-align: right;
+        }
+        #purchaseTable tfoot tr:last-child { background: #f7f7f7; border-top: 2px solid #ddd; }
+        #purchaseTable tfoot tr:last-child td[data-label] { border-bottom: none !important; }
+        #purchaseTable tfoot tr:last-child .form-control,
+        #purchaseTable tfoot tr:last-child input[type="text"] { font-size: 15px !important; font-weight: 700 !important; }
+        #purchaseTable tfoot td.tfoot-btn-cell {
+            display: block !important;
+            order: -1;
+            padding: 0;
+            border-bottom: 1px solid #f0f0f0 !important;
+        }
+        #purchaseTable tfoot td.tfoot-btn-cell .btn {
+            display: block;
+            width: 100%;
+            border-radius: 0;
+            margin: 0;
+            padding: 11px;
+            font-size: 16px;
+        }
+        /* VAT cell: hidden by default; shown only when JS sets display:table-cell */
+        #purchaseTable tfoot td.vathidden[data-label] { display: none !important; }
+        #purchaseTable tfoot td.vathidden[data-label][style*="table-cell"] { display: block !important; width: 100% !important; box-sizing: border-box; }
+
+        .table-responsive .col-sm-3.table-bordered { width: 50% !important; margin-top: 14px; border-radius: 7px; }
+
+        .form-group.row.text-right { margin-top: 12px; }
+        .form-group.row.text-right .btn-success { padding: 10px 44px; font-size: 14px; border-radius: 6px; }
     }
 
-    .col-medium {
-        width: 8% !important;
-    }
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .inv-header-flex { flex-direction: column; align-items: flex-start; }
+        .inv-form-section .col-sm-6 { width: 100%; float: none; }
 
-    .vathidden {
-        width: 8% !important;
-    }
+        .table-responsive .col-sm-3.table-bordered { width: 100% !important; float: none; box-sizing: border-box; }
 
-    .col-small {
-        width: 7% !important;
+        .form-group.row.text-right .col-sm-12 { text-align: center; }
+        .form-group.row.text-right .btn-success { width: 100%; }
+
+        .table-responsive { overflow: visible; }
+        #purchaseTable { display: block; width: 100%; }
+        #purchaseTable tbody { display: block; width: 100%; padding: 4px 2px; background: #f4f6f8; border-radius: 8px; }
+        #purchaseTable thead { display: none; }
+
+        #purchaseTable tbody tr {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 16px;
+            border: 1px solid #ebebeb;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,.07);
+        }
+        #purchaseTable tbody tr[style*="table-row"] {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        #purchaseTable tbody td {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 10px;
+            border: none !important;
+            border-bottom: 1px solid #f0f0f0 !important;
+            white-space: normal;
+        }
+        #purchaseTable tbody td.vathidden { width: 100% !important; }
+
+        #purchaseTable tbody td:last-child {
+            border-bottom: none !important;
+            padding: 0;
+        }
+        #purchaseTable tbody td:last-child .td-mobile-label { display: none; }
+        #purchaseTable tbody td:last-child button,
+        #purchaseTable tbody td:last-child .btn {
+            width: 100%;
+            border-radius: 0;
+            margin: 0;
+            display: block;
+        }
+        #purchaseTable tbody td:last-child > div {
+            width: 100% !important;
+            display: flex !important;
+        }
+        #purchaseTable tbody td:last-child > div .btn { flex: 1; }
+
+        .td-mobile-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            margin-bottom: 4px;
+        }
+
+        #purchaseTable tbody td .form-control,
+        #purchaseTable tbody td input[type="text"],
+        #purchaseTable tbody td input[type="number"],
+        #purchaseTable tbody td select,
+        #purchaseTable tbody td > div,
+        #purchaseTable tbody td .chosen-container,
+        #purchaseTable tbody td .select2-container { width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
+
+        #purchaseTable tbody td.vathidden[style*="table-cell"] {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box;
+            padding: 6px 10px;
+            border-bottom: 1px solid #f0f0f0 !important;
+        }
+
+        #purchaseTable tfoot {
+            display: block;
+            margin-top: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fff;
+            overflow: hidden;
+        }
+        #purchaseTable tfoot tr { display: flex; flex-direction: column; }
+        #purchaseTable tfoot td { display: none !important; border: none !important; padding: 0; }
+
+        #purchaseTable tfoot td[data-label] {
+            display: block !important;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0 !important;
+        }
+        #purchaseTable tfoot td[data-label]::before {
+            content: attr(data-label);
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            margin-bottom: 5px;
+        }
+        #purchaseTable tfoot td[data-label] .form-control,
+        #purchaseTable tfoot td[data-label] input[type="text"] {
+            display: block;
+            width: 100% !important;
+            box-sizing: border-box;
+            font-size: 13px;
+            font-weight: 600;
+            height: 34px !important;
+            text-align: right;
+        }
+
+        #purchaseTable tfoot tr:last-child { background: #f7f7f7; border-top: 2px solid #ddd; }
+        #purchaseTable tfoot tr:last-child td[data-label] { border-bottom: none !important; }
+        #purchaseTable tfoot tr:last-child td[data-label]::before { color: #555; }
+        #purchaseTable tfoot tr:last-child .form-control,
+        #purchaseTable tfoot tr:last-child input[type="text"] {
+            font-size: 15px !important;
+            font-weight: 700 !important;
+        }
+
+        #purchaseTable tfoot td.tfoot-btn-cell {
+            display: block !important;
+            order: -1;
+            padding: 0;
+            border-bottom: 1px solid #f0f0f0 !important;
+        }
+        #purchaseTable tfoot td.tfoot-btn-cell .btn {
+            display: block;
+            width: 100%;
+            border-radius: 0;
+            margin: 0;
+            padding: 11px;
+            font-size: 16px;
+        }
+        /* VAT cell: hidden by default; shown only when JS sets display:table-cell */
+        #purchaseTable tfoot td.vathidden[data-label] { display: none !important; }
+        #purchaseTable tfoot td.vathidden[data-label][style*="table-cell"] { display: block !important; width: 100% !important; box-sizing: border-box; }
     }
 </style>
 <div class="row">
     <div class="col-sm-12">
-        <div class="panel panel-bd lobidrag">
-            <div class="panel-heading" id="style12">
-                <div class="panel-title" style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="panel panel-bd lobidrag inv-panel">
+            <div class="panel-heading inv-header" id="style12">
+                <div class="panel-title inv-header-flex">
 
-                    <h4 id="title" style="margin:0;">
+                    <h4 id="title" class="inv-page-title" style="margin:0;">
                         <?php echo $title; ?>
                     </h4>
 
-                    <span class="padding-lefttitle">
+                    <span class="padding-lefttitle inv-header-btns">
+                        <button class="btn btn-info m-b-5 m-r-2" onclick="openAddProductModal()">
+                            <i class="ti-plus"></i> Add Product
+                        </button>
+                        <button class="btn btn-success m-b-5 m-r-2" onclick="openAddSupplierModal()">
+                            <i class="fa fa-user"></i> Add Supplier
+                        </button>
+
                         <?php if ($this->permission1->method('add_stockbatch', 'create')->access()) { ?>
                             <button class="btn btn-primary m-b-5 m-r-2" onclick="openStockbatch()">
                                 <i class="ti-plus"></i> <?php echo display('add_stockbatch') ?>
@@ -53,7 +409,7 @@
                 </div>
             </div>
 
-            <div class="panel-body">
+            <div class="panel-body inv-form-section">
 
                 <div class="row">
                     <div class="col-sm-6">
@@ -137,11 +493,6 @@
                                     <?php } ?>
                                 </select>
                             </div>
-                            <?php if ($this->permission1->method('add_supplier', 'create')->access()) { ?>
-                                <div class="col-sm-2">
-                                    <a class="btn btn-success" title="Add New Supplier" href="<?php echo base_url('add_supplier'); ?>"><i class="fa fa-user"></i></a>
-                                </div>
-                            <?php } ?>
                         </div>
                     </div>
 
@@ -182,7 +533,7 @@
                         <tbody id="addinvoiceItem">
                             <tr id="myRow1">
                                 <td class="product_field">
-
+                                    <span class="td-mobile-label">Product</span>
                                     <div style='position: relative; display: inline-block;width:100%;'>
                                         <input class='form-control' type='text' id="productInput1" placeholder='Product...' onkeyup='handleProductKeyPress(event,1)' autocomplete='off' />
                                         <input type='text' name='customer_id[]' id='product1' hidden />
@@ -201,17 +552,20 @@
                                 </td>
 
                                 <td class="rate">
+                                    <span class="td-mobile-label">Store</span>
                                     <select class="form-control" id="store1" name="store[]" tabindex="3" onchange="product_search(1,'store')">
                                         <option value=""></option>
                                     </select>
                                 </td>
                                 <td class="rate">
+                                    <span class="td-mobile-label">Batch</span>
                                     <select class="form-control" id="batch1" name="batch[]" tabindex="3" onchange="product_search(1,'batch')">
                                         <option value=""></option>
                                     </select>
                                 </td>
 
                                 <td class="qty">
+                                    <span class="td-mobile-label">Unit</span>
                                     <select class="form-control" id="unit1" required name="unit1" onchange="product_search(1,'unit')" tabindex="3">
                                         <option value=""></option>
                                     </select>
@@ -220,6 +574,7 @@
                                     <input type="hidden" id="conversion_ratio1" />
                                 </td>
                                 <td class="qty">
+                                    <span class="td-mobile-label">Av.Qty</span>
                                     <input type="hidden" name="code[]" onkeyup="product_search(1,'code');"
                                         class="total_qntt_1 form-control text-right"
                                         id="code1" placeholder="0.00" min="0" readonly />
@@ -230,18 +585,22 @@
 
 
                                 <td class="qty">
+                                    <span class="td-mobile-label">Qty</span>
                                     <input type="text" name="product_quantity[]" id="qty1" min="0" class="form-control text-right store_cal_1" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" placeholder="0.00" value="" tabindex="6" />
                                 </td>
                                 <td class="rate">
+                                    <span class="td-mobile-label">Price</span>
                                     <input type="text" name="product_rate[]" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" id="product_rate1" class="form-control product_rate_1 text-right" placeholder="0.00" value="" min="0" tabindex="7" />
                                 </td>
 
                                 <td class="qty">
+                                    <span class="td-mobile-label">Discount</span>
                                     <input type="text" name="discount_per[]" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" id="discount1" class="form-control discount_1 text-right" min="0" tabindex="11" placeholder="0.00" />
                                     <input type="hidden" value="<?php echo $discount_type ?>" name="discount_type" id="discount_type">
 
                                 </td>
                                 <td class="rate">
+                                    <span class="td-mobile-label">Dis.val</span>
                                     <input type="text" name="discountvalue[]" id="discount_value1" class="form-control text-right discount_value_1 total_discount_val" min="0" tabindex="12" placeholder="0.00" readonly />
                                 </td>
 
@@ -250,12 +609,14 @@
 
 
                                 <td class="rate vathidden">
+                                    <span class="td-mobile-label">VAT</span>
                                     <input type="hidden" name="vatpercent[]" onkeyup="calculate_sum(1);" onchange="calculate_sum(1);" id="vat_percent1" class="form-control vat_percent_1 text-right" min="0" tabindex="13" placeholder="0.00" />
 
                                     <input type="text" name="vatvalue[]" id="vat_value1" class="form-control vat_value1 text-right total_vatamnt" min="0" tabindex="14" placeholder="0.00" readonly />
                                 </td>
                                 <!-- VAT  end-->
                                 <td class="product_field">
+                                    <span class="td-mobile-label">Total</span>
                                     <input class="form-control total_price text-right total_price_1" type="text" name="total_price[]" id="total_price1" value="0.00" readonly="readonly" />
 
                                     <input type="hidden" id="total_discount1" class="" />
@@ -272,6 +633,7 @@
                             ?>
                                 <tr id="myRow<?php echo $i; ?>">
                                     <td class="product_field">
+                                        <span class="td-mobile-label">Product</span>
                                         <div style='position: relative; display: inline-block;width:100%;'>
                                             <input class='form-control' type='text' id="productInput<?php echo $i; ?>" placeholder='Product...' onkeyup='handleProductKeyPress(event,<?php echo $i; ?>)' autocomplete='off' />
                                             <input type='text' name='customer_id[]' id='product<?php echo $i; ?>' hidden />
@@ -291,12 +653,14 @@
 
 
                                     <td class="rate">
+                                        <span class="td-mobile-label">Store</span>
                                         <select class="form-control" id="store<?php echo $i; ?>" name="store[]" tabindex="3" onchange="product_search(<?php echo $i; ?>, 'store')">
                                             <option value=""></option>
                                         </select>
                                     </td>
 
                                     <td class="rate">
+                                        <span class="td-mobile-label">Batch</span>
                                         <select class="form-control" id="batch<?php echo $i; ?>" name="batch[]" tabindex="3" onchange="product_search(<?php echo $i; ?>, 'batch')">
                                             <option value=""></option>
                                         </select>
@@ -305,6 +669,7 @@
 
 
                                     <td class="qty">
+                                        <span class="td-mobile-label">Unit</span>
                                         <select class="form-control" id="unit<?php echo $i; ?>" required name="unit<?php echo $i; ?>" onchange="product_search(<?php echo $i; ?>,'unit')" tabindex="3">
                                             <option value=""></option>
                                         </select>
@@ -314,31 +679,37 @@
                                     </td>
 
                                     <td class="qty">
+                                        <span class="td-mobile-label">Av.Qty</span>
                                         <input type="hidden" name="code[]" onkeyup="product_search(<?php echo $i; ?>, 'code');" class="total_qntt_1 form-control text-right" id="code<?php echo $i; ?>" placeholder="0.00" min="0" readonly />
                                         <span id='codetype<?php echo $i; ?>' style="margin-left:5px"></span>
 
                                     </td>
 
                                     <td class="qty">
+                                        <span class="td-mobile-label">Qty</span>
                                         <input type="text" name="product_quantity[]" id="qty<?php echo $i; ?>" min="0" class="form-control text-right store_cal_1" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" placeholder="0.00" value="" tabindex="6" />
                                     </td>
 
                                     <td class="rate">
+                                        <span class="td-mobile-label">Price</span>
                                         <input type="text" name="product_rate[]" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" id="product_rate<?php echo $i; ?>" class="form-control product_rate_1 text-right" placeholder="0.00" value="" min="0" tabindex="7" />
                                     </td>
 
                                     <td class="qty">
+                                        <span class="td-mobile-label">Discount</span>
                                         <input type="text" name="discount_per[]" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" id="discount<?php echo $i; ?>" class="form-control discount_1 text-right" min="0" tabindex="11" placeholder="0.00" />
                                         <input type="hidden" value="<?php echo $discount_type ?>" name="discount_type" id="discount_type">
                                     </td>
 
                                     <td class="rate">
+                                        <span class="td-mobile-label">Dis.val</span>
                                         <input type="text" name="discountvalue[]" id="discount_value<?php echo $i; ?>" class="form-control text-right discount_value_1 total_discount_val" min="0" tabindex="12" placeholder="0.00" readonly />
                                     </td>
 
                                     <!-- VAT start -->
 
                                     <td class="rate vathidden">
+                                        <span class="td-mobile-label">VAT</span>
                                         <input type="hidden" name="vatpercent[]" onkeyup="calculate_sum(<?php echo $i; ?>);" onchange="calculate_sum(<?php echo $i; ?>);" id="vat_percent<?php echo $i; ?>" class="form-control vat_percent_1 text-right" min="0" tabindex="13" placeholder="0.00" />
 
                                         <input type="text" name="vatvalue[]" id="vat_value<?php echo $i; ?>" class="form-control vat_value1 text-right total_vatamnt" min="0" tabindex="14" placeholder="0.00" readonly />
@@ -346,6 +717,7 @@
 
                                     <!-- VAT end -->
                                     <td class="product_field">
+                                        <span class="td-mobile-label">Total</span>
                                         <input class="form-control total_price text-right total_price_1" type="text" name="total_price[]" id="total_price<?php echo $i; ?>" value="0.00" readonly="readonly" />
                                         <input type="hidden" id="total_discount<?php echo $i; ?>" class="" />
                                         <input type="hidden" id="all_discount<?php echo $i; ?>" class="total_discount dppr" name="discount_amount[]" />
@@ -368,10 +740,10 @@
                                 <td colspan="10" class="text-right vathidden"><b><?php echo display('total') ?>:</b></td>
                                 <td colspan="9" class="text-right vatshow"><b><?php echo display('total') ?>:</b></td>
 
-                                <td class="text-right">
+                                <td class="text-right" data-label="Total">
                                     <input type="text" id="Total" class="text-right form-control" name="total" value="0.00" readonly="readonly" />
                                 </td>
-                                <td> <button type="button" id="add_invoice_item" class="btn btn-info" name="add-invoice-item"
+                                <td class="tfoot-btn-cell"> <button type="button" id="add_invoice_item" class="btn btn-info" name="add-invoice-item"
                                         onClick="addInputField('addinvoiceItem');" tabindex="9"><i class="fa fa-plus"></i></button>
 
                                     <input type="hidden" name="baseUrl" class="baseUrl" value="<?php echo base_url(); ?>" />
@@ -382,7 +754,7 @@
                                 <td colspan="10" class="text-right vathidden"><b>Purchase Discount:</b></td>
                                 <td colspan="9" class="text-right vatshow"><b>Purchase Discount:</b></td>
 
-                                <td class="text-right">
+                                <td class="text-right" data-label="Purchase Discount">
                                     <input type="text" id="discount" class="text-right form-control discount total_discount_val" onkeyup="calculate_sum(1)" name="discount" placeholder="0.00" value="" />
                                 </td>
 
@@ -395,7 +767,7 @@
                                 <td colspan="9" class="text-right vatshow"><b><?php echo display('total_discount') ?>:</b></td>
 
 
-                                <td class="text-right">
+                                <td class="text-right" data-label="Total Discount">
                                     <input type="text" id="total_discount_ammount" class="form-control text-right" name="total_discount" value="0.00" readonly="readonly" />
                                 </td>
                                 <td>
@@ -406,7 +778,7 @@
 
                                 <td class="text-right vathidden" colspan="10"><b><?php echo display('ttl_val') ?>:</b></td>
 
-                                <td class="text-right vathidden">
+                                <td class="text-right vathidden" data-label="VAT Value">
                                     <input type="text" id="total_vat_amnt" class="form-control text-right" name="total_vat_amnt" value="0.00" readonly="readonly" />
                                 </td>
                                 <td class="text-right vathidden">
@@ -420,7 +792,7 @@
                                 <td colspan="9" class="text-right vatshow"><b><?php echo display('grand_total') ?>:</b></td>
 
 
-                                <td class="text-right">
+                                <td class="text-right" data-label="Grand Total">
                                     <input type="text" id="grandTotal" class="text-right form-control grandTotalamnt" name="grand_total_price" placeholder="0.00" value="00" readonly />
                                 </td>
                                 <td> </td>
@@ -478,6 +850,8 @@ echo "let suppliers=" . json_encode($all_supplier) . ";";
 echo "let pmethods=" . json_encode($all_pmethod) . ";";
 echo "let vtinfo=" . json_encode($vtinfo) . ";";
 echo "let batches=" . json_encode($batches) . ";";
+echo "let ap_categories=" . json_encode($category_list ?: []) . ";";
+echo "let ap_units=" . json_encode($unit_list ?: []) . ";";
 
 echo "let usertype=" . json_encode($this->session->userdata('user_level2')) . ";";
 
@@ -1902,4 +2276,286 @@ echo "</script>";
 
 
     }
+</script>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title" style="text-align:center; font-weight:600;">Add New Product</h4>
+            </div>
+            <div class="modal-body">
+                <div id="ap_loading" style="text-align:center; padding:20px; display:none;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+                <div id="ap_success_msg" style="display:none;"></div>
+                <div id="ap_form_body">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Barcode / QR Code</label>
+                                <input type="text" id="ap_barcode" class="form-control" placeholder="Leave blank to auto-generate">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Product Name <span class="text-danger">*</span></label>
+                                <input type="text" id="ap_product_name" class="form-control" placeholder="Enter product name">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Category <span class="text-danger">*</span></label>
+                                <select id="ap_category_id" class="form-control">
+                                    <option value="">Select Category</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Product Type</label>
+                                <select id="ap_product_type" class="form-control">
+                                    <option value="N/A" selected>N/A</option>
+                                    <option value="Retail Good">Retail Good</option>
+                                    <option value="Finished Good">Finished Good</option>
+                                    <option value="Ingredients">Ingredients</option>
+                                    <option value="Raw Material">Raw Material</option>
+                                    <option value="Packing Material">Packing Material</option>
+                                    <option value="MRO">MRO</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Batch Type</label>
+                                <select id="ap_batchtype" class="form-control">
+                                    <option value="1">Single</option>
+                                    <option value="2">Multiple</option>
+                                    <option value="3" selected>Both</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Default Sales Price</label>
+                                <select id="ap_defaultsaleprice" class="form-control">
+                                    <option value="fixedprice">Fixed Price</option>
+                                    <option value="mrp">MRP</option>
+                                    <option value="custom" selected>Custom</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Master Stock Unit <span class="text-danger">*</span></label>
+                                <select id="ap_unit" class="form-control">
+                                    <option value="">Select Unit</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Stock</label>
+                                <select id="ap_stock" class="form-control">
+                                    <option value="1">Enable</option>
+                                    <option value="0" selected>Disable</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Default Store</label>
+                                <select id="ap_store" class="form-control">
+                                    <option value="1" selected>N/A</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label style="font-weight:700;">Supplier</label>
+                                <select id="ap_supplier_id" class="form-control">
+                                    <option value="">Select Supplier</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="ap_save_btn" onclick="saveNewProduct()">Save Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function openAddProductModal() {
+    $('#ap_barcode').val('');
+    $('#ap_product_name').val('');
+    $('#ap_product_type').val('N/A');
+    $('#ap_batchtype').val('3');
+    $('#ap_defaultsaleprice').val('custom');
+    $('#ap_stock').val('0');
+
+    var $store = $('#ap_store').empty().append('<option value="1" selected>N/A</option>');
+    if (stores) $.each(stores, function(i, s) { $store.append('<option value="'+s.id+'">'+s.name+'</option>'); });
+
+    var $sup = $('#ap_supplier_id').empty().append('<option value="">Select Supplier</option>');
+    if (suppliers) $.each(suppliers, function(i, s) { $sup.append('<option value="'+s.supplier_id+'">'+s.supplier_name+'</option>'); });
+
+    $('#ap_loading').show();
+    $('#ap_form_body').hide();
+    $('#ap_save_btn').prop('disabled', true);
+
+    $.ajax({
+        url: '<?php echo base_url("get_product_form_data"); ?>',
+        type: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            var $cat = $('#ap_category_id').empty().append('<option value="">Select Category</option>');
+            $.each(data.categories, function(i, c) { $cat.append('<option value="'+c.category_id+'">'+c.category_name+'</option>'); });
+
+            var $unit = $('#ap_unit').empty().append('<option value="">Select Unit</option>');
+            $.each(data.units, function(i, u) { $unit.append('<option value="'+u.unit_id+'">'+u.unit_name+'</option>'); });
+
+            $('#ap_loading').hide();
+            $('#ap_form_body').show();
+            $('#ap_save_btn').prop('disabled', false);
+        },
+        error: function() {
+            $('#ap_loading').hide();
+            $('#ap_form_body').show();
+            $('#ap_save_btn').prop('disabled', false);
+        }
+    });
+
+    $('#addProductModal').modal('show');
+}
+function saveNewProduct() {
+    var name = $('#ap_product_name').val().trim();
+    var cat  = $('#ap_category_id').val();
+    var unit = $('#ap_unit').val();
+    if (!name) { alert('Product name is required.'); return; }
+    if (!cat)  { alert('Category is required.'); return; }
+    if (!unit) { alert('Master Stock Unit is required.'); return; }
+
+    $('#ap_save_btn').prop('disabled', true).text('Saving...');
+    $.ajax({
+        url:  '<?php echo base_url("save_product_ajax"); ?>',
+        type: 'POST',
+        data: {
+            product_id:       $('#ap_barcode').val().trim(),
+            product_name:     name,
+            category_id:      cat,
+            product_type:     $('#ap_product_type').val(),
+            batchtype:        $('#ap_batchtype').val(),
+            defaultsaleprice: $('#ap_defaultsaleprice').val(),
+            unit:             unit,
+            stock:            $('#ap_stock').val(),
+            store:            $('#ap_store').val() || 1,
+            supplier_id:      $('#ap_supplier_id').val() || 0,
+            status:           '1',
+            subcategory_id:   0,
+            brand_id:         0,
+            oop_id:           '',
+            vat:              '0',
+            sell_price:       '0',
+            cost_price:       '0'
+        },
+        dataType: 'json',
+        success: function(r) {
+            $('#ap_save_btn').prop('disabled', false).text('Save Product');
+            if (r.status === 'Success') {
+                var pname    = $('#ap_product_name').val().trim();
+                var unitId   = $('#ap_unit').val();
+                var unitName = $('#ap_unit option:selected').text();
+
+                // Add to products array
+                if (products) products.push({ id: r.id, product_name: pname, unit: unitId, unit_name: unitName });
+
+                // Load into the table row
+                var rowNum;
+                var lastProd = document.getElementById('product' + (count - 1));
+                if (lastProd && lastProd.value == '') {
+                    rowNum = count - 1;
+                    getActiveStore(0, rowNum);
+                } else {
+                    rowNum = count;
+                    document.getElementById('myRow' + rowNum).style.display = 'table-row';
+                    getActiveStore(0, rowNum);
+                    count = count + 1;
+                }
+                document.getElementById('productInput' + rowNum).value = pname;
+                document.getElementById('product' + rowNum).value = r.id;
+                product_search(rowNum, 'product');
+                $('#addProductModal').modal('hide');
+            } else {
+                alert('Failed to save product: ' + (r.message || 'Unknown error'));
+            }
+        },
+        error: function() {
+            $('#ap_save_btn').prop('disabled', false).text('Save Product');
+            alert('Failed to save product. Please try again.');
+        }
+    });
+}
+$('#addProductModal').on('hidden.bs.modal', function() {
+    $('#ap_barcode').val('');
+    $('#ap_product_name').val('');
+    $('#ap_save_btn').text('Save Product').prop('disabled', false);
+});
+</script>
+
+<!-- Add Supplier Modal -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title" style="text-align:center; font-weight:600;">Add New Supplier</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="font-weight:700;">Supplier Name</label>
+                    <input type="text" id="modal_supplier_name" class="form-control" placeholder="Enter supplier name">
+                </div>
+                <div class="form-group">
+                    <label style="font-weight:700;">Phone Number</label>
+                    <input type="text" id="modal_supplier_phone" class="form-control" placeholder="Enter phone number">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewSupplier()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function openAddSupplierModal() {
+    $('#modal_supplier_name').val('');
+    $('#modal_supplier_phone').val('');
+    $('#addSupplierModal').modal('show');
+}
+function saveNewSupplier() {
+    var name  = $('#modal_supplier_name').val().trim();
+    var phone = $('#modal_supplier_phone').val().trim();
+    if (!name) { alert('Supplier name is required.'); return; }
+    $.ajax({
+        url:  '<?php echo base_url("save_supplier_ajax"); ?>',
+        type: 'POST',
+        data: { supplier_name: name, supplier_phone: phone },
+        dataType: 'json',
+        success: function(r) {
+            if (r.inserted_id) {
+                $('#supplier_id').append('<option value="' + r.inserted_id + '">' + r.supplier_name + '</option>');
+                $('#supplier_id').val(r.inserted_id).trigger('change');
+                $('#addSupplierModal').modal('hide');
+            } else {
+                alert('Failed to save supplier.');
+            }
+        },
+        error: function() { alert('Failed to save supplier.'); }
+    });
+}
 </script>

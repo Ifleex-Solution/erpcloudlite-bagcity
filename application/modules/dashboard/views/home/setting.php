@@ -190,6 +190,13 @@
                             </div>
                         </div>
 
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Virtual Keyboard <i class="text-danger">*</i></label>
+                            <div class="col-sm-6">
+                                <input type="checkbox" name="vk_enable" class="is-qr-pos" value="1" <?php if(isset($sdata->vk_enable) && $sdata->vk_enable == 1){ echo 'checked'; } ?>>
+                                <span style="font-size:12px; color:#888; margin-left:6px;">Enable virtual keyboard on Touch Invoice</span>
+                            </div>
+                        </div>
 
                         <div class="form-group row">
                             <label for="example-text-input" class="col-sm-4 col-form-label"></label>

@@ -68,7 +68,7 @@ class Permission_model extends CI_Model
         $this->db->select('*');
         $this->db->from('users u');
         $this->db->join('user_login ul', 'ul.user_id = u.user_id');
-        // $this->db->where_in('ul.user_type', [ 2]);
+        $this->db->where_in('ul.user_type', [2,3]);
 
         $query = $this->db->get();
         if ($query->num_rows() > 0) {

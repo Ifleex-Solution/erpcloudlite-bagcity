@@ -32,6 +32,8 @@ class Purchase extends MX_Controller
         $data['all_supplier'] = $this->purchase_model->supplier_list();
         $data['all_pmethod'] = $this->pmethod_dropdown();
         $data['units'] = $this->active_units();
+        $data['category_list'] = $this->product_model->active_category();
+        $data['unit_list']     = $this->product_model->active_unit();
 
         // $data['products'] = $this->active_product();
         $data['vtinfo']   = $this->db->select('*')->from('vat_tax_setting')->get()->row();
@@ -769,6 +771,8 @@ class Purchase extends MX_Controller
         $data['all_supplier'] = $this->purchase_model->supplier_list();
         $data['all_pmethod'] = $this->pmethod_dropdown();
         $data['products'] = $this->active_product();
+        $data['category_list'] = $this->product_model->active_category();
+        $data['unit_list']     = $this->product_model->active_unit();
         $data['vtinfo']   = $this->db->select('*')->from('vat_tax_setting')->get()->row();
         if ($id) {
             $data['store_list'] = $this->product_model->all_store();
@@ -3081,7 +3085,24 @@ WHERE id = '{$item['invoicedetail']}'
         }
     }
 
-   
-
+    public function save_supplier_ajax()
+    {
+        $encryption_key = Config::$encryption_key;
+        $name  = $this->input->post('supplier_name', TRUE);
+        $phone = $this->input->post('supplier_phone', TRUE);
+        if (!$name) { echo json_encode(['error' => 'Name required']); return; }
+        $query = "INSERT INTO supplier_information
+            (supplier_name, mobile, supplier_calling_name, supplier_billing_name, nic_no, status)
+            VALUES (
+                AES_ENCRYPT('{$name}', '{$encryption_key}'),
+                AES_ENCRYPT('{$phone}', '{$encryption_key}'),
+                AES_ENCRYPT('{$name}', '{$encryption_key}'),
+                AES_ENCRYPT('{$name}', '{$encryption_key}'),
+                AES_ENCRYPT('', '{$encryption_key}'),
+                1
+            )";
+        $this->db->query($query);
+        echo json_encode(['inserted_id' => $this->db->insert_id(), 'supplier_name' => $name]);
+    }
 
 }

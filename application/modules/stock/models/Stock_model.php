@@ -208,6 +208,95 @@ public function check_batch_has_transactions($batch_id)
 }
 
 
+    public function inventory_transection($postData = null, $fdate, $tdate)
+    {
+        $response = array();
+
+        $draw           = $postData['draw'];
+        $start          = $postData['start'];
+        $rowperpage     = $postData['length'];
+        $columnIndex    = $postData['order'][0]['column'];
+        $columnName     = $postData['columns'][$columnIndex]['data'];
+        $columnSortOrder = $postData['order'][0]['dir'];
+        $searchValue    = $postData['search']['value'];
+
+        $searchQuery = "";
+        if ($searchValue != '') {
+            $searchQuery = " (ds.stocktype like '%" . $searchValue . "%' or ds.type like '%" . $searchValue . "%' or ds.id like '%" . $searchValue . "%' or ds.date like '%" . $searchValue . "%' or ds.reason like '%" . $searchValue . "%' ) ";
+        }
+
+        $this->db->select('count(*) as allcount');
+        $this->db->from('adj_stock ds');
+        if ($fdate) $this->db->where("ds.date>=", $fdate);
+        if ($tdate) $this->db->where("ds.date<=", $tdate);
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $records = $this->db->get()->result();
+        $totalRecords = $records[0]->allcount;
+
+        $this->db->select('count(*) as allcount');
+        $this->db->from('adj_stock ds');
+        if ($fdate) $this->db->where("ds.date>=", $fdate);
+        if ($tdate) $this->db->where("ds.date<=", $tdate);
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $records = $this->db->get()->result();
+        $totalRecordwithFilter = $records[0]->allcount;
+
+        $this->db->select('ds.id, ds.reason, ds.date,');
+        $this->db->select("(CASE
+                WHEN ds.type = 'openingstock' THEN 'Opening Stock'
+                WHEN ds.type = 'storetransfer' THEN 'Store Transfer'
+                WHEN ds.type = 'stockdisposal' THEN 'Stock Disposal'
+                WHEN ds.type = 'stockadjustment' THEN 'Stock Adjustment'
+            END) AS type", false);
+        $this->db->select("(CASE
+                WHEN ds.stocktype = 'actualstock' THEN 'Actual Stock'
+                WHEN ds.stocktype = 'physicalstock' THEN 'Physical Stock'
+                WHEN ds.stocktype = 'both' THEN 'Both'
+            END) AS stocktype", false);
+        $this->db->from('adj_stock ds');
+        if ($fdate) $this->db->where("ds.date>=", $fdate);
+        if ($tdate) $this->db->where("ds.date<=", $tdate);
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $this->db->order_by("ds.id", "desc");
+        $this->db->order_by("ds.date", "desc");
+        $this->db->limit($rowperpage, $start);
+        $records = $this->db->get()->result();
+
+        $data = array();
+        $sl   = 1;
+        $base_url  = base_url();
+        $jsaction  = "return confirm('Are You Sure ?')";
+
+        foreach ($records as $record) {
+            $button = '';
+            if ($this->permission1->method('manage_inventory_transection', 'update')->access()) {
+                $button .= ' <a href="' . $base_url . 'new_inventory_transection/' . $record->id . '" class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="left" title="' . display('update') . '"><i class="fa fa-pencil" aria-hidden="true"></i></a>';
+            }
+            if ($this->permission1->method('manage_inventory_transection', 'delete')->access()) {
+                $button .= '  <a href="' . $base_url . 'stock/stock/delete_adjstock/' . $record->id . '" class="btn btn-xs btn-danger" onclick="' . $jsaction . '"><i class="fa fa-trash"></i></a>';
+            }
+
+            $data[] = array(
+                'sl'        => $sl,
+                'id'        => $record->id,
+                'reason'    => $record->reason,
+                'stocktype' => $record->stocktype,
+                'type'      => $record->type,
+                'date'      => $record->date,
+                'button'    => $button,
+            );
+            $sl++;
+        }
+
+        $response = array(
+            "draw"                  => intval($draw),
+            "iTotalRecords"         => $totalRecords,
+            "iTotalDisplayRecords"  => $totalRecordwithFilter,
+            "aaData"                => $data
+        );
+
+        return $response;
+    }
 
 
     //Opening stockbatch

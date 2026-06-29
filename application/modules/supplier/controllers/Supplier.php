@@ -731,4 +731,35 @@ class Supplier extends MX_Controller
         $data['page']      = "supplier_ledger";
         echo Modules::run('template/layout', $data);
     }
+
+    /* ── CSV Upload: Supplier ────────────────────────────────────── */
+    public function save_supplier_from_csv()
+    {
+        $enc  = Config::$encryption_key;
+        $name = trim($this->input->post('supplier_name', TRUE));
+        if (empty($name)) { echo json_encode(['status'=>'Error','message'=>'Supplier name is required']); return; }
+        $exists = $this->db->query("SELECT supplier_id FROM supplier_information WHERE AES_DECRYPT(supplier_name,'$enc')='".addslashes($name)."' LIMIT 1")->row();
+        if ($exists) { echo json_encode(['status'=>'Error','message'=>'Supplier already exists: '.$name]); return; }
+
+        $e = function($v) use ($enc) { return "AES_ENCRYPT('".addslashes($v)."','$enc')"; };
+        $calling = trim($this->input->post('supplier_calling_name', TRUE));
+        $billing = trim($this->input->post('supplier_billing_name', TRUE));
+        $mobile  = trim($this->input->post('mobile', TRUE));
+        $phone   = trim($this->input->post('phone', TRUE));
+        $email   = trim($this->input->post('email_address', TRUE));
+        $nic     = trim($this->input->post('nic_no', TRUE));
+        $country = trim($this->input->post('country', TRUE));
+        $state   = trim($this->input->post('state', TRUE));
+        $city    = trim($this->input->post('city', TRUE));
+        $zip     = trim($this->input->post('zip', TRUE));
+        $addr1   = trim($this->input->post('address', TRUE));
+        $addr2   = trim($this->input->post('address2', TRUE));
+        $status  = (int)$this->input->post('status', TRUE);
+
+        $sql = "INSERT INTO supplier_information
+            (supplier_name,supplier_calling_name,supplier_billing_name,mobile,phone,email_address,nic_no,country,state,city,zip,address,address2,status)
+            VALUES ({$e($name)},{$e($calling)},{$e($billing)},{$e($mobile)},{$e($phone)},{$e($email)},{$e($nic)},'".addslashes($country)."','".addslashes($state)."','".addslashes($city)."','".addslashes($zip)."',{$e($addr1)},{$e($addr2)},$status)";
+        $this->supplier_model->create($sql);
+        echo json_encode(['status'=>'Success','id'=>$this->db->insert_id()]);
+    }
 }

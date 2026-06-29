@@ -26,4 +26,6 @@ $route['branch_list']         = "store/store/bdtask_branchlist";
 //store part
 $route['store_form']         = "store/store/bdtask_store_form";
 $route['store_form/(:any)']  = "store/store/bdtask_store_form/$1";
-$route['storelist']         = "store/store/bdtask_storelist";
+$route['storelist']                    = "store/store/bdtask_storelist";
+$route['save_branch_from_csv']         = "store/store/save_branch_from_csv";
+$route['save_store_from_csv']          = "store/store/save_store_from_csv";

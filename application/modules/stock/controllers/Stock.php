@@ -1103,6 +1103,43 @@ WHERE id = '{$id}';
         echo modules::run('template/layout', $data);
     }
 
+    public function bdtask_new_stock_form($id = null)
+    {
+        $data = array(
+            'title' => 'New Inventory Transection',
+        );
+        $data['products'] = $this->active_product();
+        $data["batches"] = $this->active_batch();
+        if ($id) {
+            $data['store_list'] = $this->product_model->all_store();
+        } else {
+            $data['store_list'] = $this->product_model->active_store();
+        }
+        $data['stockbatchopening'] = $this->stockbatchopening();
+        $data['units'] = $this->active_units();
+        $data['modal_products'] = $this->singleusage_product();
+        $data['category_list'] = $this->product_model->active_category();
+        $data['unit_list']     = $this->product_model->active_unit();
+        $data['all_supplier']  = $this->purchase_model->supplier_list();
+
+        $data['id'] = $id;
+        $data['type'] = null;
+
+        $data['module'] = 'stock';
+        $data['page']   = "new_inventory_transection";
+
+        if (!$this->permission1->method('new_stock', 'create')->access()) {
+            $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
+            redirect($previous_url);
+        }
+
+        if ($id != null) {
+            $data['type']  = $this->stocktype($id);
+            $data['title'] = "Edit New Inventory Transection";
+        }
+        echo modules::run('template/layout', $data);
+    }
+
     public function stockbatchopening()
     {
         $encryption_key = Config::$encryption_key;
@@ -1176,9 +1213,9 @@ WHERE id = '{$id}';
                     VALUES (
                         " . $this->db->escape($item['product']) . ",
                         " . $this->db->escape($items[0]['date']) . ",
-                        'Stock',
+                        'Inventory Transaction',
                         " . $this->db->escape($items[0]['type']) . ",
-            
+
                         AES_ENCRYPT('', '{$encryption_key}'),
                         AES_ENCRYPT(" . $this->db->escape($inserted_id) . ", '{$encryption_key}'),
             
@@ -1205,9 +1242,9 @@ WHERE id = '{$id}';
                     VALUES (
                         " . $this->db->escape($item['product']) . ",
                         " . $this->db->escape($items[0]['date']) . ",
-                        'Stock',
+                        'Inventory Transaction',
                         " . $this->db->escape($items[0]['type']) . ",
-            
+
                         AES_ENCRYPT('', '{$encryption_key}'),
                         AES_ENCRYPT(" . $this->db->escape($inserted_id) . ", '{$encryption_key}'),
             
@@ -1284,6 +1321,113 @@ WHERE id = '{$id}';
 
 
 
+    public function save_openingstock_from_csv()
+    {
+        $enc        = Config::$encryption_key;
+        $date       = $this->input->post('date',       TRUE);
+        $reason     = $this->input->post('reason',     TRUE);
+        $items_json = $this->input->post('items_json', TRUE);
+        $items      = json_decode($items_json, true);
+
+        if (empty($date) || !is_array($items) || count($items) === 0) {
+            echo json_encode(['status'=>'Error','message'=>'Date and items are required']);
+            return;
+        }
+
+        date_default_timezone_set('Asia/Colombo');
+        $lastupdate = date('Y-m-d H:i:s');
+        $userid     = $this->session->userdata('id');
+
+        $this->db->trans_start();
+
+        $this->db->query("INSERT INTO adj_stock (date, reason, type2, stocktype, type)
+            VALUES (
+                " . $this->db->escape($date) . ",
+                " . $this->db->escape($reason) . ",
+                AES_ENCRYPT('A', '$enc'),
+                'both',
+                'openingstock'
+            )");
+        $adj_id = $this->db->insert_id();
+
+        foreach ($items as $item) {
+            $product      = (int)$item['product_id'];
+            $store        = (int)$item['store_id'];
+            $batch        = (int)$item['batch_id'];
+            $unit         = (int)$item['unit_id'];
+            $conversionid = isset($item['conversionid']) ? $item['conversionid'] : '';
+            $qty          = (float)$item['qty'];
+            $aqty         = isset($item['aqty']) ? $item['aqty'] : $qty;
+
+            $stockSql = "INSERT INTO {TABLE}
+                (product, batch, store, stock, type, pid, date, conversion_id, unit)
+                VALUES (
+                    " . $this->db->escape($product) . ",
+                    " . $this->db->escape($batch) . ",
+                    " . $this->db->escape($store) . ",
+                    AES_ENCRYPT(" . $this->db->escape($qty) . ", '$enc'),
+                    'adj_stock',
+                    " . $this->db->escape($adj_id) . ",
+                    " . $this->db->escape($date) . ",
+                    " . $this->db->escape($conversionid) . ",
+                    " . $this->db->escape($unit) . "
+                )";
+            $this->db->query(str_replace('{TABLE}', 'stock_details',   $stockSql));
+            $this->db->query(str_replace('{TABLE}', 'phystock_details', $stockSql));
+
+            $this->db->query("INSERT INTO audit_stock
+                (product, date, scenario, incident, pvoucher, voucher, pid, store,
+                 astockstr, pstockstr, astock, pstock, lastupdateddate, type2)
+                VALUES (
+                    " . $this->db->escape($product) . ",
+                    " . $this->db->escape($date) . ",
+                    'Inventory Transaction',
+                    'openingstock',
+                    AES_ENCRYPT('', '$enc'),
+                    AES_ENCRYPT(" . $this->db->escape($adj_id) . ", '$enc'),
+                    " . $this->db->escape($adj_id) . ",
+                    " . $this->db->escape($store) . ",
+                    AES_ENCRYPT(" . $this->db->escape($aqty) . ", '$enc'),
+                    AES_ENCRYPT('', '$enc'),
+                    AES_ENCRYPT(" . $this->db->escape($qty) . ", '$enc'),
+                    AES_ENCRYPT('', '$enc'),
+                    " . $this->db->escape($lastupdate) . ",
+                    AES_ENCRYPT('A', '$enc')
+                )");
+
+            $this->db->query("INSERT INTO audit_stock
+                (product, date, scenario, incident, pvoucher, voucher, pid, store,
+                 astockstr, pstockstr, astock, pstock, lastupdateddate, type2)
+                VALUES (
+                    " . $this->db->escape($product) . ",
+                    " . $this->db->escape($date) . ",
+                    'Inventory Transaction',
+                    'openingstock',
+                    AES_ENCRYPT('', '$enc'),
+                    AES_ENCRYPT(" . $this->db->escape($adj_id) . ", '$enc'),
+                    " . $this->db->escape($adj_id) . ",
+                    " . $this->db->escape($store) . ",
+                    AES_ENCRYPT('', '$enc'),
+                    AES_ENCRYPT(" . $this->db->escape($aqty) . ", '$enc'),
+                    AES_ENCRYPT('', '$enc'),
+                    AES_ENCRYPT(" . $this->db->escape($qty) . ", '$enc'),
+                    " . $this->db->escape($lastupdate) . ",
+                    AES_ENCRYPT('A', '$enc')
+                )");
+        }
+
+        $this->db->query("INSERT INTO logs (screen, operation, pid, userid, lastupdatedate)
+            VALUES ('stock', 'insert', " . $this->db->escape($adj_id) . ", " . $this->db->escape($userid) . ", " . $this->db->escape($lastupdate) . ")");
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            echo json_encode(['status'=>'Error','message'=>'Database error during save']);
+        } else {
+            echo json_encode(['status'=>'Success','id'=>$adj_id]);
+        }
+    }
+
     public function update_adjstock()
     {
         $items = $this->input->post('items', TRUE);
@@ -1353,7 +1497,7 @@ WHERE id = '{$id}';
         VALUES (
             " . $this->db->escape($item['product']) . ",
             " . $this->db->escape($items[0]['date']) . ",
-            'Stock',
+            'Inventory Transaction',
             " . $this->db->escape($items[0]['type']) . ",
 
             AES_ENCRYPT('', '{$encryption_key}'),
@@ -1382,7 +1526,7 @@ WHERE id = '{$id}';
         VALUES (
             " . $this->db->escape($item['product']) . ",
             " . $this->db->escape($items[0]['date']) . ",
-            'Stock',
+            'Inventory Transaction',
             " . $this->db->escape($items[0]['type']) . ",
 
             AES_ENCRYPT('', '{$encryption_key}'),
@@ -1452,6 +1596,257 @@ WHERE id = '{$id}';
     
         echo json_encode($this->db->trans_status() ? "Success" : "Error");
     }
+
+    public function save_storetransfer()
+    {
+        $items = $this->input->post('items', TRUE);
+        $encryption_key = Config::$encryption_key;
+        date_default_timezone_set('Asia/Colombo');
+        $lastupdate = date('Y-m-d H:i:s');
+
+        $this->db->trans_start();
+
+        $this->db->query("
+            INSERT INTO adj_stock (date, reason, type2, stocktype, type)
+            VALUES (
+                " . $this->db->escape($items[0]['date']) . ",
+                " . $this->db->escape($items[0]['reason']) . ",
+                AES_ENCRYPT(" . $this->db->escape($items[0]['type2']) . ", '{$encryption_key}'),
+                'actualstock',
+                'storetransfer'
+            )
+        ");
+
+        $inserted_id = $this->db->insert_id();
+
+        foreach ($items as $item) {
+            $from_qty    = -abs($item['quantity']);
+            $to_qty      = abs($item['quantity']);
+            $from_qtystr = '-' . $item['aqty'];
+            $to_qtystr   = $item['aqty'];
+
+            $insertStock = function($table, $store, $qty) use ($item, $inserted_id, $items, $encryption_key) {
+                return "INSERT INTO {$table} (product, batch, store, stock, type, pid, date, conversion_id, unit)
+                    VALUES (
+                        " . $this->db->escape($item['product']) . ",
+                        " . $this->db->escape($item['batch']) . ",
+                        " . $this->db->escape($store) . ",
+                        AES_ENCRYPT(" . $this->db->escape($qty) . ", '{$encryption_key}'),
+                        'adj_stock',
+                        " . $this->db->escape($inserted_id) . ",
+                        " . $this->db->escape($items[0]['date']) . ",
+                        " . $this->db->escape($item['conversionid']) . ",
+                        " . $this->db->escape($item['unit']) . "
+                    )";
+            };
+
+            $insertAuditAc = function($store, $qty, $qtystr) use ($item, $items, $inserted_id, $lastupdate, $encryption_key) {
+                return "INSERT INTO audit_stock
+                    (product, date, scenario, incident, pvoucher, voucher, pid, store,
+                     astockstr, pstockstr, astock, pstock, lastupdateddate, type2)
+                    VALUES (
+                        " . $this->db->escape($item['product']) . ",
+                        " . $this->db->escape($items[0]['date']) . ",
+                        'Inventory Transaction',
+                        'storetransfer',
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($inserted_id) . ", '{$encryption_key}'),
+                        " . $this->db->escape($inserted_id) . ",
+                        " . $this->db->escape($store) . ",
+                        AES_ENCRYPT(" . $this->db->escape($qtystr) . ", '{$encryption_key}'),
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($qty) . ", '{$encryption_key}'),
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        " . $this->db->escape($lastupdate) . ",
+                        AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}')
+                    )";
+            };
+
+            $insertAuditPhy = function($store, $qty, $qtystr) use ($item, $items, $inserted_id, $lastupdate, $encryption_key) {
+                return "INSERT INTO audit_stock
+                    (product, date, scenario, incident, pvoucher, voucher, pid, store,
+                     astockstr, pstockstr, astock, pstock, lastupdateddate, type2)
+                    VALUES (
+                        " . $this->db->escape($item['product']) . ",
+                        " . $this->db->escape($items[0]['date']) . ",
+                        'Inventory Transaction',
+                        'storetransfer',
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($inserted_id) . ", '{$encryption_key}'),
+                        " . $this->db->escape($inserted_id) . ",
+                        " . $this->db->escape($store) . ",
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($qtystr) . ", '{$encryption_key}'),
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($qty) . ", '{$encryption_key}'),
+                        " . $this->db->escape($lastupdate) . ",
+                        AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}')
+                    )";
+            };
+
+            // Decrease from from_store
+            $this->db->query($insertStock("stock_details", $item['from_store'], $from_qty));
+            $this->db->query($insertAuditAc($item['from_store'], $from_qty, $from_qtystr));
+            $from_store_row = $this->db->select("auto_gdn")->from('store')->where('id', $item['from_store'])->get()->row();
+            if ($from_store_row && $from_store_row->auto_gdn == 0) {
+                $this->db->query($insertStock("phystock_details", $item['from_store'], $from_qty));
+                $this->db->query($insertAuditPhy($item['from_store'], $from_qty, $from_qtystr));
+            }
+
+            // Increase in to_store
+            $this->db->query($insertStock("stock_details", $item['to_store'], $to_qty));
+            $this->db->query($insertAuditAc($item['to_store'], $to_qty, $to_qtystr));
+            $to_store_row = $this->db->select("auto_grn")->from('store')->where('id', $item['to_store'])->get()->row();
+            if ($to_store_row && $to_store_row->auto_grn == 0) {
+                $this->db->query($insertStock("phystock_details", $item['to_store'], $to_qty));
+                $this->db->query($insertAuditPhy($item['to_store'], $to_qty, $to_qtystr));
+            }
+        }
+
+        $this->db->query("
+            INSERT INTO logs (screen, operation, pid, userid, lastupdatedate)
+            VALUES (
+                'stock',
+                'insert',
+                " . $this->db->escape($inserted_id) . ",
+                " . $this->db->escape($this->session->userdata('id')) . ",
+                " . $this->db->escape($lastupdate) . "
+            )
+        ");
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            echo json_encode("Error");
+        } else {
+            echo json_encode("Success");
+        }
+    }
+
+    public function update_storetransfer()
+    {
+        $items = $this->input->post('items', TRUE);
+        $encryption_key = Config::$encryption_key;
+        date_default_timezone_set('Asia/Colombo');
+        $lastupdate = date('Y-m-d H:i:s');
+        $id = $this->input->post('id', TRUE);
+
+        $this->db->trans_start();
+
+        // Delete existing stock and audit records for this adjustment
+        $this->db->where('pid', $id)->where('type', 'adj_stock')->delete('stock_details');
+        $this->db->where('pid', $id)->where('type', 'adj_stock')->delete('phystock_details');
+        $this->db->where('pid', $id)->where('scenario', 'Stock')->delete('audit_stock');
+
+        $this->db->query("
+            UPDATE adj_stock SET
+                date     = " . $this->db->escape($items[0]['date']) . ",
+                reason   = " . $this->db->escape($items[0]['reason']) . ",
+                stocktype = 'actualstock',
+                type     = 'storetransfer'
+            WHERE id = " . $this->db->escape($id) . "
+        ");
+
+        foreach ($items as $item) {
+            $from_qty    = -abs($item['quantity']);
+            $to_qty      = abs($item['quantity']);
+            $from_qtystr = '-' . $item['aqty'];
+            $to_qtystr   = $item['aqty'];
+
+            $insertStock = function($table, $store, $qty) use ($item, $id, $items, $encryption_key) {
+                return "INSERT INTO {$table} (product, batch, store, stock, type, pid, date, conversion_id, unit)
+                    VALUES (
+                        " . $this->db->escape($item['product']) . ",
+                        " . $this->db->escape($item['batch']) . ",
+                        " . $this->db->escape($store) . ",
+                        AES_ENCRYPT(" . $this->db->escape($qty) . ", '{$encryption_key}'),
+                        'adj_stock',
+                        " . $this->db->escape($id) . ",
+                        " . $this->db->escape($items[0]['date']) . ",
+                        " . $this->db->escape($item['conversionid']) . ",
+                        " . $this->db->escape($item['unit']) . "
+                    )";
+            };
+
+            $insertAuditAc = function($store, $qty, $qtystr) use ($item, $items, $id, $lastupdate, $encryption_key) {
+                return "INSERT INTO audit_stock
+                    (product, date, scenario, incident, pvoucher, voucher, pid, store,
+                     astockstr, pstockstr, astock, pstock, lastupdateddate, type2)
+                    VALUES (
+                        " . $this->db->escape($item['product']) . ",
+                        " . $this->db->escape($items[0]['date']) . ",
+                        'Inventory Transaction',
+                        'storetransfer',
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($id) . ", '{$encryption_key}'),
+                        " . $this->db->escape($id) . ",
+                        " . $this->db->escape($store) . ",
+                        AES_ENCRYPT(" . $this->db->escape($qtystr) . ", '{$encryption_key}'),
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($qty) . ", '{$encryption_key}'),
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        " . $this->db->escape($lastupdate) . ",
+                        AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}')
+                    )";
+            };
+
+            $insertAuditPhy = function($store, $qty, $qtystr) use ($item, $items, $id, $lastupdate, $encryption_key) {
+                return "INSERT INTO audit_stock
+                    (product, date, scenario, incident, pvoucher, voucher, pid, store,
+                     astockstr, pstockstr, astock, pstock, lastupdateddate, type2)
+                    VALUES (
+                        " . $this->db->escape($item['product']) . ",
+                        " . $this->db->escape($items[0]['date']) . ",
+                        'Inventory Transaction',
+                        'storetransfer',
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($id) . ", '{$encryption_key}'),
+                        " . $this->db->escape($id) . ",
+                        " . $this->db->escape($store) . ",
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($qtystr) . ", '{$encryption_key}'),
+                        AES_ENCRYPT('', '{$encryption_key}'),
+                        AES_ENCRYPT(" . $this->db->escape($qty) . ", '{$encryption_key}'),
+                        " . $this->db->escape($lastupdate) . ",
+                        AES_ENCRYPT('{$this->input->post('type2', TRUE)}', '{$encryption_key}')
+                    )";
+            };
+
+            // Decrease from from_store
+            $this->db->query($insertStock("stock_details", $item['from_store'], $from_qty));
+            $this->db->query($insertAuditAc($item['from_store'], $from_qty, $from_qtystr));
+            $from_store_row = $this->db->select("auto_gdn")->from('store')->where('id', $item['from_store'])->get()->row();
+            if ($from_store_row && $from_store_row->auto_gdn == 0) {
+                $this->db->query($insertStock("phystock_details", $item['from_store'], $from_qty));
+                $this->db->query($insertAuditPhy($item['from_store'], $from_qty, $from_qtystr));
+            }
+
+            // Increase in to_store
+            $this->db->query($insertStock("stock_details", $item['to_store'], $to_qty));
+            $this->db->query($insertAuditAc($item['to_store'], $to_qty, $to_qtystr));
+            $to_store_row = $this->db->select("auto_grn")->from('store')->where('id', $item['to_store'])->get()->row();
+            if ($to_store_row && $to_store_row->auto_grn == 0) {
+                $this->db->query($insertStock("phystock_details", $item['to_store'], $to_qty));
+                $this->db->query($insertAuditPhy($item['to_store'], $to_qty, $to_qtystr));
+            }
+        }
+
+        $this->db->query("
+            INSERT INTO logs (screen, operation, pid, userid, lastupdatedate)
+            VALUES (
+                'stock',
+                'update',
+                " . $this->db->escape($id) . ",
+                " . $this->db->escape($this->session->userdata('id')) . ",
+                " . $this->db->escape($lastupdate) . "
+            )
+        ");
+
+        $this->db->trans_complete();
+
+        echo json_encode($this->db->trans_status() ? "Success" : "Error");
+    }
+
     public function delete_adjstock($id = null)
     {
         $data = $this->stocktype($id);
@@ -1526,6 +1921,26 @@ WHERE id = '{$id}';
     {
         $postData = $this->input->post();
         $data = $this->stock_model->adjstock($postData,$this->input->post('fdate'),$this->input->post('tdate'));
+        echo json_encode($data);
+    }
+
+    public function bdtask_manage_inventory_transection()
+    {
+        $data['title']      = 'Manage Inventory Transection';
+        $data['module']     = "stock";
+        $data['page']       = "manage_inventory_transection";
+        $data['total_product'] = 0;
+        if (!$this->permission1->method('manage_stock_adjustment', 'read')->access()) {
+            $previous_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url();
+            redirect($previous_url);
+        }
+        echo modules::run('template/layout', $data);
+    }
+
+    public function check_inventory_transection()
+    {
+        $postData = $this->input->post();
+        $data = $this->stock_model->inventory_transection($postData, $this->input->post('fdate'), $this->input->post('tdate'));
         echo json_encode($data);
     }
 
@@ -2047,11 +2462,14 @@ WHERE id = '{$id}';
     s.name AS store_name,
     a.date,
     a.vehicleno,
-
-    AES_DECRYPT(p.chalan_no, '{$encryption_key}') AS voucher_no,
-    CASE 
-        WHEN a.type = 'purchase' THEN 'Purchase'
-        WHEN a.type = 'salesreturn' THEN 'Sales Return'
+    CASE
+        WHEN a.type = 'purchase'    THEN AES_DECRYPT(p.chalan_no, '{$encryption_key}')
+        WHEN a.type = 'salesreturn' THEN AES_DECRYPT(sr.sales_return_id, '{$encryption_key}')
+        ELSE NULL
+    END AS voucher_no,
+    CASE
+        WHEN a.type = 'purchase'      THEN 'Purchase'
+        WHEN a.type = 'salesreturn'   THEN 'Sales Return'
         WHEN a.type = 'storetransfer' THEN 'Store Transfer'
         ELSE a.type
     END AS type_name,
@@ -2065,6 +2483,7 @@ WHERE id = '{$id}';
         $this->db->join('conversion_ratio cr2', 'cr2.conversionratio_id = b.conversion_id', 'left');
         $this->db->join('units u', 'u.unit_id = b.unit', "left");
         $this->db->join('purchase p', 'p.id = a.voucherno', 'left');
+        $this->db->join('sales_return sr', 'sr.id = a.voucherno', 'left');
         $this->db->join('store s', 's.id = b.store', 'left');
         $this->db->join('product_information pi', 'pi.id = b.product', 'left');
         $this->db->join('supplier_information si1', 'si1.supplier_id = a.supplier_id', 'left');
@@ -2131,11 +2550,14 @@ WHERE id = '{$id}';
     s.name AS store_name,
     a.date,
     a.vehicleno,
-
-    AES_DECRYPT(p.chalan_no, '{$encryption_key}') AS voucher_no,
-    CASE 
-        WHEN a.type = 'purchase' THEN 'Purchase'
-        WHEN a.type = 'salesreturn' THEN 'Sales Return'
+    CASE
+        WHEN a.type = 'purchase'    THEN AES_DECRYPT(p.chalan_no, '{$encryption_key}')
+        WHEN a.type = 'salesreturn' THEN AES_DECRYPT(sr.sales_return_id, '{$encryption_key}')
+        ELSE NULL
+    END AS voucher_no,
+    CASE
+        WHEN a.type = 'purchase'      THEN 'Purchase'
+        WHEN a.type = 'salesreturn'   THEN 'Sales Return'
         WHEN a.type = 'storetransfer' THEN 'Store Transfer'
         ELSE a.type
     END AS type_name,
@@ -2149,6 +2571,7 @@ WHERE id = '{$id}';
         $this->db->join('conversion_ratio cr2', 'cr2.conversionratio_id = b.conversion_id', 'left');
         $this->db->join('units u', 'u.unit_id = b.unit', "left");
         $this->db->join('purchase p', 'p.id = a.voucherno', 'left');
+        $this->db->join('sales_return sr', 'sr.id = a.voucherno', 'left');
         $this->db->join('store s', 's.id = b.store', 'left');
         $this->db->join('product_information pi', 'pi.id = b.product', 'left');
         $this->db->join('supplier_information si1', 'si1.supplier_id = a.supplier_id', 'left');
@@ -3660,12 +4083,17 @@ WHERE id = '{$id}';
     s.name AS store_name,
     a.date,
     a.vehicleno,
-    AES_DECRYPT(sa.sale_id, '{$encryption_key}') AS voucher_no,
-    CASE 
+    CASE
+        WHEN a.type IN ('sale', 'wholesale') THEN AES_DECRYPT(sa.sale_id, '{$encryption_key}')
+        WHEN a.type = 'purchasereturn' THEN AES_DECRYPT(sr.purchase_return_id, '{$encryption_key}')
+        ELSE NULL
+    END AS voucher_no,
+    CASE
         WHEN a.type = 'sale' THEN 'Sale'
         WHEN a.type = 'wholesale' THEN 'Wholesale'
         WHEN a.type = 'storetransfer' THEN 'Store Transfer'
-        WHEN a.type = 'salesreturn' THEN 'Sales Return'
+        WHEN a.type = 'purchasereturn' THEN 'Sales Return'
+        WHEN a.type = 'stockdisposal' THEN 'Stock Disposal'
         ELSE a.type
     END AS type_name,
     AES_DECRYPT(a.gdn_id, '{$encryption_key}') AS gdn_id,
@@ -3676,6 +4104,7 @@ WHERE id = '{$id}';
         $this->db->join('phystock_details b', 'b.pid = a.id', 'left');
         $this->db->join('conversion_ratio cr2', 'cr2.conversionratio_id = b.conversion_id', 'left');
         $this->db->join('sale sa', 'sa.id = a.voucherno', 'left');
+        $this->db->join('purchase_return sr', 'sr.id = a.voucherno', 'left');
         $this->db->join('units u', 'u.unit_id = b.unit', "left");
         $this->db->join('store s', 's.id = b.store', 'left');
         $this->db->join('product_information pi', 'pi.id = b.product', 'left');
@@ -3740,12 +4169,16 @@ WHERE id = '{$id}';
     s.name AS store_name,
     a.date,
     a.vehicleno,
-    AES_DECRYPT(sa.sale_id, '{$encryption_key}') AS voucher_no,
-    CASE 
+    CASE
+        WHEN a.type IN ('sale', 'wholesale') THEN AES_DECRYPT(sa.sale_id, '{$encryption_key}')
+        WHEN a.type = 'purchasereturn' THEN AES_DECRYPT(sr.purchase_return_id, '{$encryption_key}')
+        ELSE NULL
+    END AS voucher_no,
+    CASE
         WHEN a.type = 'sale' THEN 'Sale'
         WHEN a.type = 'wholesale' THEN 'Wholesale'
         WHEN a.type = 'storetransfer' THEN 'Store Transfer'
-        WHEN a.type = 'salesreturn' THEN 'Sales Return'
+        WHEN a.type = 'purchasereturn' THEN 'Purchase Return'
         ELSE a.type
     END AS type_name,
     AES_DECRYPT(a.gdn_id, '{$encryption_key}') AS gdn_id,
@@ -3756,6 +4189,7 @@ WHERE id = '{$id}';
         $this->db->join('phystock_details b', 'b.pid = a.id', 'left');
         $this->db->join('conversion_ratio cr2', 'cr2.conversionratio_id = b.conversion_id', 'left');
         $this->db->join('sale sa', 'sa.id = a.voucherno', 'left');
+        $this->db->join('purchase_return sr', 'sr.id = a.voucherno', 'left');
         $this->db->join('units u', 'u.unit_id = b.unit', "left");
         $this->db->join('store s', 's.id = b.store', 'left');
         $this->db->join('product_information pi', 'pi.id = b.product', 'left');
@@ -4027,6 +4461,134 @@ WHERE id = '{$id}';
 
 
        
+        return false;
+    }
+
+    public function getBatchInStockByProductAndBatchtype()
+    {
+        $encryption_key = Config::$encryption_key;
+        $currentDate    = date('Y-m-d');
+        $product_id     = $this->input->post('product', TRUE);
+        $nstock         = $this->input->post('nstock', TRUE);
+        $apply_stock_filter = ($nstock !== '0' && $nstock !== 0);
+
+        $escaped_pid = $this->db->escape($product_id);
+
+        $stock_filter_single = "
+            (
+                (SELECT IFNULL(SUM(CAST(AES_DECRYPT(sd.stock, '{$encryption_key}') AS DECIMAL(18,4))), 0)
+                   FROM stock_details sd
+                  WHERE sd.batch   = stockbatch.id
+                    AND sd.product = CAST(stockbatch.product AS CHAR))
+              + (SELECT IFNULL(SUM(CAST(AES_DECRYPT(pd.stock, '{$encryption_key}') AS DECIMAL(18,4))), 0)
+                   FROM phystock_details pd
+                  WHERE pd.batch   = stockbatch.id
+                    AND pd.product = CAST(stockbatch.product AS CHAR))
+            ) > 0";
+
+        $stock_filter_multi = "
+            (
+                (SELECT IFNULL(SUM(CAST(AES_DECRYPT(sd.stock, '{$encryption_key}') AS DECIMAL(18,4))), 0)
+                   FROM stock_details sd
+                  WHERE sd.batch   = stockbatch.id
+                    AND sd.product = {$escaped_pid})
+              + (SELECT IFNULL(SUM(CAST(AES_DECRYPT(pd.stock, '{$encryption_key}') AS DECIMAL(18,4))), 0)
+                   FROM phystock_details pd
+                  WHERE pd.batch   = stockbatch.id
+                    AND pd.product = {$escaped_pid})
+            ) > 0";
+
+        if ($this->input->post('batchtype', TRUE) == 1) {
+            $this->db->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid');
+            $this->db->from('stockbatch');
+            $this->db->where('busage', 'single');
+            $this->db->where('product', $product_id);
+            if (!$this->input->post('id', TRUE)) {
+                $this->db->where('status', 1);
+            }
+            if ($apply_stock_filter) {
+                $this->db->where($stock_filter_single, NULL, FALSE);
+            }
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                echo json_encode($query->result_array());
+            } else {
+                echo "not";
+            }
+        } else if ($this->input->post('batchtype', TRUE) == 2) {
+            $this->db->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid');
+            $this->db->from('stockbatch');
+            $this->db->where('busage', 'multiple');
+            if (!$this->input->post('id', TRUE)) {
+                $this->db->where('status', 1);
+            }
+            if ($apply_stock_filter) {
+                $this->db->where($stock_filter_multi, NULL, FALSE);
+            }
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                echo json_encode($query->result_array());
+            } else {
+                echo "not";
+            }
+        } else if ($this->input->post('batchtype', TRUE) == 3) {
+            if (!$this->input->post('id', TRUE)) {
+                $q1 = $this->db
+                    ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
+                    ->from('stockbatch')
+                    ->where('busage', 'single')
+                    ->where('product', $product_id)
+                    ->where('mdate <=', $currentDate)
+                    ->group_start()
+                    ->where('edate_enabled', 0)
+                    ->or_where('edate >=', $currentDate)
+                    ->group_end()
+                    ->where('status', 1);
+                if ($apply_stock_filter) {
+                    $q1->where($stock_filter_single, NULL, FALSE);
+                }
+                $query1 = $q1->get_compiled_select();
+            } else {
+                $q1 = $this->db
+                    ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
+                    ->from('stockbatch')
+                    ->where('busage', 'single')
+                    ->where('product', $product_id);
+                if ($apply_stock_filter) {
+                    $q1->where($stock_filter_single, NULL, FALSE);
+                }
+                $query1 = $q1->get_compiled_select();
+            }
+
+            if (!$this->input->post('id', TRUE)) {
+                $q2 = $this->db
+                    ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
+                    ->from('stockbatch')
+                    ->where('busage', 'multiple')
+                    ->where('status', 1);
+                if ($apply_stock_filter) {
+                    $q2->where($stock_filter_multi, NULL, FALSE);
+                }
+                $query2 = $q2->get_compiled_select();
+            } else {
+                $q2 = $this->db
+                    ->select('id, AES_DECRYPT(batchid, "' . $encryption_key . '") as batchid', FALSE)
+                    ->from('stockbatch')
+                    ->where('busage', 'multiple');
+                if ($apply_stock_filter) {
+                    $q2->where($stock_filter_multi, NULL, FALSE);
+                }
+                $query2 = $q2->get_compiled_select();
+            }
+
+            $finalQuery = $this->db->query("$query1 UNION $query2");
+            if ($finalQuery->num_rows() > 0) {
+                echo json_encode($finalQuery->result_array());
+            } else {
+                echo "not";
+            }
+        }
+
         return false;
     }
 

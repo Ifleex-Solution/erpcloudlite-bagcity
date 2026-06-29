@@ -37,6 +37,18 @@
 						</select>
 					</div>
 				</div>
+				<div class="form-group">
+					<label for="status">Status</label>
+					<div class="input-group mr-4" style="width: 250px;">
+						<select class="form-control" id="status" name="status" style="width: 250px;" tabindex="5">
+							<option value="">All Status</option>
+							<option value="0">Ordered</option>
+							<option value="1">Invoiced</option>
+							<option value="2">Canceled</option>
+						</select>
+					</div>
+				</div>
+
 
 				<div class="form-group" style="margin-bottom: 10px;">
 					<input type="checkbox" id="single_date_checkbox" name="single_date_checkbox">
@@ -189,6 +201,7 @@ echo "</script>";
 				istype: document.getElementById('single_date_checkbox').checked,
 				branch: $('#branch').val(),
 				customer_id: $('#customer_id').val(),
+				status: $('#status').val(),
 			},
 			success: function(data1) {
 				var datas = JSON.parse(data1);

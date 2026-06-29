@@ -45,18 +45,20 @@ class User_model extends CI_Model {
 
 	public function read()
 	{
-		return $this->db->select("
-				a.*, 
+		$this->db->select("
+				a.*,
 				CONCAT_WS(' ', a.first_name, a.last_name) AS fullname,b.*,b.status as status,b.username as email
 			")
 			->from('users a')
 			->join('user_login b','b.user_id = a.user_id')
 			->order_by('a.user_id', 'desc')
-			->group_by('a.user_id')
-            // ->where_in('b.user_type', [1, 2])
+			->group_by('a.user_id');
 
-			->get()
-			->result();
+		if ($this->session->userdata('user_type') != 1) {
+			$this->db->where_not_in('b.user_type', 1);
+		}
+
+		return $this->db->get()->result();
 	}
 
 	public function company_list($id=null)

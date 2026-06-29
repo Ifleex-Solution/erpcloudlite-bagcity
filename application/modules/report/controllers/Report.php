@@ -2057,28 +2057,31 @@ FROM
         'Purchase Return' AS incidenttype,
         pr.payment_type,
         pt.name AS payment_method,
-        AES_DECRYPT(pr.purchase_return_id, '{$encryption_key}') AS invoice_no,
+        AES_DECRYPT(p.chalan_no, '{$encryption_key}')  AS invoice_no,
         CAST(AES_DECRYPT(pr.grandTotal, '{$encryption_key}') AS DECIMAL(18,2)) AS grandTotal,
         AES_DECRYPT(pr.type2, '{$encryption_key}') AS type2,
         pr.createddate,
         pr.branch
     FROM purchase_return pr
     INNER JOIN payment_type pt ON pt.id = pr.payment_type
+    INNER JOIN purchase p ON p.id = pr.purchase_id
+
 
     UNION ALL
 
-    SELECT 
+    SELECT
         sr.rdate AS date,
         'Sales Return' AS incidenttype,
         sr.payment_type,
         pt.name AS payment_method,
-        AES_DECRYPT(sr.sales_return_id, '{$encryption_key}') AS invoice_no,
+        AES_DECRYPT(s.sale_id, '{$encryption_key}') AS invoice_no,
         -CAST(AES_DECRYPT(sr.grandTotal, '{$encryption_key}') AS DECIMAL(18,2)) AS grandTotal,
         AES_DECRYPT(sr.type2, '{$encryption_key}') AS type2,
         sr.createddate,
         sr.branch
     FROM sales_return sr
     INNER JOIN payment_type pt ON pt.id = sr.payment_type
+    INNER JOIN sale s ON s.id = sr.sales_id
 
 ) AS cashbook
 
@@ -2441,7 +2444,7 @@ ORDER BY createddate DESC
         $pdf->Cell(37, 10, 'Date', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(37, 10, 'Incident', 'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(37, 10, 'Payment Method', 'TB', 0, 'C', 0, '', 1);
-        $pdf->Cell(45, 10, 'Invoice No', 'TB', 0, 'C', 0, '', 1);
+        $pdf->Cell(45, 10, 'Voucher No', 'TB', 0, 'C', 0, '', 1);
         $pdf->Cell(37, 10, 'Amount', 'TB', 0, 'R', 0, '', 1);
 
 
@@ -2471,8 +2474,8 @@ ORDER BY createddate DESC
                 $pdf->SetFont('helvetica', 'B', 12);
                 $pdf->Cell(37, 10, 'Date', 'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(37, 10, 'Incident', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(37, 10, 'Payment Method', 'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(45, 10, 'Invoice No', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(37, 10, 'Payment Method', 'TB', 0, 'C', 0, '', 1);
+                $pdf->Cell(45, 10, 'Voucher No', 'TB', 0, 'C', 0, '', 1);
                 $pdf->Cell(37, 10, 'Amount', 'TB', 0, 'R', 0, '', 1);
                 $pdf->Ln(10);
             }
@@ -3922,8 +3925,9 @@ ORDER BY createddate DESC
         $empid       = $this->input->post('empid');
         $branch      = $this->input->post('branch');
         $customer_id = $this->input->post('customer_id');
+        $status = $this->input->post('status');
 
-        $report_data = $this->report_model->service_order_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id);
+        $report_data = $this->report_model->service_order_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id,$status);
         if (!$report_data) {
             $report_data = [];
         }
@@ -3955,8 +3959,9 @@ ORDER BY createddate DESC
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(30, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(30, 10, 'EOD Date',    'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(40, 10, 'Order No',      'TB', 0, 'L', 0, '', 1);
-        $pdf->Cell(50, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(30, 10, 'Order No',      'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(40, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+        $pdf->Cell(20, 10, 'Status',      'TB', 0, 'L', 0, '', 1);
         $pdf->Cell(40, 10, 'Amount',        'TB', 0, 'R', 0, '', 1);
         $pdf->Ln(10);
 
@@ -3975,9 +3980,10 @@ ORDER BY createddate DESC
                 $this->header($pdf, $page, "Job Order Report", $_SESSION['ssori_istype'], $_SESSION['ssorifrom_date'], $_SESSION['ssorito_date']);
                 $pdf->SetFont('helvetica', 'B', 12);
                 $pdf->Cell(30, 10, 'Order Date',    'TB', 0, 'L', 0, '', 1);
-                 $pdf->Cell(30, 10, 'EOD Date',    'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(40, 10, 'Order No',      'TB', 0, 'L', 0, '', 1);
-                $pdf->Cell(50, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(30, 10, 'EOD Date',    'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(30, 10, 'Order No',      'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(40, 10, 'Customer Name', 'TB', 0, 'L', 0, '', 1);
+                $pdf->Cell(20, 10, 'Status',      'TB', 0, 'L', 0, '', 1);
                 $pdf->Cell(40, 10, 'Amount',        'TB', 0, 'R', 0, '', 1);
                 $pdf->Ln(10);
             }
@@ -3988,9 +3994,10 @@ ORDER BY createddate DESC
 
             $pdf->SetFont('', '', 10);
             $pdf->Cell(30, 8, $row['date'], 0, 0, 'L');
-             $pdf->Cell(30, 8, $row['eod_date'], 0, 0, 'L');
-            $pdf->Cell(40, 8, $row['invoiceno'], 0, 0, 'L');
-            $pdf->Cell(50, 8, $row['customer_name'], 0, 0, 'L');
+            $pdf->Cell(30, 8, $row['eod_date'], 0, 0, 'L');
+            $pdf->Cell(30, 8, $row['invoiceno'], 0, 0, 'L');
+            $pdf->Cell(40, 8, $row['customer_name'], 0, 0, 'L');
+            $pdf->Cell(20, 8, $row['status_label'], 0, 0, 'L');
             $pdf->Cell(40, 8, number_format($amount, 2), 0, 1, 'R');
         }
 

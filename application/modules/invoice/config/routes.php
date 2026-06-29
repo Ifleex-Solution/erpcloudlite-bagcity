@@ -3,6 +3,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 $route['add_invoice']         = "invoice/invoice/bdtask_invoice_form";
 $route['new_pos']         = "invoice/invoice/bdtask_new_pos";
+$route['touch_invoice']              = "invoice/invoice/touch_invoice_form";
+$route['touch_invoice/(:num)']       = "invoice/invoice/touch_invoice_form/$1";
+$route['ti_search_products']         = "invoice/invoice/ti_search_products";
 $route['new_quotation']         = "invoice/invoice/bdtask_quotation_form";
 $route['manage_quotation']         = "invoice/invoice/bdtask_quotation_list";
 

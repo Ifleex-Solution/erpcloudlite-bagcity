@@ -1925,18 +1925,24 @@ ORDER BY quantity DESC
         $this->db->select("ds.id,
             AES_DECRYPT(ds.gdn_id,'$encryption_key') AS gdn_id,
             ds.date,
-            AES_DECRYPT(p.sale_id,'$encryption_key') AS voucherno,
+            CASE
+                WHEN ds.type IN ('sale','wholesale') THEN AES_DECRYPT(p.sale_id,'$encryption_key')
+                WHEN ds.type = 'purchasereturn'      THEN AES_DECRYPT(pr.purchase_return_id,'$encryption_key')
+                ELSE ''
+            END AS voucherno,
             CASE
                 WHEN ds.type = 'sale' THEN 'Sale'
                 WHEN ds.type = 'wholesale' THEN 'Wholesale'
-                WHEN ds.type = 'storetransfer' THEN 'Store Transfer'
+                WHEN ds.type = 'stockdisposal' THEN 'Stock Disposal'
                 WHEN ds.type = 'purchasereturn' THEN 'Purchase Return'
+                WHEN ds.type='storetransfer' THEN 'Store Transfer'
                 ELSE REPLACE(ds.type, '_', ' ')
             END AS incidenttype,
             s.name as store,
             AES_DECRYPT(ci.customer_name,'$encryption_key') as customer_name");
         $this->db->from('gdn_stock ds');
-        $this->db->join('sale p', 'ds.voucherno = p.id', 'left');
+        $this->db->join('sale p', 'ds.voucherno = p.id AND ds.type IN (\'sale\',\'wholesale\')', 'left');
+        $this->db->join('purchase_return pr', 'ds.voucherno = pr.id AND ds.type = \'purchasereturn\'', 'left');
         $this->db->join('phystock_details pd', 'pd.pid = ds.id', 'left');
         $this->db->join('store s', 's.id = pd.store', 'left');
         $this->db->join('customer_information ci', 'ci.customer_id = ds.customer_id', 'left');
@@ -2024,7 +2030,7 @@ ORDER BY quantity DESC
         return false;
     }
 
-    public function service_order_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id)
+    public function service_order_reportinvoicewise($from_date, $to_date, $empid, $branch, $customer_id,$status)
     {
         $encryption_key = Config::$encryption_key;
         $branchResult = $this->db->select("branch.id")
@@ -2041,11 +2047,19 @@ ORDER BY quantity DESC
             $branchids = array_column($branchResult, 'id');
         }
 
-        $this->db->select("a.date,a.eod_date,
-            AES_DECRYPT(a.service_order_id,'" . $encryption_key . "') as invoiceno,
+            $this->db->select("
+            a.date,
+            a.eod_date,
+            AES_DECRYPT(a.service_order_id, '" . $encryption_key . "') AS invoiceno,
             AES_DECRYPT(b.customer_name, '" . $encryption_key . "') AS customer_name,
-            AES_DECRYPT(a.grandTotal,'" . $encryption_key . "') as total,
-            COUNT(sod.id) as item_count");
+            AES_DECRYPT(a.grandTotal, '" . $encryption_key . "') AS total,
+            COUNT(sod.id) AS item_count,
+            CASE
+                WHEN a.status = 0 THEN 'Ordered'
+                WHEN a.status = 1 THEN 'Invoiced'
+                ELSE 'Canceled'
+            END AS status_label
+        ", false);
         $this->db->from('service_order a');
         $this->db->join('customer_information b', 'b.customer_id = a.customer_id', 'left');
         $this->db->join('service_order_details sod', 'sod.pid = a.id', 'left');
@@ -2059,6 +2073,14 @@ ORDER BY quantity DESC
 
         if ($customer_id) {
             $this->db->where('a.customer_id', $customer_id);
+        }
+
+        if ($status) {
+            $this->db->where('a.status', $status);
+        }
+
+        if ($status==0) {
+            $this->db->where('a.status', $status);
         }
 
         if ($branch) {
@@ -2100,16 +2122,22 @@ ORDER BY quantity DESC
         $this->db->select("ds.id,
             AES_DECRYPT(ds.grn_id,'$encryption_key') AS grn_id,
             ds.date,
-            AES_DECRYPT(p.chalan_no,'$encryption_key') AS voucherno,
+            CASE
+                WHEN ds.type = 'purchase'    THEN AES_DECRYPT(p.chalan_no,'$encryption_key')
+                WHEN ds.type = 'salesreturn' THEN AES_DECRYPT(sr.sales_return_id,'$encryption_key')
+                ELSE ''
+            END AS voucherno,
             CASE
                 WHEN ds.type = 'purchase' THEN 'Purchase'
                 WHEN ds.type = 'salesreturn' THEN 'Sales Return'
+                WHEN ds.type = 'storetransfer' THEN 'Store Transfer'
                 ELSE REPLACE(ds.type, '_', ' ')
             END AS incidenttype,
             s.name as store,
             AES_DECRYPT(si.supplier_name,'$encryption_key') as supplier_name");
         $this->db->from('grn_stock ds');
-        $this->db->join('purchase p', 'ds.voucherno = p.id', 'left');
+        $this->db->join('purchase p', 'ds.voucherno = p.id AND ds.type = \'purchase\'', 'left');
+        $this->db->join('sales_return sr', 'ds.voucherno = sr.id AND ds.type = \'salesreturn\'', 'left');
         $this->db->join('phystock_details pd', 'pd.pid = ds.id', 'left');
         $this->db->join('store s', 's.id = pd.store', 'left');
         $this->db->join('supplier_information si', 'si.supplier_id = ds.supplier_id', 'left');

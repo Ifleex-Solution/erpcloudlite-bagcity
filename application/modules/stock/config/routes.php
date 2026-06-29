@@ -12,6 +12,15 @@ $route['newstockadjustment_form']         = "stock/stock/bdtask_newstockadjustme
 $route['newstockadjustment_form/(:any)']  = "stock/stock/bdtask_newstockadjustment_form/$1";
 $route['manage_stock_adjustment']         = "stock/stock/bdtask_manage_stock_adjustment";
 
+//new inventory transection part
+$route['new_inventory_transection']         = "stock/stock/bdtask_new_stock_form";
+$route['new_inventory_transection/(:any)']  = "stock/stock/bdtask_new_stock_form/$1";
+
+//manage inventory transection part
+$route['manage_inventory_transection']      = "stock/stock/bdtask_manage_inventory_transection";
+
+$route['save_openingstock_from_csv']   = "stock/stock/save_openingstock_from_csv";
+
 //GRN
 $route['new_grn']         = "stock/stock/bdtask_newgrn_form";
 $route['new_grn/(:any)']  = "stock/stock/bdtask_newgrn_form/$1";

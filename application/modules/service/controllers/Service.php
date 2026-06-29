@@ -943,6 +943,7 @@ class Service extends MX_Controller
         // $maxid = $this->Accounts_model->getMaxFieldNumber('id', 'acc_vaucher', 'Vtype', 'DV', 'VNo');
         $query = $this->db->select('*')
             ->from('employee_history')
+            ->where_not_in('id', 1)
             ->where('status', '1')
             ->get();
         if ($query->num_rows() > 0) {
@@ -2189,6 +2190,19 @@ class Service extends MX_Controller
             ->result_array();
     }
 
-
-
+    /* ── CSV Upload: Service ─────────────────────────────────────── */
+    public function save_service_from_csv()
+    {
+        $name   = trim($this->input->post('service_name', TRUE));
+        if (empty($name)) { echo json_encode(['status'=>'Error','message'=>'Service name is required']); return; }
+        $charge = $this->input->post('charge', TRUE);
+        $vat    = $this->input->post('service_vat', TRUE);
+        $desc   = trim($this->input->post('description', TRUE));
+        $status = (int)$this->input->post('status', TRUE);
+        $data   = ['service_name'=>$name,'description'=>$desc,'charge'=>(float)$charge,'status'=>$status];
+        if ($vat !== '' && $vat !== null) $data['service_vat'] = (float)$vat;
+        $result = $this->service_model->service_entry($data);
+        if ($result === FALSE) { echo json_encode(['status'=>'Error','message'=>'Service already exists: '.$name]); return; }
+        echo json_encode(['status'=>'Success','id'=>$this->db->insert_id()]);
+    }
 }

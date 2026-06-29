@@ -352,7 +352,8 @@ class Product_model extends CI_Model
      subcategory_id,brand_id,oop_id,
         defaultsaleprice,ad,bd,addigit,batchtype,printname,
         supplier_id,product_type,stock,
-        max_stock_level,min_stock_level,reorder_stock_level,reserve_stock_level
+        max_stock_level,min_stock_level,reorder_stock_level,reserve_stock_level,
+        product_image
 
 
 ")
@@ -360,6 +361,63 @@ class Product_model extends CI_Model
             ->where('id', $id)
             ->get()
             ->row();
+    }
+
+    public function all_product_names()
+    {
+        return $this->db->select('product_name')
+            ->from('product_information')
+            ->get()->result_array();
+    }
+
+    public function all_product_ids()
+    {
+        return $this->db->select('product_id')
+            ->from('product_information')
+            ->get()->result_array();
+    }
+
+    public function all_brand_names()
+    {
+        return $this->db->select('brand_name')
+            ->from('product_brand')
+            ->get()->result_array();
+    }
+
+    public function all_category_names()
+    {
+        return $this->db->select('category_name')
+            ->from('product_category')
+            ->get()->result_array();
+    }
+
+    public function all_subcategory_names()
+    {
+        return $this->db->select('subcategory_name, category_id')
+            ->from('product_subcategory')
+            ->get()->result_array();
+    }
+
+    public function all_unit_names()
+    {
+        return $this->db->select('unit_name')
+            ->from('units')
+            ->get()->result_array();
+    }
+
+    public function all_existing_conversionratios()
+    {
+        return $this->db->select('product, subunit')
+            ->from('conversion_ratio')
+            ->where('status', 1)
+            ->get()->result_array();
+    }
+
+    public function all_product_subunits()
+    {
+        return $this->db->select('product_id, unit_id')
+            ->from('subunit_product')
+            ->get()->result_array();
     }
 
     public function single_subunit_product($id)
@@ -1215,6 +1273,220 @@ IF(a.status = 1, 'Active', 'Inactive') as status_label,s.name as sname");
         }
     }
 
- 
+    public function BulkProductUpload($postData = null)
+    {
+        $encryption_key        = Config::$encryption_key;
+        $draw                  = $postData['draw'];
+        $start                 = $postData['start'];
+        $rowperpage            = $postData['length'];
+        $columnSortOrder       = $postData['order'][0]['dir'];
+        $searchValue           = $postData['search']['value'];
 
+        $searchQuery = '';
+        if ($searchValue != '') {
+            $searchQuery = " (po.id LIKE '%" . $searchValue . "%'
+                OR po.date LIKE '%" . $searchValue . "%'
+                OR AES_DECRYPT(po.uploaded_id,'" . $encryption_key . "') LIKE '%" . $searchValue . "%'
+                OR si.first_name LIKE '%" . $searchValue . "%'
+                OR si.last_name LIKE '%" . $searchValue . "%') ";
+        }
+
+        $this->db->select('count(*) as allcount')->from('bulk_product_details po')
+            ->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $totalRecords = $this->db->get()->result()[0]->allcount;
+
+        $this->db->select('count(*) as allcount')->from('bulk_product_details po')
+            ->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $totalRecordwithFilter = $this->db->get()->result()[0]->allcount;
+
+        $this->db->select('po.id,
+            AES_DECRYPT(po.uploaded_id,"' . $encryption_key . '") AS uploaded_id,
+            po.date, si.first_name, si.last_name, po.product_ids')
+            ->from('bulk_product_details po')
+            ->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $this->db->order_by('po.id', 'desc')->limit($rowperpage, $start);
+        $records = $this->db->get()->result();
+
+        $data = [];
+        $sl   = 1;
+        foreach ($records as $record) {
+            $button  = '<button class="btn btn-info btn-xs" onclick="showBulkDetails(' . $record->id . ')" title="View Product IDs"><i class="fa fa-eye"></i> Details</button>';
+            $button .= ' <button class="btn btn-danger btn-xs" onclick="deleteBulkProduct(' . $record->id . ')" title="Delete"><i class="fa fa-trash"></i></button>';
+            $data[]  = [
+                'sl'          => $sl,
+                'uploaded_id' => $record->uploaded_id,
+                'date'        => $record->date,
+                'name'        => $record->first_name . ' ' . $record->last_name,
+                'button'      => $button,
+            ];
+            $sl++;
+        }
+
+        return [
+            'draw'                 => intval($draw),
+            'iTotalRecords'        => $totalRecords,
+            'iTotalDisplayRecords' => $totalRecordwithFilter,
+            'aaData'               => $data,
+        ];
+    }
+
+    public function BulkConversionratioUpload($postData = null)
+    {
+        $encryption_key        = Config::$encryption_key;
+        $draw                  = $postData['draw'];
+        $start                 = $postData['start'];
+        $rowperpage            = $postData['length'];
+        $columnSortOrder       = $postData['order'][0]['dir'];
+        $searchValue           = $postData['search']['value'];
+
+        $searchQuery = '';
+        if ($searchValue != '') {
+            $searchQuery = " (po.id LIKE '%" . $searchValue . "%'
+                OR po.date LIKE '%" . $searchValue . "%'
+                OR AES_DECRYPT(po.uploaded_id,'" . $encryption_key . "') LIKE '%" . $searchValue . "%'
+                OR si.first_name LIKE '%" . $searchValue . "%'
+                OR si.last_name LIKE '%" . $searchValue . "%') ";
+        }
+
+        $this->db->select('count(*) as allcount')->from('bulk_conversionratio_details po')
+            ->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $totalRecords = $this->db->get()->result()[0]->allcount;
+
+        $this->db->select('count(*) as allcount')->from('bulk_conversionratio_details po')
+            ->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $totalRecordwithFilter = $this->db->get()->result()[0]->allcount;
+
+        $this->db->select('po.id,
+            AES_DECRYPT(po.uploaded_id,"' . $encryption_key . '") AS uploaded_id,
+            po.date, si.first_name, si.last_name, po.conversionratio_ids')
+            ->from('bulk_conversionratio_details po')
+            ->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $this->db->order_by('po.id', 'desc')->limit($rowperpage, $start);
+        $records = $this->db->get()->result();
+
+        $data = [];
+        $sl   = 1;
+        foreach ($records as $record) {
+            $button  = '<button class="btn btn-info btn-xs" onclick="showBulkDetails(' . $record->id . ')" title="View Details"><i class="fa fa-eye"></i> Details</button>';
+            $button .= ' <button class="btn btn-danger btn-xs" onclick="deleteBulkRecord(' . $record->id . ')" title="Delete"><i class="fa fa-trash"></i></button>';
+            $data[]  = [
+                'sl'          => $sl,
+                'uploaded_id' => $record->uploaded_id,
+                'date'        => $record->date,
+                'name'        => $record->first_name . ' ' . $record->last_name,
+                'button'      => $button,
+            ];
+            $sl++;
+        }
+
+        return [
+            'draw'                 => intval($draw),
+            'iTotalRecords'        => $totalRecords,
+            'iTotalDisplayRecords' => $totalRecordwithFilter,
+            'aaData'               => $data,
+        ];
+    }
+
+    private function _bulkUploadList($postData, $table, $idsCol, $detailsFn, $deleteFn)
+    {
+        $encryption_key  = Config::$encryption_key;
+        $draw            = $postData['draw'];
+        $start           = $postData['start'];
+        $rowperpage      = $postData['length'];
+        $searchValue     = $postData['search']['value'];
+        $searchQuery     = '';
+        if ($searchValue != '') {
+            $searchQuery = "(po.id LIKE '%" . $searchValue . "%'
+                OR po.date LIKE '%" . $searchValue . "%'
+                OR AES_DECRYPT(po.uploaded_id,'" . $encryption_key . "') LIKE '%" . $searchValue . "%'
+                OR si.first_name LIKE '%" . $searchValue . "%'
+                OR si.last_name LIKE '%" . $searchValue . "%')";
+        }
+
+        $this->db->select('count(*) as allcount')->from($table . ' po')->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $totalRecords = $this->db->get()->result()[0]->allcount;
+
+        $this->db->select('count(*) as allcount')->from($table . ' po')->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $totalRecordwithFilter = $this->db->get()->result()[0]->allcount;
+
+        $this->db->select("po.id, AES_DECRYPT(po.uploaded_id,'" . $encryption_key . "') AS uploaded_id, po.date, si.first_name, si.last_name")
+            ->from($table . ' po')->join('users si', 'si.user_id = po.uploadedby', 'left');
+        if ($searchValue != '') $this->db->where($searchQuery);
+        $this->db->order_by('po.id', 'desc')->limit($rowperpage, $start);
+        $records = $this->db->get()->result();
+
+        $data = [];
+        $sl   = 1;
+        foreach ($records as $record) {
+            $button  = '<button class="btn btn-info btn-xs" onclick="' . $detailsFn . '(' . $record->id . ')" title="View Details"><i class="fa fa-eye"></i> Details</button>';
+            $button .= ' <button class="btn btn-danger btn-xs" onclick="' . $deleteFn . '(' . $record->id . ')" title="Delete"><i class="fa fa-trash"></i></button>';
+            $data[] = [
+                'sl'          => $sl,
+                'uploaded_id' => $record->uploaded_id,
+                'date'        => $record->date,
+                'name'        => $record->first_name . ' ' . $record->last_name,
+                'button'      => $button,
+            ];
+            $sl++;
+        }
+        return ['draw' => intval($draw), 'iTotalRecords' => $totalRecords, 'iTotalDisplayRecords' => $totalRecordwithFilter, 'aaData' => $data];
+    }
+
+    public function BulkBrandUpload($postData)        { return $this->_bulkUploadList($postData, 'bulk_brand_details',       'brand_ids',         'showBulkBrandDetails',         'deleteBulkBrand'); }
+    public function BulkCategoryUpload($postData)     { return $this->_bulkUploadList($postData, 'bulk_category_details',    'category_ids',      'showBulkCategoryDetails',      'deleteBulkCategory'); }
+    public function BulkSubcategoryUpload($postData)  { return $this->_bulkUploadList($postData, 'bulk_subcategory_details', 'subcategory_ids',   'showBulkSubcategoryDetails',   'deleteBulkSubcategory'); }
+    public function BulkUnitUpload($postData)         { return $this->_bulkUploadList($postData, 'bulk_unit_details',        'unit_ids',          'showBulkUnitDetails',          'deleteBulkUnit'); }
+    public function BulkPaymentMethodUpload($postData){ return $this->_bulkUploadList($postData, 'bulk_paymentmethod_details','paymentmethod_ids','showBulkPaymentMethodDetails', 'deleteBulkPaymentMethod'); }
+    public function BulkBranchUpload($postData)       { return $this->_bulkUploadList($postData, 'bulk_branch_details',      'branch_ids',        'showBulkBranchDetails',        'deleteBulkBranch'); }
+    public function BulkStoreUpload($postData)        { return $this->_bulkUploadList($postData, 'bulk_store_details',       'store_ids',         'showBulkStoreDetails',         'deleteBulkStore'); }
+    public function BulkCustomerUpload($postData)     { return $this->_bulkUploadList($postData, 'bulk_customer_details',    'customer_ids',      'showBulkCustomerDetails',      'deleteBulkCustomer'); }
+    public function BulkSupplierUpload($postData)     { return $this->_bulkUploadList($postData, 'bulk_supplier_details',    'supplier_ids',      'showBulkSupplierDetails',      'deleteBulkSupplier'); }
+    public function BulkServiceUpload($postData)      { return $this->_bulkUploadList($postData, 'bulk_service_details',     'service_ids',       'showBulkServiceDetails',       'deleteBulkService'); }
+    public function BulkProductGroupUpload($postData)    { return $this->_bulkUploadList($postData, 'bulk_productgroup_details',   'productgroup_ids',   'showBulkProductGroupDetails',   'deleteBulkProductGroup'); }
+    public function BulkOpeningStockUpload($postData)    { return $this->_bulkUploadList($postData, 'bulk_openingstock_details',   'openingstock_ids',   'showBulkOpeningStockDetails',   'deleteBulkOpeningStock'); }
+    public function BulkStockBatchUpload($postData)      { return $this->_bulkUploadList($postData, 'bulk_stockbatch_details',     'stockbatch_ids',     'showBulkStockBatchDetails',     'deleteBulkStockBatch'); }
+
+    public function all_productgroup_codes() {
+        return $this->db->select('groupcode')->from('product_group')->get()->result_array();
+    }
+
+    public function all_stockbatches_for_csv() {
+        $enc = Config::$encryption_key;
+        return $this->db->query("SELECT id, AES_DECRYPT(batchid,'$enc') AS batchid, busage, product FROM stockbatch WHERE status=1 ORDER BY id ASC")->result_array();
+    }
+
+    public function all_stockbatch_batchids_for_csv() {
+        $enc = Config::$encryption_key;
+        return $this->db->query("SELECT id, AES_DECRYPT(batchid,'$enc') AS batchid FROM stockbatch ORDER BY id ASC")->result_array();
+    }
+
+    public function all_conversion_ratios_for_csv() {
+        return $this->db->select('conversionratio_id, product, subunit, convertiontype, conversion_ratio')
+            ->from('conversion_ratio')
+            ->where('status', 1)
+            ->get()->result_array();
+    }
+
+    public function all_designation_names_for_csv() {
+        return $this->db->select('id, designation')->from('designation')->get()->result_array();
+    }
+
+    public function all_designations_for_csv() {
+        return $this->db->select('id, designation')->from('designation')->where('status', 1)->get()->result_array();
+    }
+
+    public function all_employee_ids_for_csv() {
+        return $this->db->select('id, last_name')->from('employee_history')->get()->result_array();
+    }
+
+    public function BulkDesignationUpload($postData) { return $this->_bulkUploadList($postData, 'bulk_designation_details', 'designation_ids', 'showBulkDesignationDetails', 'deleteBulkDesignation'); }
+    public function BulkEmployeeUpload($postData)    { return $this->_bulkUploadList($postData, 'bulk_employee_details',    'employee_ids',    'showBulkEmployeeDetails',    'deleteBulkEmployee'); }
 }

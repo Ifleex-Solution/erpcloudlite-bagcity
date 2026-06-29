@@ -13,3 +13,4 @@ $route['edit_customer/(:num)'] = 'customer/customer/bdtask_form/$1';
 // $route['customer_ledgerdata']  = "customer/customer/bdtask_customer_ledgerData";
 // $route['customer_advance']     = "customer/customer/bdtask_customer_advance";
 // $route['advance_receipt/(:any)/(:num)']= "customer/customer/customer_advancercpt/$1/$1";
+$route['save_customer_from_csv'] = "customer/customer/save_customer_from_csv";

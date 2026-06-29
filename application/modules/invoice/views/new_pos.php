@@ -1059,7 +1059,7 @@ echo "</script>";
                     document.getElementById('invoiceType').value = 'cash_vat';
                 } else if (results[currentIndex] == "Credit VAT") {
                     document.getElementById('invoiceType').value = 'credit_vat';
-                } 
+                }
                 if (document.getElementById('invoiceType').value == 'cash_vat' ||
                     document.getElementById('invoiceType').value == 'credit_vat' ||
                     document.getElementById('invoiceType').value == 'svat') {
@@ -1394,6 +1394,7 @@ echo "</script>";
 
                 // document.getElementById('branchId').value = results[currentIndex].id;
                 product_search2(0, "product", productResults[currentIndex].id)
+                productResults = [];
                 clearResults();
             } else {
                 alert("Product shouldn't be empty")
@@ -1889,7 +1890,7 @@ echo "</script>";
         // incidentTypes = ['Sale', 'Wholesale']
         const results = pmethods
             .filter(pmethod => pmethod.name.toLowerCase().includes(query));
-            
+
         if (event.key === 'Escape') {
             let element2 = document.getElementById("productInput");
             element2.focus();
@@ -2485,7 +2486,6 @@ echo "</script>";
 
 
 
-
                     let element2 = document.getElementById("storeInput");
                     element2.focus();
 
@@ -2845,7 +2845,7 @@ echo "</script>";
                         document.getElementById('invoiceType').value = 'cash';
                     } else if (item == "Credit") {
                         document.getElementById('invoiceType').value = 'credit';
-                    }  else if (item == "Cash VAT") {
+                    } else if (item == "Cash VAT") {
                         document.getElementById('invoiceType').value = 'cash_vat';
                     } else if (item == "Credit VAT") {
                         document.getElementById('invoiceType').value = 'credit_vat';
@@ -3688,7 +3688,7 @@ echo "</script>";
         document.getElementById('vat_percent' + count).value = document.getElementById('vat_percent0').value ? document.getElementById('vat_percent0').value : 0
         document.getElementById('vat_value' + count).innerHTML = document.getElementById('vat_value0').value ? parseFloat(document.getElementById('vat_value0').value).toFixed(2) : 0.00
         document.getElementById('total_price' + count).innerHTML = document.getElementById('total_price0').value ? parseFloat(document.getElementById('total_price0').value).toFixed(2) : 0.00
-
+        document.getElementById('isstock' + count).value = document.getElementById('isstock0').value
         count = count + 1;
 
         document.getElementById('product0').value = '';
@@ -3773,7 +3773,7 @@ echo "</script>";
 
 
         $.ajax({
-            url: $('#base_url').val() + 'stock/stock/getBatchbyProductAndBatchtype',
+            url: $('#base_url').val() + 'stock/stock/getBatchInStockByProductAndBatchtype',
             type: 'POST',
             data: {
                 product: product,
@@ -4038,6 +4038,17 @@ echo "</script>";
                         qty = document.getElementById('qty' + i).innerHTML
                     }
 
+                     let aqty = "";
+                    if (document.getElementById('qty' + i).value < 0) {
+                        const qty = document.getElementById('qty' + i);
+                        if (!qty.value.startsWith('+')) {
+                            qty.value = '+' + qty.value.replace('-', '');
+                        }
+                        aqty =qty.value + " " + units.find(unit => unit.unit_id == document.getElementById('unit' + i).value).unit_name
+                    } else {
+                        aqty = "-" + document.getElementById('qty' + i).value + " " + units2.find(unit => unit.unit_id == document.getElementById('unitId' + i).value).unit_name;
+                    }
+
                     arrItem.push({
                         product: document.getElementById('productId' + i).value,
                         product_name: document.getElementById('product' + i).innerHTML,
@@ -4055,7 +4066,7 @@ echo "</script>";
                         unit: document.getElementById('unitId' + i).value,
                         conversionid: document.getElementById('conversionid' + i).value,
                         isstock: document.getElementById('isstock' + i).value,
-                        aqty: document.getElementById('qty' + i).value + " " + units2.find(unit => unit.unit_id == document.getElementById('unitId' + i).value).unit_name,
+                        aqty: aqty,
                     });
 
                 }
